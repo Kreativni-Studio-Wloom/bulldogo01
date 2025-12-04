@@ -230,49 +230,32 @@ async function igRenderRightAds(peerUserId = null) {
 			const userRef = doc.ref.parent?.parent;
 			const userId = userRef?.id || '';
 			const title = d.title || 'Bez názvu';
-			const images = Array.isArray(d.images) ? d.images : [];
-			const preview = images.find(i => i?.isPreview)?.url || images[0]?.url || 'fotky/bulldogo-logo.png';
-			const metaLeft = [d.location || ''].filter(Boolean).join(' • ');
-			const price = d.price ? `<div class="ad-price">${d.price}</div>` : '';
-			const topStyle = d.isTop ? 'style="border: 3px solid #ff8a00 !important; box-shadow: 0 8px 28px rgba(255, 138, 0, 0.6), 0 0 0 2px rgba(255, 138, 0, 0.4) !important;"' : '';
-            // Karta ve stejném formátu jako „Služby“
+			const location = d.location || 'Neuvedeno';
+			const category = d.category || '';
+			const price = d.price || '';
+			const topBadge = d.isTop ? '<span style="color:#ff8a00; font-weight:bold;">🔥 TOP</span>' : '';
+			
+            // Jednoduchá textová položka ve stylu konverzací
             items.push(`
-                <article class="ad-card${d.isTop ? ' is-top' : ''}" data-ad-id="${doc.id}" data-user-id="${userId}" ${topStyle}>
-                    <div class="ad-thumb" onclick="window.location.href='ad-detail.html?id=${encodeURIComponent(doc.id)}&userId=${encodeURIComponent(userId)}'">
-                        <img src="${preview}" alt="${title}" loading="lazy" decoding="async">
+                <div class="ig-conv" style="cursor:pointer; padding:12px; border-bottom:1px solid #e5e7eb;" 
+                     onclick="window.location.href='ad-detail.html?id=${encodeURIComponent(doc.id)}&userId=${encodeURIComponent(userId)}'">
+                    <div style="flex:1;">
+                        <div style="font-weight:600; color:#111827; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                            <span>${title}</span>
+                            ${topBadge}
+                        </div>
+                        <div style="font-size:13px; color:#6b7280; margin-bottom:4px;">
+                            📍 ${location} ${category ? '• ' + category : ''}
+                        </div>
+                        ${price ? `<div style="font-size:14px; font-weight:600; color:#667eea;">${price}</div>` : ''}
                     </div>
-                    <div class="ad-body">
-                        <h3 class="ad-title">${title}</h3>
-                        <div class="ad-meta"><span>${d.location || 'Neuvedeno'}</span> • <span>${d.category || ''}</span></div>
-                        ${price}
+                    <div style="color:#9ca3af; font-size:20px;">
+                        <i class="fas fa-chevron-right"></i>
                     </div>
-                    ${d.isTop ? `
-                    <div class="ad-badge-top"><i class="fas fa-fire"></i> TOP</div>
-                    <div class="ad-flames" aria-hidden="true"></div>
-                    ` : ''}
-                    <div class="ad-actions">
-                        <button class="btn-contact" title="Kontaktovat" onclick="contactSeller('${doc.id}', '${userId}'); event.stopPropagation();">
-                            <i class="fas fa-comment"></i>
-                        </button>
-                        <button class="btn-profile" title="Profil" onclick="window.location.href='profile.html?uid=${encodeURIComponent(userId)}'; event.stopPropagation();">
-                            <i class="fas fa-user"></i>
-                        </button>
-                        <button class="btn-info" title="Info" onclick="window.location.href='ad-detail.html?id=${encodeURIComponent(doc.id)}&userId=${encodeURIComponent(userId)}'; event.stopPropagation();">
-                            <i class="fas fa-info"></i>
-                        </button>
-                    </div>
-                </article>
+                </div>
             `);
 		});
 		el.innerHTML = items.join('');
-		// Klik na kartu mimo tlačítka vede na detail
-		Array.from(el.querySelectorAll('.ad-card')).forEach(node => {
-			node.addEventListener('click', () => {
-				const adId = node.getAttribute('data-ad-id') || '';
-				const userId = node.getAttribute('data-user-id') || '';
-				if (adId && userId) window.location.href = `ad-detail.html?id=${encodeURIComponent(adId)}&userId=${encodeURIComponent(userId)}`;
-			});
-		});
 	} catch (e) {
 		console.warn('Pravý panel – nepodařilo se načíst inzeráty:', e);
 		// Fallback – 3 statické karty s logem
