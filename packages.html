@@ -204,67 +204,187 @@
         </section>
 
         <!-- Payment Section -->
-        <section class="payment-section" id="paymentSection" style="display: none;">
-            <div class="container">
-                <div class="payment-header">
-                    <h2 class="section-title">Dokončení objednávky</h2>
-                    <p class="section-subtitle">Dokončete platbu pro aktivaci balíčku</p>
+        <section class="payment-section" id="paymentSection" style="display: none; padding: 60px 0; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+            <div class="container" style="max-width: 700px;">
+                <!-- Hlavička s gradientem -->
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <div style="
+                        display: inline-block;
+                        padding: 8px 20px;
+                        background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+                        border-radius: 20px;
+                        margin-bottom: 16px;
+                    ">
+                        <span style="font-size: 14px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 1px;">
+                            <i class="fas fa-shopping-cart"></i> Objednávka
+                        </span>
+                    </div>
+                    <h2 style="font-size: 32px; font-weight: 700; color: #111827; margin-bottom: 12px;">Dokončení objednávky</h2>
+                    <p style="font-size: 16px; color: #6b7280;">Dokončete platbu pro aktivaci balíčku</p>
                 </div>
 
-                <div class="payment-summary">
-                    <div class="summary-card">
-                        <h3>Shrnutí objednávky</h3>
-                        <div class="summary-item">
-                            <span>Balíček:</span>
-                            <span id="selectedPlanTitle">-</span>
+                <!-- Moderní karta se shrnutím -->
+                <div style="
+                    background: white;
+                    border-radius: 24px;
+                    padding: 32px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+                    margin-bottom: 24px;
+                    border: 1px solid #f3f4f6;
+                ">
+                    <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-file-invoice" style="color: #f77c00;"></i>
+                        Shrnutí objednávky
+                    </h3>
+                    
+                    <div style="space-y: 16px;">
+                        <!-- Balíček -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f9fafb; border-radius: 12px; margin-bottom: 12px;">
+                            <span style="font-size: 15px; color: #6b7280; font-weight: 500;">
+                                <i class="fas fa-box" style="color: #f77c00; margin-right: 8px;"></i>
+                                Balíček
+                            </span>
+                            <span style="font-size: 16px; font-weight: 700; color: #111827;" id="selectedPlanTitle">-</span>
                         </div>
-                        <div class="summary-item">
-                            <span>Typ:</span>
-                            <span id="selectedPlanType">-</span>
+                        
+                        <!-- Typ -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f9fafb; border-radius: 12px; margin-bottom: 12px;">
+                            <span style="font-size: 15px; color: #6b7280; font-weight: 500;">
+                                <i class="fas fa-tag" style="color: #f77c00; margin-right: 8px;"></i>
+                                Typ předplatného
+                            </span>
+                            <span style="font-size: 15px; color: #111827;" id="selectedPlanType">-</span>
                         </div>
-                        <div class="summary-item total">
-                            <span>Cena:</span>
-                            <span id="totalPrice">-</span>
+                        
+                        <!-- Cena - zvýrazněná -->
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            padding: 20px;
+                            background: linear-gradient(135deg, rgba(247,124,0,0.1) 0%, rgba(253,240,2,0.1) 100%);
+                            border-radius: 12px;
+                            border: 2px solid #f77c00;
+                            margin-top: 20px;
+                        ">
+                            <span style="font-size: 18px; color: #111827; font-weight: 700;">
+                                <i class="fas fa-credit-card" style="color: #f77c00; margin-right: 8px;"></i>
+                                Celková cena
+                            </span>
+                            <span style="
+                                font-size: 28px;
+                                font-weight: 800;
+                                background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                                background-clip: text;
+                            " id="totalPrice">-</span>
                         </div>
                     </div>
+                </div>
 
-                    <div class="payment-methods">
-                        <h3>Způsob platby</h3>
-                        <div class="payment-options">
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="card" checked>
-                                <div class="option-content">
-                                    <i class="fas fa-credit-card"></i>
-                                    <span>Kreditní karta</span>
-                                </div>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="bank">
-                                <div class="option-content">
-                                    <i class="fas fa-university"></i>
-                                    <span>Bankovní převod</span>
-                                </div>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="payment" value="paypal">
-                                <div class="option-content">
-                                    <i class="fab fa-paypal"></i>
-                                    <span>PayPal</span>
-                                </div>
-                            </label>
-                        </div>
+                <!-- Způsoby platby -->
+                <div style="
+                    background: white;
+                    border-radius: 24px;
+                    padding: 32px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+                    margin-bottom: 24px;
+                    border: 1px solid #f3f4f6;
+                ">
+                    <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-wallet" style="color: #f77c00;"></i>
+                        Způsob platby
+                    </h3>
+                    
+                    <div style="display: grid; gap: 12px;">
+                        <label style="
+                            display: flex;
+                            align-items: center;
+                            padding: 16px 20px;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.borderColor='#f77c00'; this.style.background='rgba(247,124,0,0.05)';"
+                        onmouseout="this.style.borderColor='#e5e7eb'; this.style.background='white';">
+                            <input type="radio" name="payment" value="card" checked style="margin-right: 12px; accent-color: #f77c00;">
+                            <i class="fas fa-credit-card" style="font-size: 20px; color: #f77c00; margin-right: 12px;"></i>
+                            <span style="font-size: 16px; font-weight: 600; color: #111827;">Kreditní karta</span>
+                        </label>
+                        
+                        <label style="
+                            display: flex;
+                            align-items: center;
+                            padding: 16px 20px;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.borderColor='#f77c00'; this.style.background='rgba(247,124,0,0.05)';"
+                        onmouseout="this.style.borderColor='#e5e7eb'; this.style.background='white';">
+                            <input type="radio" name="payment" value="bank" style="margin-right: 12px; accent-color: #f77c00;">
+                            <i class="fas fa-university" style="font-size: 20px; color: #f77c00; margin-right: 12px;"></i>
+                            <span style="font-size: 16px; font-weight: 600; color: #111827;">Bankovní převod</span>
+                        </label>
+                        
+                        <label style="
+                            display: flex;
+                            align-items: center;
+                            padding: 16px 20px;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.borderColor='#f77c00'; this.style.background='rgba(247,124,0,0.05)';"
+                        onmouseout="this.style.borderColor='#e5e7eb'; this.style.background='white';">
+                            <input type="radio" name="payment" value="paypal" style="margin-right: 12px; accent-color: #f77c00;">
+                            <i class="fab fa-paypal" style="font-size: 20px; color: #f77c00; margin-right: 12px;"></i>
+                            <span style="font-size: 16px; font-weight: 600; color: #111827;">PayPal</span>
+                        </label>
                     </div>
+                </div>
 
-                    <div class="payment-actions">
-                        <button class="btn-secondary" onclick="hidePayment()">
-                            <i class="fas fa-arrow-left"></i>
-                            Zpět
-                        </button>
-                        <button class="btn-primary" onclick="processPayment()">
-                            <i class="fas fa-credit-card"></i>
-                            Zaplatit
-                        </button>
-                    </div>
+                <!-- Tlačítka -->
+                <div style="display: flex; gap: 16px; margin-top: 32px;">
+                    <button onclick="hidePayment()" style="
+                        flex: 1;
+                        padding: 16px 32px;
+                        background: white;
+                        border: 2px solid #e5e7eb;
+                        border-radius: 12px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #6b7280;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.borderColor='#9ca3af'; this.style.color='#111827';"
+                    onmouseout="this.style.borderColor='#e5e7eb'; this.style.color='#6b7280';">
+                        <i class="fas fa-arrow-left"></i> Zpět
+                    </button>
+                    
+                    <button onclick="processPayment()" style="
+                        flex: 2;
+                        padding: 18px 40px;
+                        background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+                        border: none;
+                        border-radius: 12px;
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: #111827;
+                        cursor: pointer;
+                        box-shadow: 0 4px 16px rgba(247,124,0,0.3);
+                        transition: all 0.2s;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 24px rgba(247,124,0,0.4)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(247,124,0,0.3)';">
+                        <i class="fas fa-lock"></i> Zaplatit bezpečně
+                    </button>
+                </div>
+                
+                <!-- Bezpečnostní informace -->
+                <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 13px;">
+                    <i class="fas fa-shield-alt" style="color: #f77c00;"></i>
+                    Platba je zabezpečená SSL šifrováním
                 </div>
             </div>
         </section>
