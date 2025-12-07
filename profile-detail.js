@@ -389,7 +389,17 @@ function updateProfileInfo() {
     if (profileNameEl) profileNameEl.textContent = displayName;
     if (profileEmailEl) profileEmailEl.textContent = userProfile.email || currentProfileUser.email || '';
     if (profileLocationEl) profileLocationEl.textContent = userProfile.city || userProfile.location || currentProfileUser.location || 'Lokace neuvedena';
-    if (profileBioEl) profileBioEl.textContent = userProfile.bio || userProfile.description || 'Uživatel nezadal žádný popis.';
+    if (profileBioEl) {
+        const bioText = userProfile.bio || userProfile.description || 'Uživatel nezadal žádný popis.';
+        // Zachovat odřádkování - escapovat HTML a převést \n na <br>
+        const escapedText = bioText
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        profileBioEl.innerHTML = escapedText.replace(/\n/g, '<br>');
+    }
     
     // Update contact info
     const profileDisplayNameEl = document.getElementById('profileDisplayName');
