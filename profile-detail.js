@@ -9,20 +9,20 @@ let userReviews = [];
 
 // Category names mapping
 const categoryNames = {
-    'auto-moto-doprava': 'Auto, Moto, Doprava',
-    'auto-moto': 'Auto, Moto',
-    'domaci-zvirata': 'Domácí zvířata',
-    'domacnost-remeslnici': 'Domácnost, Řemeslníci',
-    'gastronomie-catering': 'Gastronomie, Catering',
-    'hobby-kreativni-sluzby': 'Hobby, Kreativní služby',
-    'it-technologie': 'IT, Technologie',
-    'osobni-sluzby-drobne-prace': 'Osobní služby, Drobné práce',
-    'pravo-finance-administrativa': 'Právo, Finance, Administrativa',
-    'specializovane-sluzby': 'Specializované služby',
-    'udalosti-zabava': 'Události, Zábava',
-    'vzdelani-doucovani': 'Vzdělání, Doučování',
-    'zahrada-exterier': 'Zahrada, Exteriér',
-    'zdravi-pece': 'Zdraví, Péče'
+    'home_craftsmen': 'Domácnost & Řemeslníci',
+    'auto_moto': 'Auto & Moto',
+    'garden_exterior': 'Zahrada & Exteriér',
+    'education_tutoring': 'Vzdělávání & Doučování',
+    'it_technology': 'IT & technologie',
+    'health_personal_care': 'Zdraví a Osobní péče',
+    'gastronomy_catering': 'Gastronomie & Catering',
+    'events_entertainment': 'Události & Zábava',
+    'personal_small_jobs': 'Osobní služby & drobné práce',
+    'auto_moto_transport': 'Auto - moto doprava',
+    'hobby_creative': 'Hobby & kreativní služby',
+    'law_finance_admin': 'Právo & finance & administrativa',
+    'pets': 'Domácí zvířata',
+    'specialized_custom': 'Specializované služby na přání'
 };
 
 // Initialize page
