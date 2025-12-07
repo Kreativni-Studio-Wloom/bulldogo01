@@ -388,7 +388,7 @@ function updateProfileInfo() {
     
     if (profileNameEl) profileNameEl.textContent = displayName;
     if (profileEmailEl) profileEmailEl.textContent = userProfile.email || currentProfileUser.email || '';
-    if (profileLocationEl) profileLocationEl.textContent = userProfile.location || currentProfileUser.location || 'Lokace neuvedena';
+    if (profileLocationEl) profileLocationEl.textContent = userProfile.city || userProfile.location || currentProfileUser.location || 'Lokace neuvedena';
     if (profileBioEl) profileBioEl.textContent = userProfile.bio || userProfile.description || 'Uživatel nezadal žádný popis.';
     
     // Update contact info
