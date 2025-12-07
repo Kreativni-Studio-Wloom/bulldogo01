@@ -712,6 +712,13 @@ function goToPage(page) {
 function createAdCard(service, showActions = true) {
     const topStyle = service.isTop ? 'style="border: 3px solid #ff8a00 !important; box-shadow: 0 8px 28px rgba(255, 138, 0, 0.6), 0 0 0 2px rgba(255, 138, 0, 0.4) !important;"' : '';
     
+    // Formátování ceny - pokud je jen číslo, přidat Kč
+    let formattedPrice = service.price || '';
+    if (formattedPrice && /^\d+$/.test(formattedPrice.toString().trim())) {
+        // Pokud je cena jen číslo, přidat "Kč"
+        formattedPrice = `${formattedPrice} Kč`;
+    }
+    
     return `
         <article class="ad-card${service.isTop ? ' is-top' : ''}" data-category="${service.category || ''}" ${topStyle}>
             <div class="ad-thumb">
@@ -720,7 +727,7 @@ function createAdCard(service, showActions = true) {
             <div class="ad-body">
                 <h3 class="ad-title">${service.title || 'Bez názvu'}</h3>
                 <div class="ad-meta"><span>${service.location || 'Neuvedeno'}</span> • <span>${getCategoryName(service.category || '')}</span></div>
-                ${service.price ? `<div class="ad-price">${service.price}</div>` : ''}
+                ${formattedPrice ? `<div class="ad-price">${formattedPrice}</div>` : ''}
             </div>
             ${service.isTop ? `
             <div class="ad-badge-top"><i class="fas fa-fire"></i> TOP</div>
