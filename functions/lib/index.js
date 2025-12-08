@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = void 0;
+exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.validateICO = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const axios_1 = __importDefault(require("axios"));
@@ -35,6 +35,122 @@ const cors_1 = __importDefault(require("cors"));
 admin.initializeApp();
 // CORS middleware
 const corsHandler = (0, cors_1.default)({ origin: true });
+/**
+ * validateICO
+ * HTTPS endpoint, který proxy-uje dotaz na ARES a sjednotí odpověď.
+ * Volání:
+ *  - GET /validateICO?ico=12345678
+ *  - POST /validateICO  { ico: "12345678" }
+ * Vrací JSON: { ok: boolean, ico?: string, name?: string, seat?: any, reason?: string }
+ */
+exports.validateICO = functions.region("europe-west1").https.onRequest(async (req, res) => {
+    return corsHandler(req, res, async () => {
+        var _a, _b, _c, _d, _e, _f;
+        try {
+            let networkError = false;
+            const raw = (req.method === "GET"
+                ? req.query.ico || req.query.ic || ""
+                : ((_a = req.body) === null || _a === void 0 ? void 0 : _a.ico) || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.ic) || "") || "";
+            const ico = (raw || "").toString().replace(/\D+/g, "").slice(0, 8);
+            if (ico.length !== 8) {
+                res.status(200).json({ ok: false, reason: "IČO musí mít 8 číslic." });
+                return;
+            }
+            // Primární REST JSON API
+            try {
+                const url = `https://ares.gov.cz/ekonomicke-subjekty-v-be/v1/ekonomicke-subjekty/${ico}`;
+                const ares = await axios_1.default.get(url, {
+                    timeout: 7000,
+                    headers: {
+                        "Accept": "application/json",
+                        // Některá veřejná rozhraní jsou citlivá na User-Agent
+                        "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)"
+                    }
+                });
+                const data = ares.data || {};
+                const companyName = data.obchodniJmeno ||
+                    data.obchodni_jmeno ||
+                    data.obchodni_name ||
+                    data.obchodniJméno ||
+                    null;
+                const seat = data.sidlo || data.sídlo || data.seat || null;
+                if (companyName || data.ico || data.IC) {
+                    res.status(200).json({ ok: true, ico, name: companyName, seat });
+                    return;
+                }
+            }
+            catch (err) {
+                networkError = true;
+                console.warn("ARES JSON call failed:", ((_c = err === null || err === void 0 ? void 0 : err.response) === null || _c === void 0 ? void 0 : _c.status) || (err === null || err === void 0 ? void 0 : err.code) || (err === null || err === void 0 ? void 0 : err.message) || "unknown");
+                // pokračuj na XML fallback
+            }
+            // Fallback na staré XML API (spolehlivé i pro některé OSVČ záznamy)
+            try {
+                // Primární XML endpoint
+                const urlXml1 = `https://wwwinfo.mfcr.cz/cgi-bin/ares/darv_bas.cgi?ico=${ico}`;
+                const xmlRes1 = await axios_1.default.get(urlXml1, {
+                    timeout: 8000,
+                    responseType: "text",
+                    headers: {
+                        "Accept": "application/xml,text/xml;q=0.9,*/*;q=0.8",
+                        "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)"
+                    },
+                    transformResponse: [(d) => d],
+                });
+                let xml = xmlRes1.data || "";
+                // Pokud by první endpoint nevrátil data, zkus záložní
+                if (!xml || typeof xml !== "string" || xml.length < 50) {
+                    const urlXml2 = `https://wwwinfo.mfcr.cz/cgi-bin/ares/xar.cgi?ico=${ico}&jazyk=cz&xml=1`;
+                    const xmlRes2 = await axios_1.default.get(urlXml2, {
+                        timeout: 8000,
+                        responseType: "text",
+                        headers: {
+                            "Accept": "application/xml,text/xml;q=0.9,*/*;q=0.8",
+                            "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)"
+                        },
+                        transformResponse: [(d) => d],
+                    });
+                    xml = xmlRes2.data || "";
+                }
+                const icoMatch = xml.match(/<[^>]*ICO[^>]*>\s*([0-9]{8})\s*<\/[^>]*ICO[^>]*>/i);
+                let name = null;
+                const nameMatchOF = xml.match(/<[^>]*OF[^>]*>\s*([^<]+)\s*<\/[^>]*OF[^>]*>/i);
+                const nameMatchObchodniFirma = xml.match(/<Obchodni[_ ]?firma[^>]*>\s*([^<]+)\s*<\/Obchodni[_ ]?firma[^>]*>/i);
+                if (nameMatchOF && nameMatchOF[1])
+                    name = nameMatchOF[1].trim();
+                else if (nameMatchObchodniFirma && nameMatchObchodniFirma[1])
+                    name = nameMatchObchodniFirma[1].trim();
+                if (icoMatch && icoMatch[1]) {
+                    res.status(200).json({ ok: true, ico, name });
+                    return;
+                }
+            }
+            catch (err) {
+                networkError = true;
+                console.warn("ARES XML call failed:", ((_d = err === null || err === void 0 ? void 0 : err.response) === null || _d === void 0 ? void 0 : _d.status) || (err === null || err === void 0 ? void 0 : err.code) || (err === null || err === void 0 ? void 0 : err.message) || "unknown");
+                // ignoruj, půjdeme na závěrečnou chybu
+            }
+            if (networkError) {
+                res
+                    .status(200)
+                    .json({ ok: false, reason: "ARES je dočasně nedostupný. Zkuste to později." });
+                return;
+            }
+            res.status(200).json({ ok: false, reason: "Subjekt s tímto IČO nebyl nalezen." });
+        }
+        catch (error) {
+            const status = (_e = error === null || error === void 0 ? void 0 : error.response) === null || _e === void 0 ? void 0 : _e.status;
+            if (status === 404) {
+                res.status(200).json({ ok: false, reason: "Subjekt s tímto IČO nebyl nalezen." });
+                return;
+            }
+            console.error("ARES proxy error:", ((_f = error === null || error === void 0 ? void 0 : error.response) === null || _f === void 0 ? void 0 : _f.data) || (error === null || error === void 0 ? void 0 : error.message));
+            res
+                .status(200)
+                .json({ ok: false, reason: "ARES je dočasně nedostupný. Zkuste to později." });
+        }
+    });
+});
 // GoPay konfigurace z environment variables
 const getGoPayConfig = () => {
     const config = functions.config().gopay || {};

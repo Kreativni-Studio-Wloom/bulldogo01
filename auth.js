@@ -412,23 +412,51 @@ function normalizeICO(input) {
     return digits.slice(0, 8);
 }
 
-// Ověření IČO přes ARES veřejné API (fail-safe: pokud ARES nedostupné, registraci nepovolit)
-// Pozn.: pro produkci doporučujeme serverový proxy kvůli CORS a rate-limitům.
+// Ověření IČO – preferuje Firebase Function proxy (CORS-safe), fallback na přímé ARES volání
 async function validateICOWithARES(ico) {
     const n = normalizeICO(ico);
     if (n.length !== 8) return { ok: false, reason: 'IČO musí mít 8 číslic.' };
     try {
-        // Primární endpoint (ARES REST)
+        // 1) Zkusit volat Firebase Function (lokálně i v produkci)
+        const projectId = (window.firebaseApp && window.firebaseApp.options && window.firebaseApp.options.projectId) || 'inzerio-inzerce';
+        const regions = ['us-central1', 'europe-west1'];
+        const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        // Nejprve emulator (us-central1) na localhostu
+        if (isLocal) {
+            try {
+                const fnUrlLocal = `http://127.0.0.1:5001/${projectId}/us-central1/validateICO?ico=${encodeURIComponent(n)}`;
+                const fnResLocal = await fetch(fnUrlLocal, { method: 'GET' });
+                if (fnResLocal.ok) {
+                    const dataLocal = await fnResLocal.json().catch(() => ({}));
+                    if (typeof dataLocal?.ok === 'boolean') {
+                        if (dataLocal.ok === false && /nedostupn/i.test(dataLocal.reason || '')) {
+                            throw new Error('Emulator ARES nedostupný, zkouším produkci');
+                        }
+                        return dataLocal;
+                    }
+                }
+            } catch (_) {}
+        }
+        // Poté produkce – zkus více regionů
+        for (const r of regions) {
+            try {
+                const prodUrl = `https://${r}-${projectId}.cloudfunctions.net/validateICO?ico=${encodeURIComponent(n)}`;
+                const prodRes = await fetch(prodUrl, { method: 'GET' });
+                if (prodRes.ok) {
+                    const prodData = await prodRes.json().catch(() => ({}));
+                    if (typeof prodData?.ok === 'boolean') {
+                        return prodData;
+                    }
+                }
+            } catch (_) {}
+        }
+
+        // 2) Fallback: přímé ARES REST volání (může selhat na CORS v prohlížeči)
         const urlV1 = `https://ares.gov.cz/ekonomicke-subjekty-v-be/v1/ekonomicke-subjekty/${n}`;
         const res = await fetch(urlV1, { method: 'GET' });
-        if (!res.ok) {
-            return { ok: false, reason: 'Subjekt s tímto IČO nebyl nalezen.' };
-        }
+        if (!res.ok) return { ok: false, reason: 'Subjekt s tímto IČO nebyl nalezen.' };
         const data = await res.json().catch(() => ({}));
-        // Ověření dat – hledáme minimálně IČO / obchodní jméno
-        if (!data || (!data.ico && !data.IC)) {
-            return { ok: false, reason: 'Subjekt s tímto IČO nebyl nalezen.' };
-        }
+        if (!data || (!data.ico && !data.IC)) return { ok: false, reason: 'Subjekt s tímto IČO nebyl nalezen.' };
         const companyName = data.obchodniJmeno || data.obchodni_name || data.obchodni_jmeno || '';
         const seat = data.sidlo || data.sídlo || data.seat || null;
         return { ok: true, name: companyName, seat };
@@ -763,11 +791,14 @@ function createAuthModal() {
     modal.style.display = 'none';
     
     modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Přihlášení</h2>
-                <span class="close" onclick="closeAuthModal()">&times;</span>
-            </div>
+		<div class="modal-content auth-with-hero">
+			<div class="auth-hero-ledge">
+				<img src="fotky/bulldogo-overlay.png" alt="Bulldogo" class="auth-dog-lean" aria-hidden="true">
+				<div class="modal-header">
+					<h2 class="modal-title">Přihlášení</h2>
+					<span class="close" onclick="closeAuthModal()">&times;</span>
+				</div>
+			</div>
             <form id="authForm" class="auth-form">
                 <!-- Výběr typu registrace (pouze při registraci) -->
                 <div class="form-group registration-type" style="display: none;">
@@ -1455,6 +1486,14 @@ function setupEventListeners() {
         const newForm = authForm.cloneNode(true);
         authForm.parentNode.replaceChild(newForm, authForm);
         const cleanAuthForm = document.getElementById('authForm');
+		
+		// Po klonování se ztratí listenery na tlačítkách typů registrace.
+		// Znovu je navážeme, aby šlo přepnout na „Firma“.
+		try {
+			setupRegistrationTypeSelection();
+		} catch (e) {
+			console.warn('⚠️ Nepodařilo se znovu navázat registration-type listenery:', e?.message || e);
+		}
         
         console.log('🔧 Auth formulář nalezen, přidávám event listener (bez duplicit)');
         console.log('🔧 AuthForm ID:', cleanAuthForm.id);
