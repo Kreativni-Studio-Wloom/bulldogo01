@@ -216,18 +216,41 @@ function displayAdDetail() {
         }
         
         document.getElementById('adUser').textContent = displayName;
-        document.getElementById('adEmail').textContent = adOwner.email || 'N/A';
         
+        const emailEl = document.getElementById('adEmail');
         const phoneEl = document.getElementById('adPhone');
+        const fullEmail = adOwner.email || 'N/A';
         const fullPhone = adOwner.phone || adOwner.companyPhone || adOwner.telefon || 'N/A';
         const viewer = window.firebaseAuth?.currentUser;
+        
         if (viewer) {
+            // Přihlášený uživatel - zobrazit normálně
+            emailEl.textContent = fullEmail;
             phoneEl.textContent = fullPhone;
-            phoneEl.classList.remove('masked-phone');
+            emailEl.classList.remove('blurred-contact');
+            phoneEl.classList.remove('blurred-contact');
+            emailEl.onclick = null;
+            phoneEl.onclick = null;
+            emailEl.style.cursor = 'default';
+            phoneEl.style.cursor = 'default';
         } else {
-            // Nezalogovaný uživatel: zobrazit maskované číslo a vizuálně rozmazat
-            phoneEl.textContent = maskPhone(fullPhone);
-            phoneEl.classList.add('masked-phone');
+            // Nepřihlášený uživatel - zobrazit s blur efektem
+            emailEl.textContent = fullEmail;
+            phoneEl.textContent = fullPhone;
+            emailEl.classList.add('blurred-contact');
+            phoneEl.classList.add('blurred-contact');
+            emailEl.onclick = () => {
+                if (typeof window.showAuthModal === 'function') {
+                    window.showAuthModal('login');
+                }
+            };
+            phoneEl.onclick = () => {
+                if (typeof window.showAuthModal === 'function') {
+                    window.showAuthModal('login');
+                }
+            };
+            emailEl.style.cursor = 'pointer';
+            phoneEl.style.cursor = 'pointer';
         }
         
         // Zobrazit jméno v profilu níže na stránce

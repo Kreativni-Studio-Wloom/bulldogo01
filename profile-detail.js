@@ -442,8 +442,45 @@ function updateProfileInfo() {
     });
     
     if (profileDisplayNameEl) profileDisplayNameEl.textContent = displayName;
-    if (profileDisplayEmailEl) profileDisplayEmailEl.textContent = userProfile.email || currentProfileUser.email || '';
-    if (profileDisplayPhoneEl) profileDisplayPhoneEl.textContent = userProfile.phone || currentProfileUser.phone || 'Telefon neuveden';
+    
+    // Kontaktní údaje s blur efektem pro nepřihlášené
+    const fullEmail = userProfile.email || currentProfileUser.email || '';
+    const fullPhone = userProfile.phone || currentProfileUser.phone || 'Telefon neuveden';
+    const viewer = window.firebaseAuth?.currentUser;
+    
+    if (profileDisplayEmailEl) {
+        profileDisplayEmailEl.textContent = fullEmail;
+        if (!viewer) {
+            profileDisplayEmailEl.classList.add('blurred-contact');
+            profileDisplayEmailEl.onclick = () => {
+                if (typeof window.showAuthModal === 'function') {
+                    window.showAuthModal('login');
+                }
+            };
+            profileDisplayEmailEl.style.cursor = 'pointer';
+        } else {
+            profileDisplayEmailEl.classList.remove('blurred-contact');
+            profileDisplayEmailEl.onclick = null;
+            profileDisplayEmailEl.style.cursor = 'default';
+        }
+    }
+    
+    if (profileDisplayPhoneEl) {
+        profileDisplayPhoneEl.textContent = fullPhone;
+        if (!viewer) {
+            profileDisplayPhoneEl.classList.add('blurred-contact');
+            profileDisplayPhoneEl.onclick = () => {
+                if (typeof window.showAuthModal === 'function') {
+                    window.showAuthModal('login');
+                }
+            };
+            profileDisplayPhoneEl.style.cursor = 'pointer';
+        } else {
+            profileDisplayPhoneEl.classList.remove('blurred-contact');
+            profileDisplayPhoneEl.onclick = null;
+            profileDisplayPhoneEl.style.cursor = 'default';
+        }
+    }
     
     // Update join date
     let joinDate = new Date();

@@ -10237,6 +10237,21 @@ html body .ad-actions {
     user-select: none;
 }
 
+.blurred-contact {
+    filter: blur(4px);
+    user-select: none;
+    transition: filter 0.2s ease;
+    position: relative;
+}
+
+.blurred-contact:hover {
+    filter: blur(3px);
+}
+
+.contact-item .blurred-contact {
+    cursor: pointer !important;
+}
+
 /* Footer positioning for ad detail page - using same as other pages */
 /* Pagination Styles */
 .pagination {
