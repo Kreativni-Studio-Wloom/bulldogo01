@@ -6091,6 +6091,28 @@ html {
 	box-shadow: 0 8px 20px rgba(247,124,0,0.2);
 }
 
+/* Auth – tlačítko Ověřit (IČ) ve firemních barvách */
+.auth-form #btnVerifyICO {
+	min-width: 120px;
+	padding: 10px 14px;
+	border-radius: 12px;
+	background: transparent;
+	color: #c45a00;
+	font-weight: 700;
+	border: 2px solid transparent;
+	border-image: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+	border-image-slice: 1;
+	transition: all .2s ease;
+}
+.auth-form #btnVerifyICO:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 8px 20px rgba(247,124,0,0.18);
+}
+.auth-form #btnVerifyICO:active {
+	transform: translateY(0);
+	box-shadow: 0 6px 14px rgba(247,124,0,0.12);
+}
+
 /* Message Styles */
 .message {
     position: fixed;
