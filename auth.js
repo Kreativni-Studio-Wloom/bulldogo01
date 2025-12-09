@@ -527,7 +527,7 @@ async function register(email, password, userData) {
         const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
         // Kontrola unikátnosti telefonního čísla před vytvořením účtu
-        const rawPhone = userData.phone || userData.companyPhone || '';
+        const rawPhone = userData.phone || '';
         const normalizedPhone = normalizePhone(rawPhone);
         // Pokud jde o firmu, ověřit IČO přes ARES
         if (userData.type === 'company') {
@@ -890,12 +890,7 @@ function createAuthModal() {
                         </div>
                         <div id="icoStatus" style="font-size:13px; margin-top:4px; color:#6b7280;"></div>
                     </div>
-                    <div class="form-group">
-                        <input type="tel" id="companyPhone" name="companyPhone" placeholder="Telefon" value="+420" required>
-                    </div>
-                    <div class="form-group">
-                        <input type="email" id="companyEmail" name="companyEmail" placeholder="Email" required>
-                    </div>
+                    <!-- Telefon a e‑mail pro firmu se vyplňují níže ve společných polích -->
                 </div>
 
                 <!-- Společná pole -->
@@ -1679,8 +1674,7 @@ function setupEventListeners() {
                 const password = formData.get('password');
                 const activeTypeBtn = document.querySelector('.registration-type-btn.active');
                 const userType = activeTypeBtn ? activeTypeBtn.getAttribute('data-type') : 'person';
-                const phoneInput = userType === 'person' ? 'phone' : 'companyPhone';
-                const phone = (formData.get(phoneInput) || '').toString().trim();
+                const phone = (formData.get('phone') || '').toString().trim();
                 const ico = (formData.get('ico') || '').toString().trim();
 
                 if (!email || !password || !phone) {
@@ -1848,7 +1842,6 @@ function setupEventListeners() {
                 const birthDate = (formData.get('birthDate') || '').toString().trim();
                 const companyName = (formData.get('companyName') || '').toString().trim();
                 const ico = (formData.get('ico') || '').toString().trim();
-                const companyPhone = (formData.get('companyPhone') || '').toString().trim();
 
                 // Vytvořit e-mailové přihlašování k telefonnímu účtu
                 const { linkWithCredential, EmailAuthProvider, updateProfile } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
@@ -1871,7 +1864,7 @@ function setupEventListeners() {
                     firstName: userType === 'company' ? '' : firstName,
                     lastName: userType === 'company' ? '' : lastName,
                     birthDate: userType === 'company' ? '' : birthDate,
-                    phone: userType === 'company' ? companyPhone : (finalUser.phoneNumber || ''),
+                    phone: (finalUser.phoneNumber || ''),
                     ico: userType === 'company' ? ico : '',
                     plan: 'none',
                     updatedAt: serverTimestamp()
@@ -1964,8 +1957,9 @@ function setupEventListeners() {
                     userData.companyName = formData.get('companyName');
                     userData.ico = formData.get('ico');
                     userData.dic = formData.get('dic');
-                    userData.companyPhone = formData.get('companyPhone');
                     userData.companyAddress = formData.get('companyAddress');
+                    // Telefon i e‑mail pro firmu se berou ze společných polí
+                    userData.phone = formData.get('phone');
                 }
                 // Při dokončení registrace ještě jednou ověřit IČO (pro jistotu)
                 if (userType === 'company') {
@@ -1982,7 +1976,7 @@ function setupEventListeners() {
                     }
                 }
 
-                const rawPhone = userType === 'person' ? (userData.phone || '') : (userData.companyPhone || '');
+                const rawPhone = (userData.phone || '');
                 const normalizedPhone = normalizePhone(rawPhone);
                 if (!normalizedPhone) {
                     showMessage('Telefon je povinný a musí být ve formátu +420...', 'error');
