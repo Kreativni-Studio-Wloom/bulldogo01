@@ -464,6 +464,18 @@ async function validateICOWithARES(ico) {
     const n = normalizeICO(ico);
     if (n.length !== 8) return { ok: false, reason: 'IČO musí mít 8 číslic.' };
     try {
+        // 0) Na Vercelu využij interní serverless proxy /api/validateICO (řeší CORS)
+        const isVercel = location.hostname.endsWith('.vercel.app');
+        if (isVercel) {
+            try {
+                const proxyUrl = `/api/validateICO?ico=${encodeURIComponent(n)}`;
+                const proxyRes = await fetch(proxyUrl, { method: 'GET' });
+                if (proxyRes.ok) {
+                    const proxyData = await proxyRes.json().catch(() => ({}));
+                    if (typeof proxyData?.ok === 'boolean') return proxyData;
+                }
+            } catch (_) {}
+        }
         // 1) Zkusit volat Firebase Function (lokálně i v produkci)
         const projectId = (window.firebaseApp && window.firebaseApp.options && window.firebaseApp.options.projectId) || 'inzerio-inzerce';
         const regions = ['us-central1', 'europe-west1'];
