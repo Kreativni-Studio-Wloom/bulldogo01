@@ -130,3 +130,4 @@ Issues? Report them at https://github.com/firebase/firebase-tools/issues and att
 [debug] [2025-12-09T10:34:40.379Z] [work-queue] {"queuedWork":["/inzerio-inzerce/us-central1/validateICO-2025-12-09T10:34:40.373Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
 [debug] [2025-12-09T10:34:40.386Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/inzerio-inzerce/us-central1/validateICO-2025-12-09T10:34:40.373Z"],"workRunningCount":1}
 [debug] [2025-12-09T10:34:40.395Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2025-12-09T14:36:10.158Z] [worker-europe-west1-validateICO-5eae1e50-d5e8-4f9b-8f14-497f111998a0]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[worker-europe-west1-validateICO-5eae1e50-d5e8-4f9b-8f14-497f111998a0]: exited"}}

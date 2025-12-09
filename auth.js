@@ -291,6 +291,19 @@ function initAuth() {
     // Import Firebase funkcí dynamicky
     import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({ onAuthStateChanged }) => {
         console.log('✅ Firebase Auth modul načten');
+        
+        // DEV bypass pro reCAPTCHA – pouze mimo produkci
+        try {
+            const isDevHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.endsWith('.vercel.app');
+            const isProd = location.hostname.endsWith('bulldogo.cz');
+            if (isDevHost && !isProd && firebaseAuth?.settings) {
+                // Pozor: funguje jen s testovacími čísly definovanými v Firebase Console
+                firebaseAuth.settings.appVerificationDisabledForTesting = true;
+                console.log('⚙️ reCAPTCHA vypnuta pro vývoj (použijte testovací čísla ve Firebase Console).');
+            }
+        } catch (e) {
+            console.warn('⚠️ Nepodařilo se nastavit appVerificationDisabledForTesting:', e?.message || e);
+        }
         // Sledování stavu přihlášení
         onAuthStateChanged(firebaseAuth, (user) => {
             console.log('👤 Auth state changed:', user ? `Přihlášen: ${user.email}` : 'Odhlášen');
@@ -1061,7 +1074,8 @@ function showAuthModal(type = 'login') {
         // Přepnout tlačítka a kroky
         if (btnSendPhoneCode) btnSendPhoneCode.style.display = '';
         if (btnAuthSubmit) btnAuthSubmit.style.display = 'none';
-        if (submitBtn) submitBtn.style.display = '';
+        // V režimu registrace primární submit "Zaregistrovat se" nepotřebujeme
+        if (submitBtn) submitBtn.style.display = 'none';
         if (phoneRight) {
             if (phoneCode) phoneCode.style.display = 'none';
         }
@@ -1666,6 +1680,9 @@ function setupEventListeners() {
                 const authMod = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
                 const { RecaptchaVerifier, signInWithPhoneNumber } = authMod;
 
+                // Zjistit, zda používáme DEV bypass (testovací čísla)
+                const devBypass = !!(firebaseAuth?.settings?.appVerificationDisabledForTesting);
+
                 // Vždy vytvořit čistou reCAPTCHA instanci (prevence DUPE)
                 try { if (recaptchaVerifier) { await recaptchaVerifier.clear(); } } catch (_) {}
                 recaptchaVerifier = null;
@@ -1676,43 +1693,35 @@ function setupEventListeners() {
                     return;
                 }
                 
-                // Použít invisible reCAPTCHA pro spolehlivější automatizaci
-                // Poznámka: Invisible reCAPTCHA nevyžaduje uživatelskou interakci
+                // Inicializace verifieru
                 recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, containerId, {
-                    size: 'invisible', // Invisible reCAPTCHA - automaticky ověří
-                    callback: (response) => {
-                        console.log('✅ reCAPTCHA callback vyvolán, token:', response ? 'získán' : 'chybí');
-                    },
+                    size: 'invisible',
+                    callback: () => {},
                     'expired-callback': () => {
                         console.warn('⚠️ reCAPTCHA expired');
-                        showMessage('Ověření reCAPTCHA vypršelo, zkuste to znovu.', 'error');
-                        recaptchaVerifier = null;
+                        if (!devBypass) showMessage('Ověření reCAPTCHA vypršelo, zkuste to znovu.', 'error');
                     }
                 });
                 
-                // Render reCAPTCHA a počkat na dokončení
+                // Render/verify POUZE mimo devBypass
                 btnSendPhoneCode.disabled = true;
                 btnSendPhoneCode.textContent = 'Inicializuji ověření...';
-                try { 
-                    console.log('🔄 Renderování reCAPTCHA...');
-                    await recaptchaVerifier.render();
-                    console.log('✅ reCAPTCHA render dokončen');
-                    
-                    // Pro invisible reCAPTCHA musíme vyvolat verify() explicitně
-                    console.log('🔄 Ověřování reCAPTCHA (invisible)...');
-                    await recaptchaVerifier.verify();
-                    console.log('✅ reCAPTCHA verify dokončeno');
-                    
-                    // Počkat chvíli, aby se reCAPTCHA správně inicializovala
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                } catch (renderError) {
-                    console.error('❌ Chyba při render/verify reCAPTCHA:', renderError);
-                    console.error('❌ Error details:', {
-                        code: renderError?.code,
-                        message: renderError?.message,
-                        name: renderError?.name
-                    });
-                    throw new Error('Nepodařilo se inicializovat ověření. Zkuste obnovit stránku.');
+                if (!devBypass) {
+                    try { 
+                        console.log('🔄 Renderování reCAPTCHA...');
+                        await recaptchaVerifier.render();
+                        console.log('✅ reCAPTCHA render dokončen');
+                        console.log('🔄 Ověřování reCAPTCHA (invisible)...');
+                        await recaptchaVerifier.verify();
+                        console.log('✅ reCAPTCHA verify dokončeno');
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    } catch (renderError) {
+                        console.error('❌ Chyba při render/verify reCAPTCHA:', renderError);
+                        showMessage('reCAPTCHA se nepodařilo inicializovat. Přidejte doménu do Authorized domains nebo použijte testovací telefon.', 'error');
+                        throw renderError;
+                    }
+                } else {
+                    console.log('🧪 Dev bypass aktivní: reCAPTCHA se nerenederuje ani neověřuje (použijte test telefonní čísla).');
                 }
 
                 console.log('📱 Pokus o odeslání SMS na:', normalizedPhone);
@@ -1754,6 +1763,9 @@ function setupEventListeners() {
                 if (phoneCodeInput) phoneCodeInput.style.display = '';
                 if (btnSendPhoneCode) btnSendPhoneCode.style.display = 'none';
                 if (btnAuthSubmitLocal) btnAuthSubmitLocal.style.display = '';
+                // Ujistit se, že původní submit zůstane skrytý i po odeslání SMS
+                const submitBtnLocal = document.querySelector('#authModal .auth-submit-btn');
+                if (submitBtnLocal) submitBtnLocal.style.display = 'none';
 
                 showMessage('SMS s kódem byla odeslána.', 'success');
             } catch (err) {
@@ -1774,7 +1786,9 @@ function setupEventListeners() {
             try {
                 const title = (document.querySelector('#authModal .modal-title')?.textContent || '').trim();
                 if (title !== 'Registrace') return; // jen v režimu registrace
-                const code = (document.getElementById('phoneCode')?.value || '').toString().trim();
+                const raw = (document.getElementById('phoneCode')?.value || '').toString().trim();
+                // Povolit 4–8 číslic, odstranit mezery a nečíselné znaky
+                const code = raw.replace(/\s+/g, '').replace(/[^0-9]/g, '');
                 if (!code) { showMessage('Zadejte kód z SMS.', 'error'); return; }
                 if (!phoneConfirmationResult) { showMessage('Nejdřív odešlete SMS s kódem.', 'error'); return; }
 
@@ -2054,10 +2068,13 @@ function setupEventListeners() {
     // Při otevření registrace přejmenovat texty tlačítek, když existují
     const modalTitle = document.querySelector('.modal-title');
     if (modalTitle && modalTitle.textContent === 'Registrace') {
-        const primarySubmit = document.getElementById('btnAuthSubmit');
+        // V režimu registrace má být hlavní flow: Odeslat SMS → Dokončit registraci
+        const primarySubmit = document.querySelector('#authModal .auth-submit-btn');
+        if (primarySubmit) primarySubmit.style.display = 'none';
         const sendCodeBtn = document.getElementById('btnSendPhoneCode');
-        if (primarySubmit) primarySubmit.textContent = 'Zaregistrovat se';
         if (sendCodeBtn) sendCodeBtn.textContent = 'Pokračovat na ověření telefonního čísla';
+        const completeBtn = document.getElementById('btnAuthSubmit');
+        if (completeBtn) completeBtn.textContent = 'Dokončit registraci';
     }
     
     // Inicializace náhledů obrázků
