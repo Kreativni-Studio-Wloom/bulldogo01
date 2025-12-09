@@ -1048,7 +1048,8 @@ function showAuthModal(type = 'login') {
         if (btnSendPhoneCode) btnSendPhoneCode.style.display = 'none';
         if (btnAuthSubmit) btnAuthSubmit.style.display = 'none';
         if (submitBtn) submitBtn.style.display = '';
-        // Skrytí telefonní řádky v přihlášení
+        // Skrytí telefonní řádky v přihlášení + zrušit required na telefonu
+        if (authPhone) authPhone.required = false;
         if (phoneRow) phoneRow.style.display = 'none';
         if (phoneRight && phoneCode) phoneCode.style.display = 'none';
 
@@ -1081,7 +1082,8 @@ function showAuthModal(type = 'login') {
         if (phoneRight) {
             if (phoneCode) phoneCode.style.display = 'none';
         }
-        // Zobrazit telefonní řádku pro registraci
+        // Zobrazit telefonní řádku pro registraci + vyžadovat telefon
+        if (authPhone) authPhone.required = true;
         if (phoneRow) phoneRow.style.display = '';
         if (authPhone && (!authPhone.value || authPhone.value.trim() === '')) {
             authPhone.value = '+420';
