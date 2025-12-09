@@ -275,11 +275,31 @@ document.addEventListener('click', (e) => {
         if (isLogin) {
             e.preventDefault();
             e.stopPropagation();
-            showAuthModal('login');
+            try {
+                showAuthModal('login');
+            } catch (err) {
+                console.error('showAuthModal(login) selhalo, zkouším fallback:', err);
+                try {
+                    if (!document.getElementById('authModal')) createAuthModal();
+                    setTimeout(() => {
+                        try { showAuthModal('login'); } catch (_) {}
+                    }, 0);
+                } catch (_) {}
+            }
         } else if (isRegister) {
             e.preventDefault();
             e.stopPropagation();
-            showAuthModal('register');
+            try {
+                showAuthModal('register');
+            } catch (err) {
+                console.error('showAuthModal(register) selhalo, zkouším fallback:', err);
+                try {
+                    if (!document.getElementById('authModal')) createAuthModal();
+                    setTimeout(() => {
+                        try { showAuthModal('register'); } catch (_) {}
+                    }, 0);
+                } catch (_) {}
+            }
         }
     } catch (_) {}
 });
