@@ -250,6 +250,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 15000);
 });
 
+// Univerzální delegovaný handler pro otevření auth modalu na všech stránkách
+document.addEventListener('click', (e) => {
+    const target = e.target.closest(
+        '.btn-login, .btn-register, ' +                 // standardní tlačítka
+        '[data-open-auth], [data-auth], ' +            // datové atributy
+        '[onclick*="showAuthModal"], ' +               // inline onclick fallback
+        'a[href="#login"], a[href="#register"]'        // hashové odkazy
+    );
+    if (!target) return;
+    try {
+        const isLogin =
+            target.classList?.contains?.('btn-login') ||
+            target.getAttribute?.('data-open-auth') === 'login' ||
+            target.getAttribute?.('data-auth') === 'login' ||
+            (target.getAttribute?.('onclick') || '').includes("showAuthModal('login'") ||
+            (target.getAttribute?.('href') || '') === '#login';
+        const isRegister =
+            target.classList?.contains?.('btn-register') ||
+            target.getAttribute?.('data-open-auth') === 'register' ||
+            target.getAttribute?.('data-auth') === 'register' ||
+            (target.getAttribute?.('onclick') || '').includes("showAuthModal('register'") ||
+            (target.getAttribute?.('href') || '') === '#register';
+        if (isLogin) {
+            e.preventDefault();
+            e.stopPropagation();
+            showAuthModal('login');
+        } else if (isRegister) {
+            e.preventDefault();
+            e.stopPropagation();
+            showAuthModal('register');
+        }
+    } catch (_) {}
+});
+
 // Inicializace autentifikace
 function initAuth() {
     console.log('🔧 Inicializuji auth s Firebase:', { firebaseAuth: !!firebaseAuth, firebaseDb: !!firebaseDb });
@@ -815,17 +849,19 @@ function createAuthModal() {
 
                 <!-- Formulář pro fyzickou osobu -->
                 <div class="person-form" style="display: none;">
-                    <div class="form-group">
-                        <input type="text" id="firstName" name="firstName" placeholder="Jméno" required>
+                    <div class="form-row two-col">
+                        <div class="half">
+                            <input type="text" id="firstName" name="firstName" placeholder="Jméno" required>
+                        </div>
+                        <div class="half">
+                            <input type="text" id="lastName" name="lastName" placeholder="Příjmení" required>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <input type="text" id="lastName" name="lastName" placeholder="Příjmení" required>
-                    </div>
-                    <div class="form-group">
-                        <input type="tel" id="phone" name="phone" placeholder="Telefon" required>
-                    </div>
-                    <div class="form-group">
-                        <input type="date" id="birthDate" name="birthDate" placeholder="Datum narození" required>
+                        <div class="date-inline">
+                            <label for="birthDate">Datum narození</label>
+                            <input type="date" id="birthDate" name="birthDate" required>
+                        </div>
                     </div>
                 </div>
 
@@ -842,35 +878,41 @@ function createAuthModal() {
                         <div id="icoStatus" style="font-size:13px; margin-top:4px; color:#6b7280;"></div>
                     </div>
                     <div class="form-group">
-                        <input type="tel" id="companyPhone" name="companyPhone" placeholder="Telefon" required>
+                        <input type="tel" id="companyPhone" name="companyPhone" placeholder="Telefon" value="+420" required>
                     </div>
                     <div class="form-group">
                         <input type="email" id="companyEmail" name="companyEmail" placeholder="Email" required>
                     </div>
                 </div>
 
-                <!-- Telefon a heslo -->
-                <div class="form-group">
-                    <input type="tel" id="authPhone" name="phone" placeholder="Telefon" required>
+                <!-- Společná pole -->
+                <div class="form-group" id="groupAuthEmail" style="display: none;">
+                    <input type="email" id="authEmail" name="email" placeholder="Email" required>
                 </div>
-                
-                <div class="form-group" id="phoneStep2" style="display: none;">
-                    <input type="text" id="phoneCode" name="phoneCode" placeholder="Kód z SMS" required>
-                </div>
-                
                 <div class="form-group">
                     <input type="password" id="authPassword" name="password" placeholder="Heslo" required>
+                </div>
+                <div class="form-row two-col" id="phoneRow">
+                    <div class="half">
+                        <input type="tel" id="authPhone" name="phone" placeholder="Telefon" required>
+                    </div>
+                    <div class="half" id="phoneRight">
+                        <button type="button" id="btnSendPhoneCode" class="btn btn-secondary" style="display: none;">Odeslat SMS kód</button>
+                        <input type="text" id="phoneCode" name="phoneCode" placeholder="Kód z SMS" inputmode="numeric" autocomplete="one-time-code" style="display: none;">
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <button type="submit" class="auth-submit-btn btn btn-primary">Přihlásit se</button>
-                    <button type="button" id="btnSendPhoneCode" class="btn btn-secondary" style="display: none;">Odeslat SMS kód</button>
                     <button type="button" id="btnAuthSubmit" class="btn btn-primary" style="display: none;">Dokončit registraci</button>
                 </div>
 
                 <div class="form-group">
                     <button type="button" class="auth-switch-btn btn btn-link">Nemáte účet? Zaregistrujte se</button>
                 </div>
+                
+                <!-- Neviditelná reCAPTCHA pro ověření telefonu -->
+                <div id="recaptcha-container" style="height:0; overflow:hidden;"></div>
             </form>
         </div>
     `;
@@ -946,12 +988,12 @@ function showAuthModal(type = 'login') {
         modal = createAuthModal();
     }
     
-    const modalTitle = document.querySelector('.modal-title');
-    const submitBtn = document.querySelector('.auth-submit-btn');
-    const switchBtn = document.querySelector('.auth-switch-btn');
-    const registrationType = document.querySelector('.registration-type');
-    const personForm = document.querySelector('.person-form');
-    const companyForm = document.querySelector('.company-form');
+    const modalTitle = modal.querySelector('.modal-title');
+    const submitBtn = modal.querySelector('.auth-submit-btn');
+    const switchBtn = modal.querySelector('.auth-switch-btn');
+    const registrationType = modal.querySelector('.registration-type');
+    const personForm = modal.querySelector('.person-form');
+    const companyForm = modal.querySelector('.company-form');
     
     console.log('🔍 Elementy nalezeny:', {
         modal: !!modal,
@@ -963,9 +1005,13 @@ function showAuthModal(type = 'login') {
         companyForm: !!companyForm
     });
 
-    const btnSendPhoneCode = document.getElementById('btnSendPhoneCode');
-    const btnAuthSubmit = document.getElementById('btnAuthSubmit');
-    const phoneStep2 = document.getElementById('phoneStep2');
+    const btnSendPhoneCode = modal.querySelector('#btnSendPhoneCode');
+    const btnAuthSubmit = modal.querySelector('#btnAuthSubmit');
+    const groupAuthEmail = modal.querySelector('#groupAuthEmail');
+    const phoneRight = modal.querySelector('#phoneRight');
+    const phoneCode = modal.querySelector('#phoneCode');
+    const authEmail = modal.querySelector('#authEmail');
+    const authPhone = modal.querySelector('#authPhone');
 
     if (type === 'login') {
         console.log('🔧 Nastavuji modal pro přihlášení');
@@ -976,6 +1022,8 @@ function showAuthModal(type = 'login') {
         registrationType.style.display = 'none';
         personForm.style.display = 'none';
         companyForm.style.display = 'none';
+        if (groupAuthEmail) { groupAuthEmail.style.display = 'none'; }
+        if (authEmail) { authEmail.required = false; }
         
         // Odstranit required atribut ze skrytých polí při přihlášení
         toggleRequired(personForm, false);
@@ -983,8 +1031,11 @@ function showAuthModal(type = 'login') {
         
         // Přepnout tlačítka a kroky
         if (btnSendPhoneCode) btnSendPhoneCode.style.display = 'none';
-        if (btnAuthSubmit) btnAuthSubmit.style.display = '';
-        if (phoneStep2) phoneStep2.style.display = 'none';
+        if (btnAuthSubmit) btnAuthSubmit.style.display = 'none';
+        if (submitBtn) submitBtn.style.display = '';
+        if (phoneRight) {
+            if (phoneCode) phoneCode.style.display = 'none';
+        }
 
         console.log('✅ Modal nastaven pro přihlášení:', { 
             title: modalTitle.textContent, 
@@ -996,6 +1047,8 @@ function showAuthModal(type = 'login') {
         switchBtn.textContent = 'Již máte účet? Přihlaste se';
         switchBtn.setAttribute('data-type', 'login');
         registrationType.style.display = 'block';
+        if (groupAuthEmail) { groupAuthEmail.style.display = ''; }
+        if (authEmail) { authEmail.required = true; }
         
         // Zobrazit formulář pro fyzickou osobu jako výchozí
         personForm.style.display = 'block';
@@ -1008,7 +1061,13 @@ function showAuthModal(type = 'login') {
         // Přepnout tlačítka a kroky
         if (btnSendPhoneCode) btnSendPhoneCode.style.display = '';
         if (btnAuthSubmit) btnAuthSubmit.style.display = 'none';
-        if (phoneStep2) phoneStep2.style.display = 'none';
+        if (submitBtn) submitBtn.style.display = '';
+        if (phoneRight) {
+            if (phoneCode) phoneCode.style.display = 'none';
+        }
+        if (authPhone && (!authPhone.value || authPhone.value.trim() === '')) {
+            authPhone.value = '+420';
+        }
 
         console.log('🎯 Inicializace registrace - výchozí stav:', {
             personForm: {
@@ -1030,9 +1089,12 @@ function showAuthModal(type = 'login') {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     
+    // Po vytvoření/otevření modalu navěsit plné listenery (form submit, SMS krok)
+    try { setupEventListeners(); } catch (e) { console.warn('setupEventListeners failed', e); }
+    
     // Debug: Zkontrolovat formulář po otevření modalu a nastavit event listener
     setTimeout(() => {
-        const authFormAfterOpen = document.getElementById('authForm');
+        const authFormAfterOpen = modal.querySelector('#authForm');
         console.log('🔍 AuthForm po otevření modalu:', authFormAfterOpen ? 'NALEZEN' : 'NENALEZEN');
         console.log('🔍 AuthForm element po otevření:', authFormAfterOpen);
         if (authFormAfterOpen) {
@@ -1589,6 +1651,11 @@ function setupEventListeners() {
 
                 // Normalizovat a ověřit unikátnost telefonu ještě před odesláním SMS
                 const normalizedPhone = normalizePhone(phone);
+                // Zabránit odeslání jen s předvolbou bez čísla
+                if (normalizedPhone === '+420') {
+                    showMessage('Doplňte telefonní číslo za předvolbou +420.', 'error');
+                    return;
+                }
                 const available = await isPhoneAvailable(normalizedPhone);
                 if (!available) {
                     showMessage('Toto telefonní číslo je již používáno jiným účtem.', 'error');
@@ -1681,12 +1748,12 @@ function setupEventListeners() {
                     throw smsError;
                 }
 
-                // Zobrazit krok 2
-                const phoneStep2 = document.getElementById('phoneStep2');
-                const btnAuthSubmit = document.getElementById('btnAuthSubmit');
-                if (phoneStep2) phoneStep2.style.display = '';
+                // Zobrazit pole pro kód a umožnit dokončení registrace
+                const phoneCodeInput = document.getElementById('phoneCode') || document.querySelector('#phoneCode');
+                const btnAuthSubmitLocal = document.getElementById('btnAuthSubmit') || document.querySelector('#btnAuthSubmit');
+                if (phoneCodeInput) phoneCodeInput.style.display = '';
                 if (btnSendPhoneCode) btnSendPhoneCode.style.display = 'none';
-                if (btnAuthSubmit) btnAuthSubmit.style.display = 'none';
+                if (btnAuthSubmitLocal) btnAuthSubmitLocal.style.display = '';
 
                 showMessage('SMS s kódem byla odeslána.', 'success');
             } catch (err) {
@@ -1700,6 +1767,82 @@ function setupEventListeners() {
         });
     }
 
+    // Tlačítko: Dokončit registraci (ověřit zadaný SMS kód a založit účet)
+    const btnAuthSubmit2 = document.getElementById('btnAuthSubmit');
+    if (btnAuthSubmit2) {
+        btnAuthSubmit2.addEventListener('click', async () => {
+            try {
+                const title = (document.querySelector('#authModal .modal-title')?.textContent || '').trim();
+                if (title !== 'Registrace') return; // jen v režimu registrace
+                const code = (document.getElementById('phoneCode')?.value || '').toString().trim();
+                if (!code) { showMessage('Zadejte kód z SMS.', 'error'); return; }
+                if (!phoneConfirmationResult) { showMessage('Nejdřív odešlete SMS s kódem.', 'error'); return; }
+
+                btnAuthSubmit2.disabled = true;
+                btnAuthSubmit2.textContent = 'Dokončuji…';
+
+                // Potvrdit SMS kód
+                const result = await phoneConfirmationResult.confirm(code);
+                const phoneUser = result.user;
+
+                // Data pro propojení
+                const form = document.getElementById('authForm');
+                const formData = new FormData(form);
+                const email = formData.get('email');
+                const password = formData.get('password');
+                const activeTypeBtn = document.querySelector('.registration-type-btn.active');
+                const userType = activeTypeBtn ? activeTypeBtn.getAttribute('data-type') : 'person';
+                const firstName = (formData.get('firstName') || '').toString().trim();
+                const lastName = (formData.get('lastName') || '').toString().trim();
+                const birthDate = (formData.get('birthDate') || '').toString().trim();
+                const companyName = (formData.get('companyName') || '').toString().trim();
+                const ico = (formData.get('ico') || '').toString().trim();
+                const companyPhone = (formData.get('companyPhone') || '').toString().trim();
+
+                // Vytvořit e-mailové přihlašování k telefonnímu účtu
+                const { linkWithCredential, EmailAuthProvider, updateProfile } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                const credential = EmailAuthProvider.credential(email, password);
+                await linkWithCredential(phoneUser, credential);
+
+                // Zapsat profil
+                const { setDoc, doc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                const finalUser = phoneUser;
+                await setDoc(doc(firebaseDb, 'users', finalUser.uid), {
+                    uid: finalUser.uid,
+                    email,
+                    phoneNumber: finalUser.phoneNumber || '',
+                    createdAt: serverTimestamp(),
+                    provider: 'password+phone',
+                    type: userType
+                }, { merge: true });
+                await setDoc(doc(firebaseDb, 'users', finalUser.uid, 'profile', 'profile'), {
+                    name: userType === 'company' ? companyName : `${firstName} ${lastName}`.trim(),
+                    firstName: userType === 'company' ? '' : firstName,
+                    lastName: userType === 'company' ? '' : lastName,
+                    birthDate: userType === 'company' ? '' : birthDate,
+                    phone: userType === 'company' ? companyPhone : (finalUser.phoneNumber || ''),
+                    ico: userType === 'company' ? ico : '',
+                    plan: 'none',
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+                try {
+                    await updateProfile(finalUser, { displayName: userType === 'company' ? companyName : `${firstName} ${lastName}`.trim() });
+                } catch (_) {}
+
+                showMessage('Registrace dokončena.', 'success');
+                closeAuthModal();
+                if (typeof window.afterLoginCallback === 'function') {
+                    try { window.afterLoginCallback(); } catch (_) {}
+                }
+            } catch (err) {
+                console.error('❌ Dokončení registrace selhalo:', err);
+                showMessage(humanizePhoneError(err), 'error');
+            } finally {
+                btnAuthSubmit2.disabled = false;
+                btnAuthSubmit2.textContent = 'Dokončit registraci';
+            }
+        });
+    }
     // Tlačítko: Zpět z kroku 2
     const btnPhoneBack = document.getElementById('btnPhoneBack');
     if (btnPhoneBack) {

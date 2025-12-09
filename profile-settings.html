@@ -216,7 +216,7 @@
                         </div>
                         <div class="form-group">
                             <label for="phone">Telefon</label>
-                            <input type="tel" id="phone" value="" class="form-input" placeholder="Zadejte váš telefon">
+                            <input type="tel" id="phone" value="+420" class="form-input" placeholder="Zadejte váš telefon">
                         </div>
                         <div class="form-group">
                             <label for="city">Město</label>
@@ -410,12 +410,13 @@
                 const firstName = firstNameEl ? firstNameEl.value : '';
                 const lastName = lastNameEl ? lastNameEl.value : '';
                 
+                const phoneRaw = phoneEl ? phoneEl.value.trim() : '';
                 const personalData = {
                     firstName: firstName,
                     lastName: lastName,
                     name: `${firstName} ${lastName}`.trim(), // Zachovat i složené jméno pro kompatibilitu
                     email: emailEl ? emailEl.value : '',
-                    phone: phoneEl ? phoneEl.value : '',
+                    phone: phoneRaw === '+420' ? '' : phoneRaw,
                     city: cityEl ? cityEl.value : '',
                     bio: bioEl ? bioEl.value : '',
                     updatedAt: new Date()
@@ -1193,7 +1194,7 @@ Prosím kontaktujte podporu.
                 'firstName': userProfile?.firstName || '',
                 'lastName': userProfile?.lastName || '',
                 'email': userProfile?.email || '',
-                'phone': userProfile?.phone || '',
+                'phone': userProfile?.phone || '+420',
                 'city': userProfile?.city || '',
                 'bio': userProfile?.bio || ''
             };

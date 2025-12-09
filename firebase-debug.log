@@ -1,0 +1,132 @@
+[debug] [2025-12-09T07:39:14.732Z] ----------------------------------------------------------------------
+[debug] [2025-12-09T07:39:14.736Z] Command:       /usr/local/bin/node /Users/jirivrba/.npm/_npx/7750544ccf494d8b/node_modules/.bin/firebase emulators:start --only functions --project inzerio-inzerce
+[debug] [2025-12-09T07:39:14.736Z] CLI Version:   14.27.0
+[debug] [2025-12-09T07:39:14.736Z] Platform:      darwin
+[debug] [2025-12-09T07:39:14.736Z] Node Version:  v24.11.0
+[debug] [2025-12-09T07:39:14.737Z] Time:          Tue Dec 09 2025 08:39:14 GMT+0100 (Central European Standard Time)
+[debug] [2025-12-09T07:39:14.739Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-12-09T07:39:14.949Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] Failed to authenticate, have you run firebase login?
+[warn] ⚠  emulators: You are not currently authenticated so some features may not work correctly. Please run firebase login to authenticate the CLI. 
+[info] i  emulators: Starting emulators: functions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions"}}
+[debug] [2025-12-09T07:39:15.522Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-12-09T07:39:15.522Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-12-09T07:39:15.526Z] Emulator locator file path: /var/folders/1l/_0xtbwn1531_ytvz66sv5jcw0000gn/T/hub-inzerio-inzerce.json
+[debug] [2025-12-09T07:39:15.527Z] [hub] writing locator at /var/folders/1l/_0xtbwn1531_ytvz66sv5jcw0000gn/T/hub-inzerio-inzerce.json
+[debug] [2025-12-09T07:39:15.960Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-12-09T07:39:15.960Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-12-09T07:39:15.960Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-12-09T07:39:15.960Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect\u001b[22m"}}
+[debug] [2025-12-09T07:39:15.963Z] No OAuth tokens found
+[debug] [2025-12-09T07:39:15.963Z] No OAuth tokens found
+[debug] [2025-12-09T07:39:15.963Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-09T07:39:15.964Z] Failed to get Admin SDK config for inzerio-inzerce, falling back to cache Failed to get Admin SDK for Firebase project inzerio-inzerce. Please make sure the project exists and your account has permission to access it. {"name":"FirebaseError","children":[],"exit":2,"message":"Failed to get Admin SDK for Firebase project inzerio-inzerce. Please make sure the project exists and your account has permission to access it.","original":{"name":"FirebaseError","children":[],"exit":1,"message":"Failed to authenticate, have you run \u001b[1mfirebase login\u001b[22m?","original":{},"status":500},"status":500}
+[warn] ⚠  functions: Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect. {"metadata":{"emulator":{"name":"functions"},"message":"Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect."}}
+[info] i  functions: Watching "/Users/jirivrba/Downloads/Bulldogo1/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/jirivrba/Downloads/Bulldogo1/functions\" for Cloud Functions..."}}
+[debug] [2025-12-09T07:39:15.990Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-12-09T07:39:16.891Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.5.0",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-plugin-import": "^2.25.4",
+    "typescript": "^4.9.0",
+    "@types/node": "^20.0.0"
+  },
+  "private": true
+}
+[debug] [2025-12-09T07:39:16.891Z] Building nodejs source
+[debug] [2025-12-09T07:39:16.892Z] Failed to find version of module node: reached end of search path /Users/jirivrba/Downloads/Bulldogo1/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "24". Using node@24 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (4.9.0) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-12-09T07:39:16.894Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-12-09T07:39:16.903Z] Found firebase-functions binary at '/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8057
+
+[debug] [2025-12-09T07:39:17.636Z] Got response from /__/functions.yaml {"endpoints":{"validateICO":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"region":["europe-west1"],"httpsTrigger":{},"entryPoint":"validateICO"},"createPayment":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"createPayment"},"checkPayment":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"checkPayment"},"gopayNotification":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"gopayNotification"},"paymentReturn":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"paymentReturn"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] ✔  functions: Loaded functions definitions from source: validateICO, createPayment, checkPayment, gopayNotification, paymentReturn. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: validateICO, createPayment, checkPayment, gopayNotification, paymentReturn."}}
+[info] ✔  functions[europe-west1-validateICO]: http function initialized (http://127.0.0.1:5001/inzerio-inzerce/europe-west1/validateICO). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/inzerio-inzerce/europe-west1/validateICO)."}}
+[info] ✔  functions[us-central1-createPayment]: http function initialized (http://127.0.0.1:5001/inzerio-inzerce/us-central1/createPayment). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/inzerio-inzerce/us-central1/createPayment)."}}
+[info] ✔  functions[us-central1-checkPayment]: http function initialized (http://127.0.0.1:5001/inzerio-inzerce/us-central1/checkPayment). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/inzerio-inzerce/us-central1/checkPayment)."}}
+[info] ✔  functions[us-central1-gopayNotification]: http function initialized (http://127.0.0.1:5001/inzerio-inzerce/us-central1/gopayNotification). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/inzerio-inzerce/us-central1/gopayNotification)."}}
+[info] ✔  functions[us-central1-paymentReturn]: http function initialized (http://127.0.0.1:5001/inzerio-inzerce/us-central1/paymentReturn). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/inzerio-inzerce/us-central1/paymentReturn)."}}
+[debug] [2025-12-09T07:39:21.706Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2025-12-09T07:39:24.875Z] [work-queue] {"queuedWork":["/inzerio-inzerce/europe-west1/validateICO-2025-12-09T07:39:24.875Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2025-12-09T07:39:24.876Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/inzerio-inzerce/europe-west1/validateICO-2025-12-09T07:39:24.875Z"],"workRunningCount":1}
+[debug] [2025-12-09T07:39:24.876Z] Accepted request GET /inzerio-inzerce/europe-west1/validateICO?ico=27074358 --> europe-west1-validateICO
+[debug] [2025-12-09T07:39:24.876Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2025-12-09T07:39:24.877Z] [functions] Got req.url=/inzerio-inzerce/europe-west1/validateICO?ico=27074358, mapping to path=/?ico=27074358 {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/inzerio-inzerce/europe-west1/validateICO?ico=27074358, mapping to path=/?ico=27074358"}}
+[debug] [2025-12-09T07:39:24.883Z] [worker-pool] addWorker(europe-west1-validateICO) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(europe-west1-validateICO)"}}
+[debug] [2025-12-09T07:39:24.884Z] [worker-pool] Adding worker with key europe-west1-validateICO, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key europe-west1-validateICO, total=1"}}
+[debug] [2025-12-09T07:39:25.766Z] [runtime-status] [47303] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2025-12-09T07:39:25.767Z] [runtime-status] [47303] Resolved module firebase-functions {"declared":true,"installed":true,"version":"4.9.0","resolution":"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"4.9.0\",\"resolution\":\"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js\"}"}}
+[debug] [2025-12-09T07:39:25.767Z] [runtime-status] [47303] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}] {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Outgoing network have been stubbed. [{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"net\",\"status\":\"mocked\"}]"}}
+[debug] [2025-12-09T07:39:25.768Z] [runtime-status] [47303] Resolved module firebase-functions {"declared":true,"installed":true,"version":"4.9.0","resolution":"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"4.9.0\",\"resolution\":\"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js\"}"}}
+[debug] [2025-12-09T07:39:25.984Z] [runtime-status] [47303] Checked functions.config() {"config":{}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Checked functions.config() {\"config\":{}}"}}
+[debug] [2025-12-09T07:39:25.985Z] [runtime-status] [47303] firebase-functions has been stubbed. {"functionsResolution":{"declared":true,"installed":true,"version":"4.9.0","resolution":"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] firebase-functions has been stubbed. {\"functionsResolution\":{\"declared\":true,\"installed\":true,\"version\":\"4.9.0\",\"resolution\":\"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js\"}}"}}
+[debug] [2025-12-09T07:39:25.987Z] [runtime-status] [47303] Resolved module firebase-functions {"declared":true,"installed":true,"version":"4.9.0","resolution":"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"4.9.0\",\"resolution\":\"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js\"}"}}
+[debug] [2025-12-09T07:39:25.988Z] [runtime-status] [47303] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2025-12-09T07:39:25.990Z] [runtime-status] [47303] Resolved module firebase-functions {"declared":true,"installed":true,"version":"4.9.0","resolution":"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"4.9.0\",\"resolution\":\"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-functions/lib/v1/index.js\"}"}}
+[debug] [2025-12-09T07:39:25.991Z] [runtime-status] [47303] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-admin/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] firebase-admin has been stubbed. {\"adminResolution\":{\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/jirivrba/Downloads/Bulldogo1/functions/node_modules/firebase-admin/lib/index.js\"}}"}}
+[debug] [2025-12-09T07:39:26.027Z] [runtime-status] [47303] initializeApp(DEFAULT) {"storageBucket":"inzerio-inzerce.appspot.com","databaseURL":"https://inzerio-inzerce.firebaseio.com","projectId":"inzerio-inzerce"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] initializeApp(DEFAULT) {\"storageBucket\":\"inzerio-inzerce.appspot.com\",\"databaseURL\":\"https://inzerio-inzerce.firebaseio.com\",\"projectId\":\"inzerio-inzerce\"}"}}
+[debug] [2025-12-09T07:39:26.033Z] [runtime-status] [47303] Functions runtime initialized. {"cwd":"/Users/jirivrba/Downloads/Bulldogo1/functions","node_version":"24.11.0"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Functions runtime initialized. {\"cwd\":\"/Users/jirivrba/Downloads/Bulldogo1/functions\",\"node_version\":\"24.11.0\"}"}}
+[debug] [2025-12-09T07:39:26.034Z] [runtime-status] [47303] Listening to port: /var/folders/1l/_0xtbwn1531_ytvz66sv5jcw0000gn/T/fire_emu_52752f5e21701e47.sock {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[runtime-status] [47303] Listening to port: /var/folders/1l/_0xtbwn1531_ytvz66sv5jcw0000gn/T/fire_emu_52752f5e21701e47.sock"}}
+[debug] [2025-12-09T07:39:26.114Z] [worker-europe-west1-validateICO-5eae1e50-d5e8-4f9b-8f14-497f111998a0]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[worker-europe-west1-validateICO-5eae1e50-d5e8-4f9b-8f14-497f111998a0]: IDLE"}}
+[debug] [2025-12-09T07:39:26.114Z] [worker-pool] submitRequest(triggerId=europe-west1-validateICO) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=europe-west1-validateICO)"}}
+[info] i  functions: Beginning execution of "europe-west1-validateICO" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"Beginning execution of \"europe-west1-validateICO\""}}
+[debug] [2025-12-09T07:39:26.115Z] [worker-europe-west1-validateICO-5eae1e50-d5e8-4f9b-8f14-497f111998a0]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[worker-europe-west1-validateICO-5eae1e50-d5e8-4f9b-8f14-497f111998a0]: BUSY"}}
+[info] >  ARES JSON call failed: 404 {"user":"ARES JSON call failed: 404","metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"\u001b[90m> \u001b[39m ARES JSON call failed: 404"}}
+[info] >  ARES XML call failed: ENOTFOUND {"user":"ARES XML call failed: ENOTFOUND","metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"\u001b[90m> \u001b[39m ARES XML call failed: ENOTFOUND"}}
+[debug] [2025-12-09T07:39:26.382Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "europe-west1-validateICO" in 267.568459ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"Finished \"europe-west1-validateICO\" in 267.568459ms"}}
+[debug] [2025-12-09T07:39:26.383Z] [worker-europe-west1-validateICO-5eae1e50-d5e8-4f9b-8f14-497f111998a0]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"[worker-europe-west1-validateICO-5eae1e50-d5e8-4f9b-8f14-497f111998a0]: IDLE"}}
+[debug] [2025-12-09T07:39:26.383Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2025-12-09T07:39:26.383Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"europe-west1-validateICO"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2025-12-09T07:39:26.384Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2025-12-09T10:31:18.626Z] [work-queue] {"queuedWork":["/inzerio-inzerce/us-central1/validateICO-2025-12-09T10:31:18.615Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2025-12-09T10:31:18.642Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/inzerio-inzerce/us-central1/validateICO-2025-12-09T10:31:18.615Z"],"workRunningCount":1}
+[debug] [2025-12-09T10:31:18.680Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2025-12-09T10:34:40.379Z] [work-queue] {"queuedWork":["/inzerio-inzerce/us-central1/validateICO-2025-12-09T10:34:40.373Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2025-12-09T10:34:40.386Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/inzerio-inzerce/us-central1/validateICO-2025-12-09T10:34:40.373Z"],"workRunningCount":1}
+[debug] [2025-12-09T10:34:40.395Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}

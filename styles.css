@@ -5745,8 +5745,8 @@ html {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    backdrop-filter: blur(5px);
+	background: radial-gradient(1200px 600px at 70% 10%, rgba(247,124,0,0.18), transparent 60%), rgba(0,0,0,0.55);
+	backdrop-filter: blur(8px) saturate(110%);
     justify-content: center;
     align-items: center;
     overflow-y: auto;
@@ -5755,17 +5755,79 @@ html {
 }
 
 .modal-content {
-    background-color: white;
-    border-radius: 15px;
+	background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.94));
+	border-radius: 18px;
     padding: 2rem;
     width: 90%;
     max-width: 500px;
     max-height: 90vh;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+	border: 1px solid rgba(247,124,0,0.18);
+	box-shadow: 0 18px 48px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.6) inset, 0 12px 24px rgba(247,124,0,0.12);
     animation: modalSlideIn 0.3s ease-out;
     overflow-y: auto;
     margin: auto;
     box-sizing: border-box;
+	position: relative;
+}
+
+/* Rezerva nahoře kvůli „opřenému“ buldokovi */
+.modal-content.auth-with-hero { padding-top: 4.6rem; }
+
+/* Buldok „opřený“ o kartu */
+.auth-dog-lean {
+	position: absolute;
+	top: -22px;
+	left: 50%;
+	transform: translateX(-50%) rotate(-4deg);
+	transform-origin: bottom center;
+	width: 120px;
+	height: auto;
+	pointer-events: none;
+	filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
+}
+
+/* Vrchní „lištu“ s brand gradientem a titulkem */
+/* Vrchní „lištu“ s brand gradientem a titulkem */
+.auth-hero-ledge {
+	background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+	border-radius: 16px;
+	padding: 14px 18px; /* kompaktní výška přesně kolem titulku */
+	box-shadow: 0 12px 28px rgba(247,124,0,0.28);
+	color: #ffffff;
+	margin: 0;
+	position: relative;
+}
+
+.auth-with-hero .modal-header {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.auth-with-hero .modal-title {
+	color: #ffffff;
+	font-weight: 800;
+	font-size: 1.6rem;
+	background: none;
+	-webkit-text-fill-color: currentColor;
+}
+
+.auth-with-hero .close { color: rgba(255,255,255,0.9); }
+.auth-with-hero .close:hover { color: #ffffff; }
+
+/* Odstup mezi lištou a obsahem formuláře */
+.auth-with-hero .auth-form { margin-top: 14px; }
+
+/* Pozice psa nad titulkem v liště */
+.auth-hero-ledge .auth-dog-lean {
+	top: -69px;
+	left: 50%;
+	transform: translateX(-50%) rotate(0deg);
+	width: 128px;
+	z-index: 2;
 }
 
 @keyframes modalSlideIn {
@@ -5824,6 +5886,62 @@ html {
     margin-bottom: 0;
 }
 
+/* Jemné odsazení mezi poli v horní části registrace (Jméno, Příjmení, Telefon, Datum) */
+.auth-form .person-form .form-group,
+.auth-form .company-form .form-group {
+    margin-bottom: 10px;
+}
+
+/* Menší mezera za posledním polem (např. Datum narození) před sekcí se společnými poli */
+.auth-form .person-form .form-group:last-child,
+.auth-form .company-form .form-group:last-child {
+    margin-bottom: 6px;
+}
+
+/* Datum narození – barevný obdélník vedle štítku */
+.date-inline {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.date-inline label {
+    white-space: nowrap;
+    min-width: max-content;
+    color: #6b7280;
+    font-size: 14px;
+}
+.auth-form .form-row.two-col {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.auth-form .form-row .half {
+    flex: 1 1 0%;
+}
+.auth-form .date-inline input[type="date"] {
+    flex: 1 1 0%;
+    width: auto !important;
+    min-width: 0;
+    display: block;
+    box-sizing: border-box;
+}
+.date-chip {
+    flex: 0 0 auto;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    display: inline;
+    align-items: initial;
+}
+.date-chip input[type="date"] {
+    appearance: auto;
+}
+.date-chip input[type="date"]::-webkit-calendar-picker-indicator {
+    /* reset filtru */
+    filter: none;
+}
+
 .auth-form input,
 .service-form input,
 .service-form select,
@@ -5843,6 +5961,7 @@ html {
 .service-form textarea:focus {
     outline: none;
     border-color: #f77c00;
+	box-shadow: 0 0 0 3px rgba(247,124,0,0.15);
     background-color: white;
 }
 
@@ -5865,6 +5984,38 @@ html {
 
 .auth-switch-btn:hover {
     color: #5c2710;
+}
+
+/* Auth modal CTA laděné do brandového stylu */
+.auth-form .auth-submit-btn,
+.auth-form .btn-primary {
+	width: 100%;
+	border-radius: 12px;
+	background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+	color: #ffffff;
+	box-shadow: 0 8px 20px rgba(247,124,0,0.25);
+}
+
+.auth-form .auth-submit-btn:hover,
+.auth-form .btn-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 10px 24px rgba(247,124,0,0.35);
+}
+
+/* Auth – tlačítko Odeslat SMS kód ve firemních barvách */
+.auth-form #btnSendPhoneCode {
+	width: 100%;
+	border-radius: 12px;
+	background: transparent;
+	color: #c45a00;
+	font-weight: 800;
+	border: 2px solid transparent;
+	border-image: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+	border-image-slice: 1;
+}
+.auth-form #btnSendPhoneCode:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(247,124,0,0.2);
 }
 
 /* Message Styles */
@@ -8668,12 +8819,23 @@ html {
 
 /* Date input styling */
 input[type="date"] {
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
     transition: border-color 0.3s ease;
-    background: white;
+    background: #f8f9fa;
+}
+
+/* Zajistit plnou šířku data v auth formuláři i na Safari */
+.auth-form .form-group input[type="date"] {
+    width: 100% !important;
+    min-width: 0;
+    display: block;
+    box-sizing: border-box;
 }
 
 input[type="date"]:focus {
