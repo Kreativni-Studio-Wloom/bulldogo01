@@ -5945,7 +5945,7 @@ html {
 .auth-form, .service-form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 10px;
 }
 
 .auth-form .form-group,
@@ -5969,9 +5969,7 @@ html {
 .auth-form .company-form {
     margin-bottom: 0;
 }
-.auth-form #groupAuthEmail {
-    margin-top: 10px;
-}
+.auth-form #groupAuthEmail { margin-top: 0; }
 
 /* Datum narození – barevný obdélník vedle štítku */
 .date-inline {
