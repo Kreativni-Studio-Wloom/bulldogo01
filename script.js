@@ -417,31 +417,60 @@ async function loadAndApplyUserAvatar(uid) {
 
 function ensureSidebarAvatarNode() {
 	try {
-		const headerButtons = document.querySelector('.sidebar .sidebar-header .header-buttons');
-		if (!headerButtons) return null;
+		// Primárně vložit k dolnímu bloku s tlačítkem Profil (vedle odznaku balíčku)
+		const btnProfile = document.querySelector('.sidebar .user-profile-section .btn-profile');
 		let wrap = document.getElementById('sidebarUserAvatar');
-		if (!wrap) {
-			wrap = document.createElement('div');
-			wrap.id = 'sidebarUserAvatar';
-			wrap.style.cssText = 'margin-left:auto; display:flex; align-items:center; gap:8px;';
-			const circle = document.createElement('div');
-			circle.style.cssText = 'width:32px;height:32px;border-radius:50%;overflow:hidden;background:#f3f4f6;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;';
-			const img = document.createElement('img');
-			img.id = 'sidebarUserAvatarImg';
-			img.alt = 'Profilová fotka';
-			img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:none;';
-			img.loading = 'lazy';
-			img.decoding = 'async';
-			const icon = document.createElement('i');
-			icon.id = 'sidebarUserAvatarPh';
-			icon.className = 'fas fa-user';
-			icon.style.cssText = 'color:#9ca3af;font-size:14px;';
-			circle.appendChild(img);
-			circle.appendChild(icon);
-			wrap.appendChild(circle);
-			headerButtons.appendChild(wrap);
+		if (btnProfile) {
+			if (!wrap) {
+				wrap = document.createElement('span');
+				wrap.id = 'sidebarUserAvatar';
+				wrap.style.cssText = 'display:inline-flex; margin-left:8px; vertical-align:middle;';
+				const circle = document.createElement('span');
+				circle.style.cssText = 'width:28px;height:28px;border-radius:50%;overflow:hidden;background:#f3f4f6;border:1px solid #e5e7eb;display:inline-flex;align-items:center;justify-content:center;';
+				const img = document.createElement('img');
+				img.id = 'sidebarUserAvatarImg';
+				img.alt = 'Profilová fotka';
+				img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:none;';
+				img.loading = 'lazy';
+				img.decoding = 'async';
+				const icon = document.createElement('i');
+				icon.id = 'sidebarUserAvatarPh';
+				icon.className = 'fas fa-user';
+				icon.style.cssText = 'color:#9ca3af;font-size:12px;';
+				circle.appendChild(img);
+				circle.appendChild(icon);
+				wrap.appendChild(circle);
+				btnProfile.appendChild(wrap);
+			}
+			return wrap;
 		}
-		return wrap;
+		// Fallback: staré umístění v záhlaví (kdyby spodní část neexistovala)
+		const headerButtons = document.querySelector('.sidebar .sidebar-header .header-buttons');
+		if (headerButtons) {
+			if (!wrap) {
+				wrap = document.createElement('div');
+				wrap.id = 'sidebarUserAvatar';
+				wrap.style.cssText = 'margin-left:auto; display:flex; align-items:center; gap:8px;';
+				const circle = document.createElement('div');
+				circle.style.cssText = 'width:32px;height:32px;border-radius:50%;overflow:hidden;background:#f3f4f6;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;';
+				const img = document.createElement('img');
+				img.id = 'sidebarUserAvatarImg';
+				img.alt = 'Profilová fotka';
+				img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:none;';
+				img.loading = 'lazy';
+				img.decoding = 'async';
+				const icon = document.createElement('i');
+				icon.id = 'sidebarUserAvatarPh';
+				icon.className = 'fas fa-user';
+				icon.style.cssText = 'color:#9ca3af;font-size:14px;';
+				circle.appendChild(img);
+				circle.appendChild(icon);
+				wrap.appendChild(circle);
+				headerButtons.appendChild(wrap);
+			}
+			return wrap;
+		}
+		return null;
 	} catch (_) {
 		return null;
 	}
