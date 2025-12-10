@@ -202,6 +202,28 @@
                         Osobní informace
                     </h3>
                     <div class="settings-form">
+                        <div class="form-group" style="display:flex; align-items:center; gap:16px;">
+                            <div style="width:80px; height:80px; border-radius:50%; overflow:hidden; background:#f3f4f6; display:flex; align-items:center; justify-content:center; border:1px solid #e5e7eb;">
+                                <img id="profilePhotoPreview" src="" alt="Profilová fotka" style="width:100%; height:100%; object-fit:cover; display:none;" loading="lazy" decoding="async">
+                                <i id="profilePhotoPlaceholder" class="fas fa-user" style="color:#9ca3af; font-size:28px;"></i>
+                            </div>
+                            <div>
+                                <label for="profilePhotoInput" class="btn-save" style="cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+                                    <i class="fas fa-image"></i>
+                                    Vybrat fotku
+                                </label>
+                                <input id="profilePhotoInput" type="file" accept="image/*" style="display:none;">
+                                <button type="button" id="btnUploadProfilePhoto" class="btn-save" style="margin-left:8px;">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    Nahrát
+                                </button>
+                                <button type="button" id="btnRemoveProfilePhoto" class="btn-save" style="margin-left:8px; background:#fff; border:1px solid #e5e7eb; color:#6b7280;">
+                                    <i class="fas fa-trash"></i>
+                                    Odebrat
+                                </button>
+                                <div id="profilePhotoHint" style="font-size:12px; color:#6b7280; margin-top:6px;">Doporučeno: čtverec min. 256×256 px, JPG/PNG/WebP.</div>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label for="firstName">Křestní jméno</label>
                             <input type="text" id="firstName" value="" class="form-input" placeholder="Zadejte vaše křestní jméno">
@@ -994,6 +1016,9 @@ Prosím kontaktujte podporu.
                 // Počkat na Firebase
                 await waitForFirebase();
                 
+                // Navázat ovládání profilové fotky
+                setupProfilePhotoControls();
+                
                 // Načíst data uživatele (automaticky prefilled)
                 await loadUserSettings();
                 
@@ -1206,6 +1231,24 @@ Prosím kontaktujte podporu.
                     element.placeholder = value ? `Aktuální: ${value}` : 'Zadejte hodnotu';
                 }
             });
+            
+            // Profilová fotka – náhled
+            try {
+                const url = userProfile?.photoURL || userProfile?.avatarUrl || '';
+                const img = document.getElementById('profilePhotoPreview');
+                const ph = document.getElementById('profilePhotoPlaceholder');
+                if (img && ph) {
+                    if (url) {
+                        img.src = url;
+                        img.style.display = 'block';
+                        ph.style.display = 'none';
+                    } else {
+                        img.src = '';
+                        img.style.display = 'none';
+                        ph.style.display = 'block';
+                    }
+                }
+            } catch (e) { /* noop */ }
 
             // Obchodní informace - vždy prefilled
             const businessFields = {
@@ -1250,6 +1293,107 @@ Prosím kontaktujte podporu.
             });
             
             console.log('✅ Formulář aktualizován s prefilled daty (kromě hesel)');
+        }
+        
+        // ===== Profilová fotka (UI + upload) =====
+        function setupProfilePhotoControls() {
+            const fileInput = document.getElementById('profilePhotoInput');
+            const preview = document.getElementById('profilePhotoPreview');
+            const placeholder = document.getElementById('profilePhotoPlaceholder');
+            const btnUpload = document.getElementById('btnUploadProfilePhoto');
+            const btnRemove = document.getElementById('btnRemoveProfilePhoto');
+            
+            if (fileInput) {
+                fileInput.addEventListener('change', () => {
+                    const file = fileInput.files && fileInput.files[0];
+                    if (!file) return;
+                    const url = URL.createObjectURL(file);
+                    if (preview && placeholder) {
+                        preview.src = url;
+                        preview.style.display = 'block';
+                        placeholder.style.display = 'none';
+                    }
+                });
+            }
+            
+            if (btnUpload) {
+                btnUpload.addEventListener('click', uploadProfilePhoto);
+            }
+            if (btnRemove) {
+                btnRemove.addEventListener('click', removeProfilePhoto);
+            }
+        }
+        
+        async function uploadProfilePhoto() {
+            try {
+                if (!window.firebaseAuth || !window.firebaseDb) return showMessage('Firebase není inicializován', 'error');
+                const user = window.firebaseAuth.currentUser;
+                if (!user) return showMessage('Musíte být přihlášeni', 'error');
+                
+                const fileInput = document.getElementById('profilePhotoInput');
+                const file = fileInput?.files && fileInput.files[0];
+                if (!file) return showMessage('Vyberte prosím obrázek', 'error');
+                
+                // Načti Firebase Storage dynamicky
+                const { getStorage, ref, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
+                const storage = getStorage(window.firebaseApp);
+                
+                // Cíl v úložišti
+                const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+                const path = `users/${user.uid}/profile/avatar_${Date.now()}.${ext}`;
+                const storageRef = ref(storage, path);
+                
+                // Nahrát
+                await uploadBytes(storageRef, file, { contentType: file.type });
+                const publicUrl = await getDownloadURL(storageRef);
+                
+                // Uložit do Firestore
+                const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                await setDoc(doc(window.firebaseDb, 'users', user.uid, 'profile', 'profile'), {
+                    photoURL: publicUrl,
+                    avatarUpdatedAt: new Date()
+                }, { merge: true });
+                
+                showMessage('✅ Profilová fotka nahrána', 'success');
+                
+                // Reset inputu a aktualizace náhledu
+                fileInput.value = '';
+                const img = document.getElementById('profilePhotoPreview');
+                if (img) img.src = publicUrl;
+                
+            } catch (e) {
+                console.error('uploadProfilePhoto error', e);
+                showMessage('Nepodařilo se nahrát fotku: ' + (e?.message || e), 'error');
+            }
+        }
+        
+        async function removeProfilePhoto() {
+            try {
+                if (!window.firebaseAuth || !window.firebaseDb) return;
+                const user = window.firebaseAuth.currentUser;
+                if (!user) return showMessage('Musíte být přihlášeni', 'error');
+                
+                // Smazat odkaz ve Firestore (soubor ve Storage ponecháme – může být sdílen)
+                const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                await setDoc(doc(window.firebaseDb, 'users', user.uid, 'profile', 'profile'), {
+                    photoURL: '',
+                    avatarUpdatedAt: new Date()
+                }, { merge: true });
+                
+                // UI reset
+                const img = document.getElementById('profilePhotoPreview');
+                const ph = document.getElementById('profilePhotoPlaceholder');
+                if (img && ph) {
+                    img.src = '';
+                    img.style.display = 'none';
+                    ph.style.display = 'block';
+                }
+                
+                showMessage('✅ Profilová fotka odebrána', 'success');
+            } catch (e) {
+                console.error('removeProfilePhoto error', e);
+                showMessage('Nepodařilo se odebrat fotku', 'error');
+            }
         }
 
         // CSS pro animace

@@ -404,18 +404,36 @@ function updateProfileInfo() {
     
     // Update main profile info
     const profileNameEl = document.getElementById('profileName');
+        const profileAvatarEl = document.getElementById('profileAvatar');
+        const profileAvatarPh = document.getElementById('profileAvatarPlaceholder');
     const profileEmailEl = document.getElementById('profileEmail');
     const profileLocationEl = document.getElementById('profileLocation');
     const profileBioEl = document.getElementById('profileBio');
     
     console.log('🖼️ Profile elements found:', {
         profileName: !!profileNameEl,
+            profileAvatar: !!profileAvatarEl,
         profileEmail: !!profileEmailEl,
         profileLocation: !!profileLocationEl,
         profileBio: !!profileBioEl
     });
     
     if (profileNameEl) profileNameEl.textContent = displayName;
+        // Avatar z userProfile.photoURL / avatarUrl
+        try {
+            const avatarUrl = userProfile?.photoURL || userProfile?.avatarUrl || '';
+            if (profileAvatarEl && profileAvatarPh) {
+                if (avatarUrl) {
+                    profileAvatarEl.src = avatarUrl;
+                    profileAvatarEl.style.display = 'block';
+                    profileAvatarPh.style.display = 'none';
+                } else {
+                    profileAvatarEl.src = '';
+                    profileAvatarEl.style.display = 'none';
+                    profileAvatarPh.style.display = 'block';
+                }
+            }
+        } catch (e) { /* noop */ }
     if (profileEmailEl) profileEmailEl.textContent = userProfile.email || currentProfileUser.email || '';
     if (profileLocationEl) profileLocationEl.textContent = userProfile.city || userProfile.location || currentProfileUser.location || 'Lokace neuvedena';
     if (profileBioEl) {
