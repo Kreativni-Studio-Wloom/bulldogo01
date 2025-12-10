@@ -100,6 +100,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize auth state management
     initializeAuthState();
     
+    // Pokud je už plán v localStorage, vykreslit odznak hned (rychlý náběh)
+    try {
+        const cachedPlan = localStorage.getItem('bdg_plan');
+        if (cachedPlan) applySidebarBadge(cachedPlan);
+    } catch (_) {}
+    
+    // Po návratu na stránku re-aplikovat z cache (např. „Mé inzeráty“)
+    window.addEventListener('pageshow', () => {
+        try {
+            const cachedPlan = localStorage.getItem('bdg_plan');
+            if (cachedPlan) applySidebarBadge(cachedPlan);
+        } catch (_) {}
+    });
+    
     // Přepínání vzhledu avataru podle hoveru sidebaru
     try {
         const sidebar = document.querySelector('.sidebar');
@@ -389,6 +403,22 @@ function updateAuthUI(user) {
         if (userProfileSection) {
             userProfileSection.style.display = 'block';
             updateUserProfile(user);
+            // 1) Okamžitě zkusit vykreslit odznak z cache (bdg_plan), aby byl vidět hned
+            try {
+                const cachedPlan = localStorage.getItem('bdg_plan');
+                if (cachedPlan) applySidebarBadge(cachedPlan);
+            } catch (_) {}
+            // 2) Asynchronně stáhnout skutečný plán a odznak případně opravit
+            try {
+                if (typeof window.checkUserPlanFromDatabase === 'function') {
+                    window.checkUserPlanFromDatabase(user.uid).then((plan) => {
+                        if (plan) {
+                            try { localStorage.setItem('bdg_plan', plan); } catch (_) {}
+                            applySidebarBadge(plan);
+                        }
+                    }).catch(() => {});
+                }
+            } catch (_) {}
         }
     } else {
         // User is not logged in
@@ -431,6 +461,24 @@ async function loadAndApplyUserAvatar(uid) {
 		applySidebarAvatar(url);
 		applyHeroAvatar(url);
 	} catch (_) { /* tichý fallback */ }
+}
+
+// Odznak balíčku u tlačítka Profil (rychlá aplikace z cache/DB)
+function applySidebarBadge(plan) {
+	try {
+		const userProfileSection = document.getElementById('userProfileSection');
+		const btnProfile = userProfileSection && userProfileSection.querySelector('.btn-profile');
+		if (!btnProfile) return;
+		const old = btnProfile.querySelector('.user-badge');
+		if (old) old.remove();
+		if (!plan || plan === 'none') return;
+		const label = plan === 'business' ? 'Firma' : plan === 'hobby' ? 'Hobby' : '?';
+		const cls = plan === 'business' ? 'badge-business' : plan === 'hobby' ? 'badge-hobby' : 'badge-unknown';
+		const badge = document.createElement('span');
+		badge.className = 'user-badge ' + cls;
+		badge.textContent = label;
+		btnProfile.appendChild(badge);
+	} catch (_) {}
 }
 
 function ensureSidebarAvatarNode() {
