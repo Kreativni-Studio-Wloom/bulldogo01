@@ -481,15 +481,21 @@ function applySidebarAvatar(url) {
 	if (!wrap) return;
 	const img = document.getElementById('sidebarUserAvatarImg');
 	const ph = document.getElementById('sidebarUserAvatarPh');
+	const btn = document.querySelector('.sidebar .user-profile-section .btn-profile');
+	const btnIcon = btn ? btn.querySelector('i') : null;
 	if (img && ph) {
 		if (url) {
 			img.src = url;
 			img.style.display = 'block';
 			ph.style.display = 'none';
+			// Skrýt původní ikonu v tlačítku Profil (když máme profilovku)
+			if (btnIcon) btnIcon.style.display = 'none';
 		} else {
 			img.src = '';
 			img.style.display = 'none';
 			ph.style.display = 'block';
+			// Zobrazit původní ikonu v tlačítku Profil (když profilovka není)
+			if (btnIcon) btnIcon.style.display = '';
 		}
 	}
 }
