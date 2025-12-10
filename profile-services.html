@@ -162,20 +162,20 @@
                 <div class="stats-cards">
                     <div class="stat-card">
                         <div class="stat-icon">
-                            <i class="fas fa-ad"></i>
+                            <i class="fas fa-list"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">12</div>
-                            <div class="stat-label">Aktivní inzeráty</div>
+                            <div class="stat-number" id="totalAds">0</div>
+                            <div class="stat-label">Celkem inzerátů</div>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">
-                            <i class="fas fa-star"></i>
+                            <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-number">4.8</div>
-                            <div class="stat-label">Hodnocení</div>
+                            <div class="stat-number" id="activeAds">0</div>
+                            <div class="stat-label">Aktivních inzerátů</div>
                         </div>
                     </div>
                 </div>
@@ -200,6 +200,40 @@
                     <i class="fas fa-plus"></i>
                     Přidat službu
                 </a>
+            </div>
+
+            <!-- Search / Filter / Sort -->
+            <div class="search-filter-bar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Hledat v mých inzerátech...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="filter-dropdown">
+                    <select id="categoryFilter">
+                        <option value="">Všechny kategorie</option>
+                        <option value="home_craftsmen">Domácnost & Řemeslníci</option>
+                        <option value="auto_moto">Auto & Moto</option>
+                        <option value="garden_exterior">Zahrada & Exteriér</option>
+                        <option value="education_tutoring">Vzdělávání & Doučování</option>
+                        <option value="it_technology">IT & technologie</option>
+                        <option value="health_personal_care">Zdraví a Osobní péče</option>
+                        <option value="gastronomy_catering">Gastronomie & Catering</option>
+                        <option value="events_entertainment">Události & Zábava</option>
+                        <option value="personal_small_jobs">Osobní služby & drobné práce</option>
+                        <option value="auto_moto_transport">Auto - moto doprava</option>
+                        <option value="hobby_creative">Hobby & kreativní služby</option>
+                        <option value="law_finance_admin">Právo & finance & administrativa</option>
+                        <option value="pets">Domácí zvířata</option>
+                        <option value="specialized_custom">Specializované služby na přání</option>
+                    </select>
+                </div>
+                <div class="sort-dropdown">
+                    <select id="sortSelect">
+                        <option value="newest">Nejnovější</option>
+                        <option value="oldest">Nejstarší</option>
+                        <option value="title">Podle názvu</option>
+                    </select>
+                </div>
             </div>
 
             <div class="services-grid">
@@ -293,8 +327,9 @@
                     userAds.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Update services display
-                updateServicesDisplay(userAds);
+                // Uložit do cache a vyrenderovat
+                window.__userAdsRaw = userAds;
+                applyFiltersAndRender();
 
             } catch (error) {
                 console.error('Chyba při načítání dat služeb:', error);
@@ -374,10 +409,7 @@
                         <p class="service-description">${ad.description}</p>
                         <div class="service-meta">
                             <span class="service-price">${ad.price || 'Cena na dotaz'}</span>
-                            <span class="service-rating">
-                                <i class="fas fa-star"></i>
-                                ${ad.rating || 'N/A'} (${ad.reviews || 0} hodnocení)
-                            </span>
+                            <span class="service-rating" style="display:none;"></span>
                         </div>
                         <div class="service-status" style="background-color: ${statusColors[ad.status]}; color: white; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.8rem; margin: 0.5rem 0;">
                             ${statusTexts[ad.status] || ad.status}
@@ -390,6 +422,10 @@
                             <button class="btn-deactivate" onclick="toggleServiceStatus('${ad.id}', '${ad.status}')">
                                 <i class="fas fa-${ad.status === 'active' ? 'pause' : 'play'}"></i>
                                 ${ad.status === 'active' ? 'Deaktivovat' : 'Aktivovat'}
+                            </button>
+                            <button class="btn-danger" onclick="deleteService('${ad.id}')">
+                                <i class="fas fa-trash"></i>
+                                Smazat
                             </button>
                         </div>
                     </div>
@@ -441,6 +477,19 @@
             } catch (error) {
                 console.error('Chyba při změně stavu služby:', error);
                 showMessage('Nepodařilo se změnit stav služby.', 'error');
+            }
+        }
+
+        async function deleteService(serviceId) {
+            try {
+                if (!confirm('Opravdu chcete smazat tento inzerát? Tuto akci nelze vrátit.')) return;
+                const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                await deleteDoc(doc(window.firebaseDb, 'users', window.firebaseAuth.currentUser.uid, 'inzeraty', serviceId));
+                showMessage('Služba byla smazána.', 'success');
+                loadServicesData();
+            } catch (error) {
+                console.error('Chyba při mazání služby:', error);
+                showMessage('Nepodařilo se smazat službu.', 'error');
             }
         }
 
@@ -501,98 +550,57 @@
         }
 
         // Update statistics with real data
-        function updateStatistics(userAds, userProfile) {
-            console.log('📊 Updating statistics:', { userAds, userProfile });
-            
-            // Active ads count
-            const activeAds = userAds ? userAds.filter(ad => ad.status === 'active').length : 0;
-            const activeAdsElement = document.querySelector('.stat-card:nth-child(1) .stat-number');
-            if (activeAdsElement) {
-                activeAdsElement.textContent = activeAds > 0 ? activeAds : '-';
-                console.log('📝 Updated active ads:', activeAds);
-            }
-
-            // Rating will be updated after loading reviews
-            const ratingElement = document.querySelector('.stat-card:nth-child(2) .stat-number');
-            if (ratingElement) {
-                ratingElement.textContent = '-';
-            }
-            
-            console.log('✅ Statistics updated');
+        function updateStatistics(userAds) {
+            const total = userAds ? userAds.length : 0;
+            const active = userAds ? userAds.filter(ad => ad.status === 'active').length : 0;
+            const totalEl = document.getElementById('totalAds');
+            const activeEl = document.getElementById('activeAds');
+            if (totalEl) totalEl.textContent = String(total);
+            if (activeEl) activeEl.textContent = String(active);
         }
 
-        // Load all user reviews (profile + ads)
-        async function loadAllUserReviews(userId) {
-            console.log('⭐ Loading all reviews for user:', userId);
-            try {
-                const { getDocs, collection, collectionGroup } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                
-                // Load profile reviews
-                const profileReviewsRef = collection(window.firebaseDb, 'users', userId, 'reviews');
-                const profileSnap = await getDocs(profileReviewsRef);
-                const profileReviews = profileSnap.docs.map(d => ({ 
-                    id: d.id, 
-                    ...d.data(),
-                    type: 'profile'
-                }));
-
-                // Load ad reviews using collectionGroup
-                const adReviewsGroup = collectionGroup(window.firebaseDb, 'reviews');
-                const adReviews = [];
-                const groupSnap = await getDocs(adReviewsGroup);
-                groupSnap.forEach(docSnap => {
-                    const parent = docSnap.ref.parent; // reviews collection
-                    const adDoc = parent?.parent; // adId document
-                    const inzeraty = adDoc?.parent; // 'inzeraty' collection
-                    const userDoc = inzeraty?.parent; // user uid document
-                    if (userDoc && userDoc.id === userId && inzeraty.id === 'inzeraty') {
-                        adReviews.push({ 
-                            id: docSnap.id, 
-                            ...docSnap.data(),
-                            type: 'ad',
-                            adId: adDoc.id
-                        });
-                    }
-                });
-
-                // Combine all reviews
-                const allReviews = [...profileReviews, ...adReviews];
-                console.log('📊 Found reviews:', { 
-                    profile: profileReviews.length, 
-                    ads: adReviews.length, 
-                    total: allReviews.length 
-                });
-
-                // Update rating in statistics after loading reviews
-                updateRatingFromReviews(allReviews);
-
-            } catch (error) {
-                console.error('❌ Error loading reviews:', error);
+        // Filtrování/třídění/hledání nad cache
+        function applyFiltersAndRender() {
+            const raw = Array.isArray(window.__userAdsRaw) ? window.__userAdsRaw.slice() : [];
+            // Update stats (nezávisle na filtru)
+            updateStatistics(raw);
+            const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+            const cat = (document.getElementById('categoryFilter')?.value || '').trim();
+            const sort = (document.getElementById('sortSelect')?.value || 'newest').trim();
+            
+            let list = raw.filter(ad => {
+                const title = (ad.title || '').toLowerCase();
+                const desc = (ad.description || '').toLowerCase();
+                const okQ = !q || title.includes(q) || desc.includes(q);
+                const okCat = !cat || ad.category === cat;
+                return okQ && okCat;
+            });
+            
+            if (sort === 'title') {
+                list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            } else if (sort === 'oldest') {
+                list.sort((a, b) => (new Date(a.createdAt || 0)) - (new Date(b.createdAt || 0)));
+            } else {
+                // newest
+                list.sort((a, b) => (new Date(b.createdAt || 0)) - (new Date(a.createdAt || 0)));
             }
+            updateServicesDisplay(list);
         }
 
-        // Update rating in statistics from reviews
-        function updateRatingFromReviews(reviews) {
-            console.log('🔄 Updating rating from reviews:', reviews.length);
-            
-            // Calculate average rating
-            const avgRating = reviews.length > 0 ? 
-                (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length) : 0;
-            
-            const ratingElement = document.querySelector('.stat-card:nth-child(2) .stat-number');
-            if (ratingElement) {
-                if (reviews.length > 0) {
-                    ratingElement.textContent = avgRating.toFixed(1);
-                } else {
-                    ratingElement.textContent = '-';
-                }
-                console.log('📝 Updated rating from reviews:', avgRating.toFixed(1), 'reviews:', reviews.length);
-            }
-        }
+        // Listeners for filters
+        document.addEventListener('DOMContentLoaded', () => {
+            const si = document.getElementById('searchInput');
+            const cf = document.getElementById('categoryFilter');
+            const ss = document.getElementById('sortSelect');
+            si && si.addEventListener('input', () => applyFiltersAndRender());
+            cf && cf.addEventListener('change', () => applyFiltersAndRender());
+            ss && ss.addEventListener('change', () => applyFiltersAndRender());
+        });
 
         // Export functions for global use
         window.editService = editService;
         window.toggleServiceStatus = toggleServiceStatus;
+        window.deleteService = deleteService;
     </script>
 </body>
 </html>
