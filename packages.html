@@ -402,5 +402,18 @@
     <script src="auth.js" defer></script>
     <script src="gopay-config.js" defer></script>
     <script src="packages.js" defer></script>
+    <script>
+        // Safeguard: zajisti funkční přihlášení/registraci/chat i na této stránce
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const btnLogin = document.querySelector('.auth-section .btn-login');
+                const btnRegister = document.querySelector('.auth-section .btn-register');
+                const chatLink = document.querySelector('.nav-menu a[href="chat.html"]');
+                if (btnLogin) btnLogin.addEventListener('click', (e) => { e.preventDefault(); if (typeof showAuthModal === 'function') showAuthModal('login'); });
+                if (btnRegister) btnRegister.addEventListener('click', (e) => { e.preventDefault(); if (typeof showAuthModal === 'function') showAuthModal('register'); });
+                if (chatLink) chatLink.addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'chat.html'; });
+            } catch (_) {}
+        });
+    </script>
 </body>
 </html>
