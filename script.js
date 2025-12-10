@@ -395,6 +395,87 @@ function updateUserProfile(user) {
     if (userEmail) userEmail.textContent = email;
     if (dropdownUserName) dropdownUserName.textContent = displayName;
     if (dropdownUserEmail) dropdownUserEmail.textContent = email;
+	
+	// Načíst avatar z Firestore profilu a propsat do UI (sidebar + hero, pokud existuje)
+	try {
+		loadAndApplyUserAvatar(user.uid);
+	} catch (_) {}
+}
+
+// Avatar helpers (sidebar + hero profilů)
+async function loadAndApplyUserAvatar(uid) {
+	try {
+		if (!uid || !window.firebaseDb) return;
+		const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+		const profileRef = doc(window.firebaseDb, 'users', uid, 'profile', 'profile');
+		const snap = await getDoc(profileRef);
+		const url = snap.exists() ? (snap.data()?.photoURL || snap.data()?.avatarUrl || '') : '';
+		applySidebarAvatar(url);
+		applyHeroAvatar(url);
+	} catch (_) { /* tichý fallback */ }
+}
+
+function ensureSidebarAvatarNode() {
+	try {
+		const headerButtons = document.querySelector('.sidebar .sidebar-header .header-buttons');
+		if (!headerButtons) return null;
+		let wrap = document.getElementById('sidebarUserAvatar');
+		if (!wrap) {
+			wrap = document.createElement('div');
+			wrap.id = 'sidebarUserAvatar';
+			wrap.style.cssText = 'margin-left:auto; display:flex; align-items:center; gap:8px;';
+			const circle = document.createElement('div');
+			circle.style.cssText = 'width:32px;height:32px;border-radius:50%;overflow:hidden;background:#f3f4f6;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;';
+			const img = document.createElement('img');
+			img.id = 'sidebarUserAvatarImg';
+			img.alt = 'Profilová fotka';
+			img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:none;';
+			img.loading = 'lazy';
+			img.decoding = 'async';
+			const icon = document.createElement('i');
+			icon.id = 'sidebarUserAvatarPh';
+			icon.className = 'fas fa-user';
+			icon.style.cssText = 'color:#9ca3af;font-size:14px;';
+			circle.appendChild(img);
+			circle.appendChild(icon);
+			wrap.appendChild(circle);
+			headerButtons.appendChild(wrap);
+		}
+		return wrap;
+	} catch (_) {
+		return null;
+	}
+}
+
+function applySidebarAvatar(url) {
+	const wrap = ensureSidebarAvatarNode();
+	if (!wrap) return;
+	const img = document.getElementById('sidebarUserAvatarImg');
+	const ph = document.getElementById('sidebarUserAvatarPh');
+	if (img && ph) {
+		if (url) {
+			img.src = url;
+			img.style.display = 'block';
+			ph.style.display = 'none';
+		} else {
+			img.src = '';
+			img.style.display = 'none';
+			ph.style.display = 'block';
+		}
+	}
+}
+
+function applyHeroAvatar(url) {
+	// Avatar vedle nadpisu "Můj profil" apod. – očekává <img id="profileHeroAvatar">
+	const img = document.getElementById('profileHeroAvatar');
+	if (!img) return;
+	if (url) {
+		img.src = url;
+		img.style.display = 'inline-block';
+	} else {
+		img.src = '';
+		img.style.display = 'none';
+	}
 }
 
 // Logout function
