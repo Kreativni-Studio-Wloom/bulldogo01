@@ -340,8 +340,9 @@
             <!-- User Profile Section -->
             <div class="ad-user-profile">
                 <div class="user-profile-header">
-                    <div class="user-avatar-large">
-                        <i class="fas fa-user"></i>
+                    <div class="user-avatar-large" style="width:64px; height:64px; border-radius:50%; overflow:hidden; border:1px solid #e5e7eb; background:#f3f4f6; display:flex; align-items:center; justify-content:center;">
+                        <img id="adUserAvatar" src="" alt="Profilová fotka" style="width:100%; height:100%; object-fit:cover; display:none;" loading="lazy" decoding="async">
+                        <i id="adUserAvatarPh" class="fas fa-user" style="color:#9ca3af;"></i>
                     </div>
                     <div class="user-info">
                         <h3 id="userProfileName">Jméno uživatele</h3>

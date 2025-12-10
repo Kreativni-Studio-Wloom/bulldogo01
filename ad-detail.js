@@ -216,6 +216,23 @@ function displayAdDetail() {
         }
         
         document.getElementById('adUser').textContent = displayName;
+        // Avatar (hlavička profilu u detailu inzerátu)
+        try {
+            const avatarUrl = adOwner.photoURL || adOwner.avatarUrl || '';
+            const img = document.getElementById('adUserAvatar');
+            const ph = document.getElementById('adUserAvatarPh');
+            if (img && ph) {
+                if (avatarUrl) {
+                    img.src = avatarUrl;
+                    img.style.display = 'block';
+                    ph.style.display = 'none';
+                } else {
+                    img.src = '';
+                    img.style.display = 'none';
+                    ph.style.display = 'block';
+                }
+            }
+        } catch (e) { /* noop */ }
         
         const emailEl = document.getElementById('adEmail');
         const phoneEl = document.getElementById('adPhone');

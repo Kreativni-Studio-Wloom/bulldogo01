@@ -120,7 +120,7 @@ async function igStartConversationsListener(uid) {
 			igConversations = conversations;
 			igRenderConversations();
 			
-			// Načíst jména uživatelů asynchronně
+            // Načíst jména (a avatar) uživatelů asynchronně
 			for (let conv of conversations) {
 				if (conv.peerId) {
 					try {
@@ -128,10 +128,12 @@ async function igStartConversationsListener(uid) {
 						const profileRef = doc(window.firebaseDb, 'users', conv.peerId, 'profile', 'profile');
 						const profileSnap = await getDoc(profileRef);
 						let userName = null;
+                        let avatarUrl = null;
 						
 						if (profileSnap.exists()) {
 							const profileData = profileSnap.data();
 							userName = profileData.name || profileData.email;
+                            avatarUrl = profileData.photoURL || profileData.avatarUrl || '';
 						} else {
 							// Fallback - zkusit users dokument
 							const userRef = doc(window.firebaseDb, 'users', conv.peerId);
@@ -146,6 +148,7 @@ async function igStartConversationsListener(uid) {
 							const convIndex = igConversations.findIndex(c => c.id === conv.id);
 							if (convIndex !== -1) {
 								igConversations[convIndex].title = userName;
+                                if (avatarUrl) igConversations[convIndex].avatar = avatarUrl;
 								igRenderConversations();
 							}
 						}
@@ -403,7 +406,9 @@ function igRenderConversations(list = igConversations) {
     }
 	el.innerHTML = list.map(c => `
 		<div class="ig-conv ${igSelectedConvId === c.id ? 'active' : ''}" data-id="${c.id}">
-			<div class="ig-avatar"><i class="fas fa-user"></i></div>
+			<div class="ig-avatar">
+                ${c.avatar ? `<img src="${c.avatar}" alt="Avatar" loading="lazy" decoding="async">` : `<i class="fas fa-user"></i>`}
+            </div>
 			<div>
 				<div class="ig-title">${c.title}</div>
 				<div class="ig-last">${c.last || ''}</div>
@@ -513,6 +518,8 @@ function igRenderMessages() {
 	const box = igQ('igMessages');
 	if (!box) return;
 	const msgs = igMessagesByConvId[igSelectedConvId] || [];
+    const conv = igConversations.find(c => c.id === igSelectedConvId);
+    const peerAvatar = conv?.avatar || '';
 	if (msgs.length === 0) {
 		box.innerHTML = '<div class="ig-empty">Zatím žádné zprávy – napište první.</div>';
         return;
@@ -522,7 +529,9 @@ function igRenderMessages() {
 		const imgs = (m.images || []).map(img => `<img src="${img.url}" alt="${img.name||''}" loading="lazy" decoding="async">`).join('');
         return `
 			<div class="ig-row ${mine ? 'mine' : ''}">
-				<div class="ig-avatar"><i class="fas fa-user"></i></div>
+				<div class="ig-avatar">
+                    ${!mine && peerAvatar ? `<img src="${peerAvatar}" alt="Avatar" loading="lazy" decoding="async">` : `<i class="fas fa-user"></i>`}
+                </div>
 				<div class="ig-bubble">
 					${m.text ? `<div>${m.text}</div>` : ''}
 					${imgs ? `<div class=\"ig-images\">${imgs}</div>` : ''}
