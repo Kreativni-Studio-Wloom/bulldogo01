@@ -259,10 +259,17 @@
     <script src="cities.js"></script>
     <script src="click-spark.js"></script>
     <script>
-        // Load user ratings from Firebase
+        // Load user ratings from Firebase + refresh při návratu
         document.addEventListener('DOMContentLoaded', () => {
             loadUserRatings();
             loadUserProfile();
+        });
+        window.addEventListener('pageshow', () => {
+            loadRatingsData();
+            loadUserData?.();
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) loadRatingsData();
         });
 
         // Load user profile data

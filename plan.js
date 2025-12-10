@@ -13,9 +13,18 @@ async function plan_waitForFirebase() {
 async function plan_load() {
 	await plan_waitForFirebase();
 	loadCurrentPlan_profile();
+	// Znovu načíst po inicializaci Auth (když currentUser naběhne později)
+	try {
+		if (window.firebaseAuth && typeof window.firebaseAuth.onAuthStateChanged === 'function') {
+			window.firebaseAuth.onAuthStateChanged((u) => {
+				if (u) loadCurrentPlan_profile();
+			});
+		}
+	} catch (_) {}
 }
 
 document.addEventListener('DOMContentLoaded', plan_load);
+window.addEventListener('pageshow', () => { loadCurrentPlan_profile(); });
 
 function formatDaysDiff(a, b) {
 	const ms = b.getTime() - a.getTime();

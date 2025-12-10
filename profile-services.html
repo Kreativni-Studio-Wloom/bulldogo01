@@ -213,11 +213,21 @@
     <script src="cities.js"></script>
     <script src="click-spark.js"></script>
     <script>
-        // Initialize auth state for profile page
+        // Initialize auth state for profile page + opakované načtení při návratu
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🚀 Profile services page loaded');
             loadUserServices();
             loadUserProfile();
+        });
+        window.addEventListener('pageshow', () => {
+            // pageshow se vyvolá i při návratu z BFCache – znovu natáhni data
+            loadServicesData();
+            loadUserData?.();
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                loadServicesData();
+            }
         });
 
         // Load user profile data
@@ -342,10 +352,22 @@
                 'paused': 'Pozastaveno'
             };
 
+            // Obrázek inzerátu (pokud existuje)
+            const imageUrl = (() => {
+                if (Array.isArray(ad.images) && ad.images.length > 0) {
+                    const first = ad.images[0];
+                    if (typeof first === 'string') return first;
+                    if (first && first.url) return first.url;
+                }
+                if (ad.image && typeof ad.image === 'string') return ad.image;
+                if (ad.image && ad.image.url) return ad.image.url;
+                if (ad.photo && ad.photo.url) return ad.photo.url;
+                return 'fotky/team.jpg';
+            })();
             return `
                 <div class="service-card">
-                    <div class="service-image">
-                        <i class="fas fa-${getCategoryIcon(ad.category)}"></i>
+                    <div class="service-image" style="height:180px; overflow:hidden; border-radius:10px; background:#f3f4f6; display:flex; align-items:center; justify-content:center;">
+                        <img src="${imageUrl}" alt="Náhled služby" style="width:100%; height:100%; object-fit:cover;" loading="lazy" decoding="async" onerror="this.src='fotky/team.jpg'">
                     </div>
                     <div class="service-content">
                         <h3 class="service-title">${ad.title}</h3>
