@@ -486,31 +486,35 @@ function ensureSidebarAvatarNode() {
 
 function applySidebarAvatar(url) {
 	const wrap = ensureSidebarAvatarNode();
-	if (!wrap) return;
 	const img = document.getElementById('sidebarUserAvatarImg');
 	const ph = document.getElementById('sidebarUserAvatarPh');
 	const btn = document.querySelector('.sidebar .user-profile-section .btn-profile');
 	const btnIcon = btn ? btn.querySelector('i') : null;
 	const sidebar = document.querySelector('.sidebar');
 	const isCollapsed = !!(sidebar && sidebar.classList.contains('collapsed'));
+	if (!btn) return;
 	if (img && ph) {
 		if (url) {
 			img.src = url;
-			img.style.display = 'block';
-			ph.style.display = 'none';
-			// Collapsed režim: zobraz avatar i přímo do ikony tlačítka
-			if (btnIcon) {
-				if (isCollapsed) {
-					btnIcon.style.display = '';
-					btnIcon.style.backgroundImage = `url(${url})`;
-					btnIcon.style.backgroundSize = 'cover';
-					btnIcon.style.backgroundPosition = 'center';
-					btnIcon.style.borderRadius = '50%';
-					btnIcon.style.width = '28px';
-					btnIcon.style.height = '28px';
-					btnIcon.style.color = 'transparent';
-				} else {
-					// Rozbalený – můžeme ikonu skrýt (viz avatar vedle odznaku)
+			// v otevřeném stavu ukazujeme náhled vedle textu, v zavřeném jen v ikoně tlačítka
+			if (isCollapsed) {
+				if (wrap) wrap.style.display = 'none';
+				ph.style.display = 'none';
+				// použijeme přímo pozadí tlačítka (čisté řešení v collapsed)
+				btn.style.backgroundImage = `url('${url}')`;
+				btn.style.backgroundSize = 'cover';
+				btn.style.backgroundPosition = 'center';
+				btn.style.backgroundRepeat = 'no-repeat';
+				if (btnIcon) btnIcon.style.display = 'none';
+				img.style.display = 'none';
+			} else {
+				// otevřené menu – zobrazíme mini avatar vedle labelu
+				if (wrap) wrap.style.display = 'inline-flex';
+				img.style.display = 'block';
+				ph.style.display = 'none';
+				btn.style.backgroundImage = '';
+				if (btnIcon) {
+					// schovej defaultní ikonku ve wide režimu
 					btnIcon.style.display = 'none';
 					btnIcon.style.backgroundImage = '';
 					btnIcon.style.width = '';
@@ -522,14 +526,10 @@ function applySidebarAvatar(url) {
 			img.src = '';
 			img.style.display = 'none';
 			ph.style.display = 'block';
-			// Zobrazit původní ikonu v tlačítku Profil (když profilovka není)
-			if (btnIcon) {
-				btnIcon.style.display = '';
-				btnIcon.style.backgroundImage = '';
-				btnIcon.style.width = '';
-				btnIcon.style.height = '';
-				btnIcon.style.color = '';
-			}
+			// Zobrazit původní ikonu v tlačítku Profil (když profilovka není) a zrušit background
+			if (btnIcon) btnIcon.style.display = '';
+			btn.style.backgroundImage = '';
+			if (wrap) wrap.style.display = 'none';
 		}
 	}
 }
