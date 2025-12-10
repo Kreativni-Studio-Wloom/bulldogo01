@@ -365,11 +365,11 @@ async function undoCancel() {
     }
 }
 
-// Auth modal – deleguj na globální implementaci z auth.js
-function showAuthModal(type) {
-    if (window.showAuthModal) {
-        window.showAuthModal(type || 'login');
-    }
+// Auth modal – používej přímo globální implementaci z auth.js (bez stínění názvu)
+function callAuthModal(type) {
+	if (typeof window.showAuthModal === 'function') {
+		window.showAuthModal(type || 'login');
+	}
 }
 
 function closeAuthModal() {
@@ -393,7 +393,7 @@ const switchBtnEl = document.querySelector('.auth-switch-btn');
 if (switchBtnEl) {
     switchBtnEl.addEventListener('click', function() {
         const type = this.getAttribute('data-type');
-        showAuthModal(type);
+        callAuthModal(type);
     });
 }
 
@@ -414,11 +414,11 @@ function checkAuthForChat() {
                 window.location.href = 'chat.html';
             } else {
                 // User is not logged in, show auth modal
-                showAuthModal('login');
+                callAuthModal('login');
             }
         });
     } else {
         // Firebase not loaded yet, show auth modal
-        showAuthModal('login');
+        callAuthModal('login');
     }
 }
