@@ -135,3 +135,29 @@ function updatePlanInfo() {
 	loadCurrentPlan_profile();
 	alert('Údaje o plánu aktualizovány');
 }
+
+// Otevřít Stripe Customer Portal (Firebase Stripe Extension)
+async function openStripeCustomerPortal() {
+	try {
+		await plan_waitForFirebase();
+		const user = window.firebaseAuth && window.firebaseAuth.currentUser;
+		if (!user) { showAuthModal('login'); return; }
+		if (!window.firebaseApp) { alert('Chyba: Firebase app není inicializována.'); return; }
+
+		const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js');
+		// Extension běží v us-central1
+		const functions = getFunctions(window.firebaseApp, 'us-central1');
+		const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
+		const returnUrl = window.location.origin + '/profile-plan.html';
+		const res = await createPortalLink({ returnUrl, locale: 'auto' });
+		const url = res?.data?.url;
+		if (!url) throw new Error('Stripe portal URL nebyla vrácena.');
+		window.location.assign(url);
+	} catch (e) {
+		console.error('openStripeCustomerPortal:', e);
+		alert('Nepodařilo se otevřít správu předplatného. Zkuste to prosím znovu.');
+	}
+}
+
+// export
+window.openStripeCustomerPortal = openStripeCustomerPortal;
