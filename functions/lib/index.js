@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.validateICO = void 0;
+exports.cleanupInactiveUsers = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.validateICO = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const axios_1 = __importDefault(require("axios"));
@@ -150,6 +150,154 @@ exports.validateICO = functions.region("europe-west1").https.onRequest(async (re
                 .json({ ok: false, reason: "ARES je dočasně nedostupný. Zkuste to později." });
         }
     });
+});
+
+/**
+ * Scheduled cleanup of inactive accounts.
+ * Smaže účty, které se nepřihlásily déle než 6 měsíců,
+ * včetně základních dat ve Firestore (profil, inzeráty, recenze, zprávy).
+ */
+const INACTIVITY_MONTHS = 6;
+const MILLIS_IN_DAY = 24 * 60 * 60 * 1000;
+async function deleteUserData(uid) {
+    const db = admin.firestore();
+    functions.logger.info("🧹 Deleting data for inactive user", { uid });
+    // Smazat profilový dokument users/{uid}/profile/profile
+    try {
+        await db.doc(`users/${uid}/profile/profile`).delete({ exists: true });
+    }
+    catch (err) {
+        functions.logger.debug("Profile delete skipped or failed", { uid, error: err === null || err === void 0 ? void 0 : err.message });
+    }
+    // Smazat inzeráty + jejich recenze: users/{uid}/inzeraty/*
+    try {
+        const adsSnap = await db.collection(`users/${uid}/inzeraty`).get();
+        for (const adDoc of adsSnap.docs) {
+            try {
+                // Smazat reviews subkolekci daného inzerátu (pokud existuje)
+                const reviewsSnap = await adDoc.ref.collection("reviews").get();
+                if (!reviewsSnap.empty) {
+                    const batch = db.batch();
+                    reviewsSnap.forEach((r) => batch.delete(r.ref));
+                    await batch.commit();
+                }
+            }
+            catch (err) {
+                functions.logger.debug("Ad reviews delete skipped or failed", { uid, adId: adDoc.id, error: err === null || err === void 0 ? void 0 : err.message });
+            }
+            await adDoc.ref.delete();
+        }
+    }
+    catch (err) {
+        functions.logger.debug("Ads delete skipped or failed", { uid, error: err === null || err === void 0 ? void 0 : err.message });
+    }
+    // Smazat uživatelské recenze pod users/{uid}/reviews
+    try {
+        const profileReviewsSnap = await db.collection(`users/${uid}/reviews`).get();
+        if (!profileReviewsSnap.empty) {
+            const batch = db.batch();
+            profileReviewsSnap.forEach((r) => batch.delete(r.ref));
+            await batch.commit();
+        }
+    }
+    catch (err) {
+        functions.logger.debug("User reviews subcollection delete failed", { uid, error: err === null || err === void 0 ? void 0 : err.message });
+    }
+    // Smazat kořenové recenze, kde je tento uživatel hodnocen
+    try {
+        const rootReviewsSnap = await db
+            .collection("reviews")
+            .where("reviewedUserId", "==", uid)
+            .get();
+        if (!rootReviewsSnap.empty) {
+            const batch = db.batch();
+            rootReviewsSnap.forEach((r) => batch.delete(r.ref));
+            await batch.commit();
+        }
+    }
+    catch (err) {
+        functions.logger.debug("Root reviews delete failed", { uid, error: err === null || err === void 0 ? void 0 : err.message });
+    }
+    // Smazat zprávy v kolekci messages, kde userId === uid
+    try {
+        const messagesSnap = await db
+            .collection("messages")
+            .where("userId", "==", uid)
+            .get();
+        if (!messagesSnap.empty) {
+            const batch = db.batch();
+            messagesSnap.forEach((m) => batch.delete(m.ref));
+            await batch.commit();
+        }
+    }
+    catch (err) {
+        functions.logger.debug("Messages delete failed", { uid, error: err === null || err === void 0 ? void 0 : err.message });
+    }
+    // Nakonec smazat kořenový dokument users/{uid} (pokud existuje)
+    try {
+        await db.doc(`users/${uid}`).delete({ exists: true });
+    }
+    catch (err) {
+        functions.logger.debug("Root user doc delete skipped or failed", { uid, error: err === null || err === void 0 ? void 0 : err.message });
+    }
+}
+exports.cleanupInactiveUsers = functions
+    .region("europe-west1")
+    .pubsub.schedule("0 4 * * *") // každý den ve 4 ráno
+    .timeZone("Europe/Prague")
+    .onRun(async (context) => {
+    const auth = admin.auth();
+    const cutoff = Date.now() - INACTIVITY_MONTHS * 30 * MILLIS_IN_DAY;
+    let nextPageToken = undefined;
+    let deletedCount = 0;
+    do {
+        const page = await auth.listUsers(1000, nextPageToken);
+        for (const user of page.users) {
+            var _a, _b;
+            // Použij poslední přihlášení, fallback na datum vytvoření
+            const lastSignIn = user.metadata.lastSignInTime
+                ? new Date(user.metadata.lastSignInTime).getTime()
+                : 0;
+            const created = user.metadata.creationTime
+                ? new Date(user.metadata.creationTime).getTime()
+                : 0;
+            const lastActivity = lastSignIn || created;
+            if (!lastActivity)
+                continue;
+            if (lastActivity < cutoff) {
+                functions.logger.info("🧹 Deleting inactive auth user", {
+                    uid: user.uid,
+                    email: (_a = user.email) !== null && _a !== void 0 ? _a : null,
+                    lastSignIn: (_b = user.metadata.lastSignInTime) !== null && _b !== void 0 ? _b : user.metadata.creationTime,
+                });
+                try {
+                    await deleteUserData(user.uid);
+                }
+                catch (err) {
+                    functions.logger.error("Failed to delete Firestore data for inactive user", {
+                        uid: user.uid,
+                        error: err === null || err === void 0 ? void 0 : err.message,
+                    });
+                }
+                try {
+                    await auth.deleteUser(user.uid);
+                    deletedCount += 1;
+                }
+                catch (err) {
+                    functions.logger.error("Failed to delete auth user", {
+                        uid: user.uid,
+                        error: err === null || err === void 0 ? void 0 : err.message,
+                    });
+                }
+            }
+        }
+        nextPageToken = page.pageToken;
+    } while (nextPageToken);
+    functions.logger.info("✅ cleanupInactiveUsers finished", {
+        deletedCount,
+        inactivityMonths: INACTIVITY_MONTHS,
+    });
+    return null;
 });
 // GoPay konfigurace z environment variables
 const getGoPayConfig = () => {
