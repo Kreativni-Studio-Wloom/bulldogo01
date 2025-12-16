@@ -6,6 +6,29 @@ let selectedAd = null;
 document.addEventListener('DOMContentLoaded', function() {
     initializeTopAds();
     initializeAuthState();
+    // Zpracování návratu ze Stripe Checkout (?payment=success|canceled)
+    (function handleStripeReturn(){
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const status = params.get('payment');
+            if (!status) return;
+            // Vyčistit URL
+            try { window.history.replaceState({}, document.title, window.location.pathname); } catch (_) {}
+            if (status === 'success') {
+                showSuccess();
+            } else if (status === 'canceled') {
+                alert("Platba byla zrušena.");
+                // Vrátit tlačítko do původního stavu
+                const payButton = document.querySelector('.payment-actions .btn-primary');
+                if (payButton) {
+                    payButton.innerHTML = '<i class="fas fa-credit-card"></i> Zaplatit';
+                    payButton.disabled = false;
+                }
+            }
+        } catch (e) {
+            console.error('handleStripeReturn error:', e);
+        }
+    })();
 });
 
 function initializeTopAds() {
@@ -317,9 +340,9 @@ function processPayment() {
     }
     // Mapování Stripe Price IDs (nahraďte skutečnými ID)
     const STRIPE_PRICE_IDS_TOPAD = {
-        oneday: "price_TOPAD_ONEDAY_REPLACE_ME",
-        oneweek: "price_TOPAD_ONEWEEK_REPLACE_ME",
-        onemonth: "price_TOPAD_ONEMONTH_REPLACE_ME"
+        oneday: "price_1Sf2971aQBd6ajy2d9lZVHRQ",
+        oneweek: "price_1Sf29n1aQBd6ajy20hbq5x6L",
+        onemonth: "price_1Sf2AQ1aQBd6ajy2IpqtOstt"
     };
     // Převod duration -> klíč
     let topAdKey = null;

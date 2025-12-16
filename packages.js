@@ -15,6 +15,29 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(waitAndLoadPlan, 100);
         }
     })();
+    // Zpracování návratu ze Stripe Checkout (?payment=success|canceled)
+    (function handleStripeReturn(){
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const status = params.get('payment');
+            if (!status) return;
+            // Vyčistit URL
+            try { window.history.replaceState({}, document.title, window.location.pathname); } catch (_) {}
+            if (status === 'success') {
+                showSuccess();
+            } else if (status === 'canceled') {
+                showMessage("Platba byla zrušena.", "error");
+                // Vrátit tlačítko do původního stavu
+                const payButton = document.querySelector('.payment-actions .btn-primary');
+                if (payButton) {
+                    payButton.innerHTML = '<i class="fas fa-credit-card"></i> Zaplatit';
+                    payButton.disabled = false;
+                }
+            }
+        } catch (e) {
+            console.error('handleStripeReturn error:', e);
+        }
+    })();
 });
 
 function initializePackages() {
@@ -112,8 +135,8 @@ async function processPayment() {
     }
     // Mapování Stripe Price IDs (nahraďte skutečnými ID z Stripe)
     const STRIPE_PRICE_IDS = {
-        hobby: "price_HOBBY_REPLACE_ME",
-        business: "price_BUSINESS_REPLACE_ME"
+        hobby: "price_1Sf26X1aQBd6ajy2BPS7ioTv",
+        business: "price_1Sf26s1aQBd6ajy2a5mNNLst"
     };
     const planId = window.selectedPlan.plan;
     const priceId = STRIPE_PRICE_IDS[planId];
