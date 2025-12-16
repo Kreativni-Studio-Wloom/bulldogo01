@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', function() {
     (function waitAndLoadPlan(){
         if (window.firebaseAuth && window.firebaseDb) {
             loadCurrentPlan();
+            // Po přihlášení schovej nepovolený balíček podle userType (person/company)
+            try { filterPackagesByUserType(); } catch (_) {}
         } else {
             setTimeout(waitAndLoadPlan, 100);
         }
@@ -50,6 +52,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })();
 });
+
+// Zobrazit uživateli jen "jeho" balíček:
+// - person => hobby
+// - company => business
+async function filterPackagesByUserType() {
+    try {
+        if (!window.firebaseAuth || !window.firebaseDb) return;
+        const user = window.firebaseAuth.currentUser;
+        if (!user) return;
+
+        const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const profileRef = doc(window.firebaseDb, 'users', user.uid, 'profile', 'profile');
+        const snap = await getDoc(profileRef);
+        const data = snap.exists() ? snap.data() : {};
+        const userType = (data?.userType || data?.type || '').toString().toLowerCase(); // person/company
+
+        const allowedPlan = userType === 'company' ? 'business' : 'hobby';
+
+        document.querySelectorAll('.pricing-card[data-plan]').forEach((card) => {
+            const plan = card.getAttribute('data-plan');
+            card.style.display = (plan === allowedPlan) ? '' : 'none';
+        });
+
+        // Pokud byl vybraný "jiný" plán, reset
+        if (window.selectedPlan && window.selectedPlan.plan && window.selectedPlan.plan !== allowedPlan) {
+            try { resetPackages(); } catch (_) {}
+        }
+    } catch (e) {
+        console.warn('filterPackagesByUserType failed:', e);
+    }
+}
 
 // Sync plánu do users/{uid}/profile/profile podle Stripe subscription (Firebase Extension)
 async function syncPlanFromStripeSubscription() {
