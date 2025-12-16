@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Po návratu ze Stripe: synchronizuj plán z extension (customers/{uid}/subscriptions)
                 (async () => {
                     try {
-                        await syncPlanFromStripeSubscription();
+                        await syncPlanFromStripeSubscription({ withRetry: true });
                     } catch (e) {
                         console.warn('syncPlanFromStripeSubscription failed:', e);
                     } finally {
@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 })();
             } else if (status === 'canceled') {
                 showMessage("Platba byla zrušena.", "error");
+                try { sessionStorage.removeItem('package_pending'); } catch (_) {}
                 // Vrátit tlačítko do původního stavu
                 const payButton = document.querySelector('.payment-actions .btn-primary');
                 if (payButton) {
@@ -85,22 +86,64 @@ async function filterPackagesByUserType() {
 }
 
 // Sync plánu do users/{uid}/profile/profile podle Stripe subscription (Firebase Extension)
-async function syncPlanFromStripeSubscription() {
+async function syncPlanFromStripeSubscription(options = {}) {
     // Čekej na Firebase
     if (!window.firebaseAuth || !window.firebaseDb) return;
     const user = window.firebaseAuth.currentUser;
     if (!user) return;
 
-    const { collection, query, where, getDocs, setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const { collection, query, where, getDocs, setDoc, doc, Timestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+    // 0) Který plán uživatel kupoval (uloženo před redirectem) – použijeme jako primární mapování
+    let pendingPlanId = null;
+    try {
+        const raw = sessionStorage.getItem('package_pending');
+        if (raw) {
+            const p = JSON.parse(raw);
+            if (p && (p.planId === 'hobby' || p.planId === 'business')) pendingPlanId = p.planId;
+        }
+    } catch (_) {}
 
     // Najdi aktivní nebo trial subscription
-    const subsQ = query(
+    const subsQ = () => query(
         collection(window.firebaseDb, 'customers', user.uid, 'subscriptions'),
         where('status', 'in', ['trialing', 'active'])
     );
-    const subsSnap = await getDocs(subsQ);
+
+    let subsSnap = await getDocs(subsQ());
+    if (subsSnap.empty && options.withRetry) {
+        // Stripe webhook může zapsat subscription až po chvíli – zkus to chvíli pollovat
+        const startedAt = Date.now();
+        const timeoutMs = 60_000;
+        const pollMs = 1200;
+        while (subsSnap.empty && (Date.now() - startedAt) < timeoutMs) {
+            await new Promise(r => setTimeout(r, pollMs));
+            subsSnap = await getDocs(subsQ());
+        }
+    }
+
+    // 1) Pokud subscription ještě není, aspoň okamžitě nastav badge podle pending plánu
     if (subsSnap.empty) {
-        console.warn('No active/trialing subscription found for user', user.uid);
+        if (pendingPlanId) {
+            const now = new Date();
+            const estEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            await setDoc(
+                doc(window.firebaseDb, 'users', user.uid, 'profile', 'profile'),
+                {
+                    plan: pendingPlanId,
+                    planName: pendingPlanId === 'business' ? 'Firma' : 'Hobby uživatel',
+                    planUpdatedAt: now,
+                    planPeriodStart: now,
+                    planPeriodEnd: estEnd,
+                    planDurationDays: 30,
+                    planCancelAt: null,
+                    planSource: 'stripe-pending'
+                },
+                { merge: true }
+            );
+            try { localStorage.setItem('bdg_plan', pendingPlanId); } catch (_) {}
+        }
+        console.warn('No active/trialing subscription found yet for user', user.uid);
         return;
     }
 
@@ -127,17 +170,9 @@ async function syncPlanFromStripeSubscription() {
     };
     const subPriceId = getFirstPriceId(sub);
 
-    // Mapování: porovnej s aktuálními priceId pro hobby/business (dynamicky z products/prices)
-    let hobbyPriceId = null;
-    let businessPriceId = null;
-    try {
-        hobbyPriceId = await resolveStripePriceIdForPlan('hobby');
-        businessPriceId = await resolveStripePriceIdForPlan('business');
-    } catch (_) {}
-
     let planId = null;
-    if (subPriceId && hobbyPriceId && subPriceId === hobbyPriceId) planId = 'hobby';
-    if (subPriceId && businessPriceId && subPriceId === businessPriceId) planId = 'business';
+    // Primárně použij pending (nejspolehlivější)
+    if (pendingPlanId) planId = pendingPlanId;
 
     // Fallback: podle názvu produktu v sub (pokud je tam)
     if (!planId) {
@@ -164,6 +199,7 @@ async function syncPlanFromStripeSubscription() {
             planUpdatedAt: now,
             planPeriodStart: cps,
             planPeriodEnd: cpe || null,
+            planDurationDays: cpe ? Math.max(1, Math.round((cpe.getTime() - cps.getTime()) / (24 * 60 * 60 * 1000))) : null,
             planCancelAt: null
         },
         { merge: true }
@@ -174,6 +210,7 @@ async function syncPlanFromStripeSubscription() {
     try {
         if (typeof window.applySidebarBadge === 'function') window.applySidebarBadge(planId);
     } catch (_) {}
+    try { sessionStorage.removeItem('package_pending'); } catch (_) {}
 }
 
 function initializePackages() {
@@ -322,6 +359,10 @@ async function processPayment() {
         payButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Přesměrovávám...';
         payButton.disabled = true;
     }
+    // Uložit pending plán (pro návrat ze Stripe – mapování + okamžitý badge)
+    try {
+        sessionStorage.setItem('package_pending', JSON.stringify({ planId, startedAt: Date.now() }));
+    } catch (_) {}
     try {
         const { addDoc, collection, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
         const successUrl = `${window.location.origin}/packages.html?payment=success`;
