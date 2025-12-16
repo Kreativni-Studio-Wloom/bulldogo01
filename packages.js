@@ -24,7 +24,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vyčistit URL
             try { window.history.replaceState({}, document.title, window.location.pathname); } catch (_) {}
             if (status === 'success') {
-                showSuccess();
+                // Po návratu ze Stripe: synchronizuj plán z extension (customers/{uid}/subscriptions)
+                (async () => {
+                    try {
+                        await syncPlanFromStripeSubscription();
+                    } catch (e) {
+                        console.warn('syncPlanFromStripeSubscription failed:', e);
+                    } finally {
+                        showSuccess();
+                        // Případně znovu načti manage UI
+                        try { loadCurrentPlan(); } catch (_) {}
+                    }
+                })();
             } else if (status === 'canceled') {
                 showMessage("Platba byla zrušena.", "error");
                 // Vrátit tlačítko do původního stavu
@@ -39,6 +50,98 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })();
 });
+
+// Sync plánu do users/{uid}/profile/profile podle Stripe subscription (Firebase Extension)
+async function syncPlanFromStripeSubscription() {
+    // Čekej na Firebase
+    if (!window.firebaseAuth || !window.firebaseDb) return;
+    const user = window.firebaseAuth.currentUser;
+    if (!user) return;
+
+    const { collection, query, where, getDocs, setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+    // Najdi aktivní nebo trial subscription
+    const subsQ = query(
+        collection(window.firebaseDb, 'customers', user.uid, 'subscriptions'),
+        where('status', 'in', ['trialing', 'active'])
+    );
+    const subsSnap = await getDocs(subsQ);
+    if (subsSnap.empty) {
+        console.warn('No active/trialing subscription found for user', user.uid);
+        return;
+    }
+
+    // Vezmi nejnovější (když je jich víc, vyber podle created/current_period_end)
+    const subs = subsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    subs.sort((a, b) => {
+        const aT = (a.current_period_end?.seconds || a.created?.seconds || 0);
+        const bT = (b.current_period_end?.seconds || b.created?.seconds || 0);
+        return bT - aT;
+    });
+    const sub = subs[0];
+
+    // Zjisti priceId ze subscription (extension dává buď price, nebo items/prices)
+    const getFirstPriceId = (s) => {
+        if (typeof s.price === 'string') return s.price;
+        if (s.price?.id) return s.price.id;
+        const item0 = Array.isArray(s.items) ? s.items[0] : null;
+        if (item0?.price) {
+            if (typeof item0.price === 'string') return item0.price;
+            if (item0.price.id) return item0.price.id;
+        }
+        if (Array.isArray(s.prices) && s.prices[0]) return s.prices[0];
+        return null;
+    };
+    const subPriceId = getFirstPriceId(sub);
+
+    // Mapování: porovnej s aktuálními priceId pro hobby/business (dynamicky z products/prices)
+    let hobbyPriceId = null;
+    let businessPriceId = null;
+    try {
+        hobbyPriceId = await resolveStripePriceIdForPlan('hobby');
+        businessPriceId = await resolveStripePriceIdForPlan('business');
+    } catch (_) {}
+
+    let planId = null;
+    if (subPriceId && hobbyPriceId && subPriceId === hobbyPriceId) planId = 'hobby';
+    if (subPriceId && businessPriceId && subPriceId === businessPriceId) planId = 'business';
+
+    // Fallback: podle názvu produktu v sub (pokud je tam)
+    if (!planId) {
+        const name = (sub?.product?.name || sub?.items?.[0]?.price?.product?.name || '').toString().toLowerCase();
+        if (name.includes('hobby')) planId = 'hobby';
+        if (name.includes('firma')) planId = 'business';
+    }
+    if (!planId) {
+        console.warn('Unable to map subscription to plan. subPriceId=', subPriceId);
+        return;
+    }
+
+    const planName = planId === 'business' ? 'Firma' : 'Hobby uživatel';
+    const now = new Date();
+    // Stripe timestamps bývají v sekundách
+    const cps = sub.current_period_start?.seconds ? new Date(sub.current_period_start.seconds * 1000) : now;
+    const cpe = sub.current_period_end?.seconds ? new Date(sub.current_period_end.seconds * 1000) : null;
+
+    await setDoc(
+        doc(window.firebaseDb, 'users', user.uid, 'profile', 'profile'),
+        {
+            plan: planId,
+            planName,
+            planUpdatedAt: now,
+            planPeriodStart: cps,
+            planPeriodEnd: cpe || null,
+            planCancelAt: null
+        },
+        { merge: true }
+    );
+
+    // cache + badge
+    try { localStorage.setItem('bdg_plan', planId); } catch (_) {}
+    try {
+        if (typeof window.applySidebarBadge === 'function') window.applySidebarBadge(planId);
+    } catch (_) {}
+}
 
 function initializePackages() {
     console.log('🚀 Initializing packages');
