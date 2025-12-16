@@ -768,6 +768,13 @@
     box-shadow: 0 15px 40px rgba(247, 124, 0, 0.2);
     border: 2px solid #f77c00;
 }
+
+/* Selectable ad cards (Topování – výběr inzerátu) */
+.ad-card.selectable { cursor: pointer; }
+.ad-card.selectable.selected {
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 15px 40px rgba(255, 215, 0, 0.25);
+}
 .ad-card.is-top:hover { 
     transform: none !important;
     box-shadow: 0 8px 28px rgba(255, 138, 0, 0.6), 0 0 0 2px rgba(255, 138, 0, 0.4), inset 0 0 0 1px rgba(255, 138, 0, 0.1) !important;

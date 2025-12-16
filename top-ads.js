@@ -205,39 +205,69 @@ async function loadUserAdsFromFirebase(preSelectedAdId = null) {
             return;
         }
         
-        querySnapshot.forEach((doc) => {
-            const ad = doc.data();
-            const adId = doc.id;
-            
+        const categoryNames = {
+            'home_craftsmen': 'Domácnost & Řemeslníci',
+            'auto_moto': 'Auto & Moto',
+            'garden_exterior': 'Zahrada & Exteriér',
+            'education_tutoring': 'Vzdělávání & Doučování',
+            'it_technology': 'IT & technologie',
+            'health_personal_care': 'Zdraví a Osobní péče',
+            'gastronomy_catering': 'Gastronomie & Catering',
+            'events_entertainment': 'Události & Zábava',
+            'personal_small_jobs': 'Osobní služby & drobné práce',
+            'auto_moto_transport': 'Auto - moto doprava',
+            'hobby_creative': 'Hobby & kreativní služby',
+            'law_finance_admin': 'Právo & finance & administrativa',
+            'pets': 'Domácí zvířata',
+            'specialized_custom': 'Specializované služby na přání'
+        };
+        const getImageUrl = (ad) => {
+            let imageUrl = 'fotky/team.jpg';
+            if (ad.images && ad.images.length > 0) {
+                if (ad.images[0].url) imageUrl = ad.images[0].url;
+                else if (typeof ad.images[0] === 'string') imageUrl = ad.images[0];
+            } else if (ad.image) {
+                if (ad.image.url) imageUrl = ad.image.url;
+                else if (typeof ad.image === 'string') imageUrl = ad.image;
+            }
+            return imageUrl;
+        };
+
+        querySnapshot.forEach((docSnap) => {
+            const ad = docSnap.data();
+            const adId = docSnap.id;
             console.log('📝 Processing ad:', adId, 'title:', ad.title);
-            
-            const adItem = document.createElement('div');
-            adItem.className = 'ad-item';
-            adItem.setAttribute('data-ad-id', adId);
-            adItem.innerHTML = `
-                <h3>${ad.title}</h3>
-                <p>${ad.description}</p>
-                <p><strong>Kategorie:</strong> ${ad.category}</p>
-                <p><strong>Lokace:</strong> ${ad.location}</p>
-                <p><strong>Cena:</strong> ${ad.price}</p>
+
+            const article = document.createElement('article');
+            article.className = 'ad-card selectable';
+            article.setAttribute('data-ad-id', adId);
+            article.innerHTML = `
+                <div class="ad-thumb">
+                    <img src="${getImageUrl(ad)}" alt="Inzerát" loading="lazy" decoding="async">
+                </div>
+                <div class="ad-body">
+                    <h3 class="ad-title">${ad.title || ''}</h3>
+                    <div class="ad-meta">
+                        <span>${ad.location || ''}</span> • <span>${categoryNames[ad.category] || ad.category || ''}</span>
+                    </div>
+                    ${ad.price ? `<div class="ad-meta" style="margin-top: 8px;"><strong>Cena:</strong> ${ad.price}</div>` : ''}
+                </div>
             `;
-            
-            adItem.addEventListener('click', function() {
-                selectAd({ id: adId, ...ad }, adItem);
+
+            article.addEventListener('click', function() {
+                selectAd({ id: adId, ...ad }, article);
             });
-            
-            adsList.appendChild(adItem);
-            
+
+            adsList.appendChild(article);
+
             // Mark pre-selected ad visually; auto-select when pricing preselected
             if (preSelectedAdId && adId === preSelectedAdId) {
                 console.log('✅ Found pre-selected ad, marking visually:', adId);
                 foundPreSelected = true;
-                adItem.classList.add('pre-selected');
-                adItem.innerHTML += '<div class="pre-selected-badge"><i class="fas fa-star"></i> Doporučeno</div>';
-
+                article.classList.add('pre-selected');
                 // Pokud je předvybraná délka/price (selectedPricing), rovnou vyber a přejdi na platbu
                 if (selectedPricing && typeof selectedPricing.duration === 'number') {
-                    try { selectAd({ id: adId, ...ad }, adItem); } catch (_) {}
+                    try { selectAd({ id: adId, ...ad }, article); } catch (_) {}
                 }
             }
         });
@@ -268,7 +298,7 @@ function selectAd(ad, element) {
     console.log('🎯 Selecting ad:', ad.id, 'title:', ad.title);
     
     // Remove previous selection
-    document.querySelectorAll('.ad-item').forEach(item => {
+    document.querySelectorAll('.ad-card.selectable').forEach(item => {
         item.classList.remove('selected');
     });
     
