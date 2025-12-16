@@ -187,7 +187,7 @@ async function processPayment() {
         payButton.disabled = true;
     }
     try {
-        const { addDoc, collection, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const { addDoc, collection, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
         const successUrl = `${window.location.origin}/packages.html?payment=success`;
         const cancelUrl = `${window.location.origin}/packages.html?payment=canceled`;
         // Připravit data pro Checkout Session – Stripe (Firebase Extension)
@@ -206,26 +206,38 @@ async function processPayment() {
             collection(window.firebaseDb, 'customers', user.uid, 'checkout_sessions'),
             sessionData
         );
-        // Poslouchat na vytvoření URL a přesměrovat
-        const unsubscribe = onSnapshot(checkoutRef, (snap) => {
-            const data = snap.data() || {};
-            const url = data.url;
-            const error = data.error;
-            if (error) {
-                console.error('Stripe checkout error:', error);
-                showMessage("Chyba při vytváření platby. Zkuste to prosím znovu.", "error");
-                if (payButton && originalText) {
-                    payButton.innerHTML = originalText;
-                    payButton.disabled = false;
+        // Čekat na URL bez realtime listeneru (Safari často blokuje Listen/channel)
+        const startedAt = Date.now();
+        const timeoutMs = 60_000;
+        const pollMs = 700;
+        const poll = async () => {
+            try {
+                const snap = await getDoc(checkoutRef);
+                const data = snap.data() || {};
+                const url = data.url;
+                const error = data.error;
+                if (error) {
+                    console.error('Stripe checkout error:', error);
+                    showMessage(`Chyba při vytváření platby: ${error.message || 'zkuste to prosím znovu.'}`, "error");
+                    if (payButton && originalText) {
+                        payButton.innerHTML = originalText;
+                        payButton.disabled = false;
+                    }
+                    return true; // stop
                 }
-                unsubscribe();
-                return;
+                if (url) {
+                    window.location.assign(url);
+                    return true; // stop
+                }
+            } catch (e) {
+                console.error('Stripe checkout poll error:', e);
             }
-            if (url) {
-                unsubscribe();
-                window.location.assign(url);
-            }
-        });
+            return (Date.now() - startedAt) > timeoutMs;
+        };
+        const t = setInterval(async () => {
+            const stop = await poll();
+            if (stop) clearInterval(t);
+        }, pollMs);
     } catch (error) {
         console.error('❌ Stripe checkout error:', error);
         showMessage("Nepodařilo se vytvořit platbu. Zkuste to prosím znovu.", "error");

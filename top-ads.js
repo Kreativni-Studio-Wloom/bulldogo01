@@ -404,7 +404,7 @@ async function processPayment() {
     // Vytvořit Stripe Checkout Session přes Firebase Extension
     (async () => {
         try {
-            const { addDoc, collection, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const { addDoc, collection, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
             const successUrl = `${window.location.origin}/top-ads.html?payment=success`;
             const cancelUrl = `${window.location.origin}/top-ads.html?payment=canceled`;
             const checkoutRef = await addDoc(
@@ -417,25 +417,38 @@ async function processPayment() {
                     metadata: { adId: selectedAd.id, duration: selectedPricing.duration }
                 }
             );
-            const unsubscribe = onSnapshot(checkoutRef, (snap) => {
-                const data = snap.data() || {};
-                const url = data.url;
-                const error = data.error;
-                if (error) {
-                    console.error('Stripe checkout error:', error);
-                    alert("Chyba při vytváření platby. Zkuste to prosím znovu.");
-                    if (payButton && originalText) {
-                        payButton.innerHTML = '<i class="fas fa-credit-card"></i> Zaplatit';
-                        payButton.disabled = false;
+            // Čekat na URL bez realtime listeneru (Safari často blokuje Listen/channel)
+            const startedAt = Date.now();
+            const timeoutMs = 60_000;
+            const pollMs = 700;
+            const poll = async () => {
+                try {
+                    const snap = await getDoc(checkoutRef);
+                    const data = snap.data() || {};
+                    const url = data.url;
+                    const error = data.error;
+                    if (error) {
+                        console.error('Stripe checkout error:', error);
+                        alert(`Chyba při vytváření platby: ${error.message || 'zkuste to prosím znovu.'}`);
+                        if (payButton && originalText) {
+                            payButton.innerHTML = '<i class="fas fa-credit-card"></i> Zaplatit';
+                            payButton.disabled = false;
+                        }
+                        return true;
                     }
-                    unsubscribe();
-                    return;
+                    if (url) {
+                        window.location.assign(url);
+                        return true;
+                    }
+                } catch (e) {
+                    console.error('Stripe checkout poll error:', e);
                 }
-                if (url) {
-                    unsubscribe();
-                    window.location.assign(url);
-                }
-            });
+                return (Date.now() - startedAt) > timeoutMs;
+            };
+            const t = setInterval(async () => {
+                const stop = await poll();
+                if (stop) clearInterval(t);
+            }, pollMs);
         } catch (error) {
             console.error('❌ Stripe checkout error:', error);
             alert("Nepodařilo se vytvořit platbu. Zkuste to prosím znovu.");
