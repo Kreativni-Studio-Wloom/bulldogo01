@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (status === 'canceled') {
                 alert("Platba byla zrušena.");
                 try { sessionStorage.removeItem('topad_pending'); } catch (_) {}
+                try { localStorage.removeItem('topad_pending'); } catch (_) {}
                 // Vrátit tlačítko do původního stavu
                 const payButton = document.querySelector('.payment-actions .btn-primary');
                 if (payButton) {
@@ -41,14 +42,46 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
 });
 
+// Po návratu ze Stripe může být Auth ještě neinicializovaná (currentUser === null).
+// Tohle čeká na Firebase + přihlášeného uživatele a teprve pak provede aktivaci.
+async function waitForFirebaseAndUser(timeoutMs = 15000) {
+    const started = Date.now();
+    // 1) počkej na firebase init
+    while (!(window.firebaseAuth && window.firebaseDb)) {
+        if (Date.now() - started > timeoutMs) throw new Error('Firebase init timeout');
+        await new Promise(r => setTimeout(r, 100));
+    }
+    // 2) počkej na auth state (uživatel může naskočit až po chvíli)
+    return await new Promise((resolve, reject) => {
+        let done = false;
+        const t = setTimeout(() => {
+            if (done) return;
+            done = true;
+            reject(new Error('Auth timeout'));
+        }, Math.max(1000, timeoutMs - (Date.now() - started)));
+        const unsub = window.firebaseAuth.onAuthStateChanged((u) => {
+            if (u && !done) {
+                done = true;
+                clearTimeout(t);
+                try { unsub(); } catch (_) {}
+                resolve(u);
+            }
+        });
+    });
+}
+
 // Aktivace TOP po návratu ze Stripe podle uloženého "pending" stavu.
 async function activateTopFromPending() {
-    if (!window.firebaseAuth || !window.firebaseDb) return;
-    const user = window.firebaseAuth.currentUser;
-    if (!user) return;
+    let user = null;
+    try {
+        user = await waitForFirebaseAndUser(20000);
+    } catch (e) {
+        console.warn('activateTopFromPending: auth/firebase not ready:', e);
+        return;
+    }
     let pending = null;
     try {
-        const raw = sessionStorage.getItem('topad_pending');
+        const raw = sessionStorage.getItem('topad_pending') || localStorage.getItem('topad_pending');
         if (raw) pending = JSON.parse(raw);
     } catch (_) {}
     if (!pending || !pending.adId || !pending.durationDays) {
@@ -72,6 +105,7 @@ async function activateTopFromPending() {
         { merge: true }
     );
     try { sessionStorage.removeItem('topad_pending'); } catch (_) {}
+    try { localStorage.removeItem('topad_pending'); } catch (_) {}
 }
 
 function initializeTopAds() {
@@ -476,11 +510,14 @@ async function processPayment() {
     }
     // Uložit pending aktivaci TOP (pro návrat ze Stripe)
     try {
-        sessionStorage.setItem('topad_pending', JSON.stringify({
+        const pending = {
             adId: selectedAd.id,
             durationDays: selectedPricing.duration,
             startedAt: Date.now()
-        }));
+        };
+        sessionStorage.setItem('topad_pending', JSON.stringify(pending));
+        // localStorage jako fallback (např. když se návrat otevře v jiném tabu)
+        localStorage.setItem('topad_pending', JSON.stringify(pending));
     } catch (_) {}
     // Vytvořit Stripe Checkout Session přes Firebase Extension
     (async () => {
@@ -498,6 +535,16 @@ async function processPayment() {
                     metadata: { adId: selectedAd.id, duration: selectedPricing.duration }
                 }
             );
+            // doplň checkoutSessionId do pending pro případné budoucí dohledání
+            try {
+                const raw = sessionStorage.getItem('topad_pending') || localStorage.getItem('topad_pending');
+                const p = raw ? JSON.parse(raw) : null;
+                if (p && !p.checkoutSessionId) {
+                    p.checkoutSessionId = checkoutRef.id;
+                    sessionStorage.setItem('topad_pending', JSON.stringify(p));
+                    localStorage.setItem('topad_pending', JSON.stringify(p));
+                }
+            } catch (_) {}
             // Čekat na URL bez realtime listeneru (Safari často blokuje Listen/channel)
             const startedAt = Date.now();
             const timeoutMs = 60_000;
