@@ -333,8 +333,8 @@ async function processPayment() {
             success_url: successUrl,
             cancel_url: cancelUrl
         };
-        // Nastavit 30denní trial pro Hobby
-        if (planId === 'hobby') {
+        // Nastavit 30denní trial pro Hobby i Firmu
+        if (planId === 'hobby' || planId === 'business') {
             sessionData.trial_period_days = 30;
         }
         // Vytvořit Checkout Session dokument
