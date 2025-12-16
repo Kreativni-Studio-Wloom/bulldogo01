@@ -5226,6 +5226,7 @@ select.search-input::-ms-expand { /* skrytí defaultní šipky v IE/Edge */
     flex: 1 1 0;
     justify-content: center;
     text-align: center;
+    min-height: 52px;
 }
 
 .btn-save:hover {
