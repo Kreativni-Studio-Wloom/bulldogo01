@@ -244,7 +244,6 @@
                         <strong>Částka:</strong> ${amount} ${gopayParams.currency || 'CZK'}<br>
                         <strong>Objednávka:</strong> ${gopayParams.orderNumber || 'N/A'}<br>
                         <strong>Produkt:</strong> ${gopayParams.productName || 'N/A'}<br>
-                        ${gopayParams.paymentMethod ? `<strong>Způsob platby:</strong> ${gopayParams.paymentMethod}<br>` : ''}
                     `;
                     
                     // Získat orderNumber z URL nebo sessionStorage
