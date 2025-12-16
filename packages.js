@@ -294,17 +294,17 @@ function updatePaymentSummary() {
     let planTitle = '';
     let planType = '';
     let price = 0;
-    switch(selectedPlan.plan) {
-        case 'hobby':
-            planTitle = 'Hobby uživatel';
-            planType = 'První měsíc zdarma, poté 49 Kč/měsíc';
-            price = 49;
-            break;
-        case 'business':
-            planTitle = 'Firma';
-            planType = 'Měsíční předplatné';
-            price = 149;
-            break;
+        switch(selectedPlan.plan) {
+            case 'hobby':
+                planTitle = 'Hobby uživatel';
+                planType = 'První měsíc zdarma, poté 49 Kč/měsíc';
+                price = 49;
+                break;
+            case 'business':
+                planTitle = 'Firma';
+                planType = 'Měsíční předplatné';
+                price = 149;
+                break;
     }
     
     document.getElementById('selectedPlanTitle').textContent = planTitle;
@@ -377,7 +377,7 @@ async function processPayment() {
         return;
     }
     // UI: loading
-    const payButton = document.querySelector('.payment-actions .btn-primary');
+        const payButton = document.querySelector('.payment-actions .btn-primary');
     const originalText = payButton ? payButton.innerHTML : null;
     if (payButton) {
         payButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Přesměrovávám...';

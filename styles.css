@@ -4693,6 +4693,45 @@ select.search-input::-ms-expand { /* skrytí defaultní šipky v IE/Edge */
     text-align: left;
 }
 
+.services-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.services-header .services-title {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.btn-add-service {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 999px;
+    border: none;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+    color: #111827;
+    box-shadow: 0 10px 25px rgba(247, 124, 0, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.btn-add-service i {
+    font-size: 0.95rem;
+}
+
+.btn-add-service:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 35px rgba(247, 124, 0, 0.45);
+    filter: brightness(1.05);
+}
+
 /* Ratings Page Styles */
 .ratings-content {
     text-align: left;

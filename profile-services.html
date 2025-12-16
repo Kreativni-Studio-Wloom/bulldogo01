@@ -278,12 +278,33 @@
                         console.log('✅ Firebase available, loading data');
                         clearInterval(checkFirebase);
                         loadUserData();
-                        
-                        // Listen for auth state changes
+
+                        // Listen for auth state changes and always refresh services + stats
                         window.firebaseAuth.onAuthStateChanged((user) => {
-                            console.log('👤 Auth state changed on profile page:', user ? user.email : 'Not logged in');
+                            console.log('👤 Auth state changed on profile services page:', user ? user.email : 'Not logged in');
                             if (user) {
+                                // Refresh profile header + stats + services when user is available
                                 loadUserData();
+                                loadServicesData();
+                            } else {
+                                // When user logs out, clear services grid and reset stats
+                                const servicesContainer = document.querySelector('.services-grid');
+                                if (servicesContainer) {
+                                    servicesContainer.innerHTML = `
+                                        <div class="no-services">
+                                            <i class="fas fa-lock"></i>
+                                            <h3>Pro zobrazení vašich služeb se musíte přihlásit</h3>
+                                            <p>Přihlaste se prosím a zkuste to znovu.</p>
+                                            <div class="no-services-actions">
+                                                <button class="btn btn-primary" onclick="showAuthModal('login')">Přihlásit se</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                                if (typeof updateStatistics === 'function') {
+                                    // Reset counters to 0
+                                    updateStatistics([]);
+                                }
                             }
                         });
                     }
