@@ -5216,6 +5216,18 @@ select.search-input::-ms-expand { /* skrytí defaultní šipky v IE/Edge */
     align-self: flex-start;
 }
 
+/* Avatar photo actions – make buttons same width */
+.profile-photo-actions {
+    max-width: 520px;
+    width: 100%;
+}
+
+.profile-photo-actions .btn-save {
+    flex: 1 1 0;
+    justify-content: center;
+    text-align: center;
+}
+
 .btn-save:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(247, 124, 0, 0.3);

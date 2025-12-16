@@ -207,8 +207,8 @@
                                 <img id="profilePhotoPreview" src="" alt="Profilová fotka" style="width:100%; height:100%; object-fit:cover; display:none;" loading="lazy" decoding="async">
                                 <i id="profilePhotoPlaceholder" class="fas fa-user" style="color:#9ca3af; font-size:34px;"></i>
                             </div>
-                            <div style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; width:100%;">
-                                <label for="profilePhotoInput" class="btn-save" style="cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
+                            <div class="profile-photo-actions" style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; width:100%;">
+                                <label for="profilePhotoInput" class="btn-save" style="cursor:pointer; align-items:center; gap:8px; white-space:nowrap;">
                                     <i class="fas fa-image"></i>
                                     Vybrat fotku
                                 </label>
@@ -1020,6 +1020,9 @@ Prosím kontaktujte podporu.
                 
                 // Načíst data uživatele (automaticky prefilled)
                 await loadUserSettings();
+
+                // Po prvním načtení nastavení hned načíst i statistiky (aktivní inzeráty + hodnocení)
+                await loadUserData();
                 
                 // Nastavit real-time listener
                 setupRealtimeListener();
@@ -1046,6 +1049,8 @@ Prosím kontaktujte podporu.
                 if (isInitialized) {
                     console.log('🔄 Automatické načítání dat při focus');
                     loadUserSettings();
+                    // Aktualizovat také statistiky (aktivní inzeráty + hodnocení)
+                    loadUserData();
                 }
             });
 
@@ -1054,6 +1059,7 @@ Prosím kontaktujte podporu.
                 if (!document.hidden && isInitialized) {
                     console.log('🔄 Automatické načítání dat při návratu na stránku');
                     loadUserSettings();
+                    loadUserData();
                 }
             });
 
@@ -1063,6 +1069,7 @@ Prosím kontaktujte podporu.
                     if (user && isInitialized) {
                         console.log('🔄 Automatické načítání dat při změně auth stavu');
                         loadUserSettings();
+                        loadUserData();
                     }
                 });
             }
@@ -1072,6 +1079,7 @@ Prosím kontaktujte podporu.
                 if (!document.hidden && isInitialized) {
                     console.log('🔄 Automatické načítání dat (30s interval)');
                     loadUserSettings();
+                    loadUserData();
                 }
             }, 30000);
         }
