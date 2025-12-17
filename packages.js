@@ -7,6 +7,7 @@ window.selectedPlan = selectedPlan;
 document.addEventListener('DOMContentLoaded', function() {
     initializePackages();
     initializeAuthState();
+    setupPackagesUserTypeFilter();
     // Po načtení stránky vyčkej na Firebase a načti stav balíčku
     (function waitAndLoadPlan(){
         if (window.firebaseAuth && window.firebaseDb) {
@@ -54,6 +55,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })();
 });
+
+// Spolehlivé filtrování balíčků až po vyřešení auth state (currentUser != null).
+function setupPackagesUserTypeFilter() {
+    (async () => {
+        try {
+            // Počkat na Firebase Auth (max ~15s jako u ostatních částí)
+            const startedAt = Date.now();
+            while (!window.firebaseAuth && (Date.now() - startedAt) < 15000) {
+                await new Promise(r => setTimeout(r, 100));
+            }
+            if (!window.firebaseAuth) return;
+
+            const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+            onAuthStateChanged(window.firebaseAuth, async (user) => {
+                if (!user) {
+                    // Nepřihlášený: ukaž oba
+                    document.querySelectorAll('.pricing-card[data-plan]').forEach((card) => {
+                        card.style.display = '';
+                    });
+                    return;
+                }
+
+                // Přihlášený: aplikuj filtr + krátký retry (kvůli pomalému dočtení profilu)
+                for (let i = 0; i < 10; i++) {
+                    await filterPackagesByUserType();
+                    // Pokud se podařilo něco schovat, přestaň
+                    const visible = Array.from(document.querySelectorAll('.pricing-card[data-plan]'))
+                        .filter((c) => c.style.display !== 'none');
+                    if (visible.length <= 1) break;
+                    await new Promise(r => setTimeout(r, 200));
+                }
+            });
+        } catch (e) {
+            console.warn('setupPackagesUserTypeFilter failed:', e);
+        }
+    })();
+}
 
 // Počká, než bude k dispozici Firebase Auth + přihlášený user.
 async function waitForSignedInUser(timeoutMs = 15000) {
