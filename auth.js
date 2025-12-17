@@ -1018,14 +1018,14 @@ function createAuthModal() {
                 <!-- Formulář pro firmu -->
                 <div class="company-form" style="display: none;">
                     <div class="form-group">
-                        <input type="text" id="companyName" name="companyName" placeholder="Název firmy" required>
-                    </div>
-                    <div class="form-group">
                         <div style="display:flex; gap:8px; align-items:center;">
                             <input type="text" id="ico" name="ico" placeholder="IČ" required style="flex:1;">
                             <button type="button" id="btnVerifyICO" class="btn">Ověřit</button>
                         </div>
                         <div id="icoStatus" style="font-size:13px; margin-top:4px; color:#6b7280;"></div>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="companyName" name="companyName" placeholder="Název firmy" required>
                     </div>
                     <!-- Telefon a e‑mail pro firmu se vyplňují níže ve společných polích -->
                 </div>
