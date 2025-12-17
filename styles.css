@@ -2531,6 +2531,11 @@ body.chat-page .sidebar { display: block; }
 body.chat-page .mobile-menu-btn, body.chat-page .sidebar-toggle-btn { display: none; }
 body.chat-page .main-content { margin-left: 70px; min-height: 100vh; }
 body.chat-page.sidebar-collapsed .main-content { margin-left: 0; }
+/* Chat musí dosáhnout až dolů – nepoužívat odečty (ty dělaly prázdný pás dole) */
+body.chat-page .ig-chat { height: 100vh; height: 100dvh; }
+@media (max-width: 900px) {
+  body.chat-page .ig-chat { height: 100vh; height: 100dvh; }
+}
 body.chat-page .instagram-chat-container { height: 100vh; width: 100%; position: relative; display: flex; }
 body.chat-page .chat-main,
 body.chat-page .chat-active,
