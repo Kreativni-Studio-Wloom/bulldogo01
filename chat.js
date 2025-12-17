@@ -14,6 +14,7 @@ let igSelectedConvId = null;              // aktivní konverzace
 let igSelectedFiles = [];                 // vybrané obrázky pro aktuální zprávu
 let igUnsubConvs = null;                  // odpojení listeneru konverzací
 let igUnsubMsgs = null;                   // odpojení listeneru zpráv
+let igPeerPhone = '';                     // telefon protistrany (pro tel:)
 
 /** Pomocné **/
 function igFormatTime(date) {
@@ -66,6 +67,25 @@ function igInitUI() {
 	if (openProfile) openProfile.addEventListener('click', () => {
 		igOpenPeerProfile();
 	});
+	const peerHeader = igQ('igPeerHeader');
+	if (peerHeader) {
+		peerHeader.addEventListener('click', () => igOpenPeerProfile());
+		peerHeader.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				igOpenPeerProfile();
+			}
+		});
+	}
+	const callBtn = igQ('igCallPhone');
+	if (callBtn) {
+		callBtn.addEventListener('click', () => {
+			if (!igPeerPhone) return;
+			const normalized = String(igPeerPhone).replace(/[^\d+]/g, '');
+			if (!normalized) return;
+			window.location.href = `tel:${normalized}`;
+		});
+	}
 
 	const input = igQ('igText');
 	const send = igQ('igSend');
@@ -438,9 +458,11 @@ async function igOpenConversation(convId, peerUserIdFromUrl = null) {
 	// hlavička
 	const conv = igConversations.find(c => c.id === convId);
 	const peerUserId = peerUserIdFromUrl || conv?.peerId || null;
+	igPeerPhone = '';
 	
 	// Načíst jméno uživatele z profilu
 	let peerName = conv?.title || 'Konverzace';
+	let peerAvatarUrl = conv?.avatar || '';
 	if (peerUserId && window.firebaseDb) {
 		try {
 			const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
@@ -449,6 +471,8 @@ async function igOpenConversation(convId, peerUserIdFromUrl = null) {
 			if (profileSnap.exists()) {
 				const profileData = profileSnap.data();
 				peerName = profileData.name || profileData.email || 'Uživatel';
+				peerAvatarUrl = profileData.photoURL || profileData.avatarUrl || peerAvatarUrl || '';
+				igPeerPhone = profileData.phone || profileData.telefon || profileData.phoneNumber || '';
 				console.log('✅ Načteno jméno uživatele:', peerName);
 			} else {
 				// Fallback - použít email z users dokumentu
@@ -466,6 +490,19 @@ async function igOpenConversation(convId, peerUserIdFromUrl = null) {
 	
 	igQ('igPeerName').textContent = peerName;
 	igQ('igPeerStatus').textContent = 'Online';
+	// Avatar v hlavičce
+	const peerAvatarEl = igQ('igPeerAvatar');
+	if (peerAvatarEl) {
+		peerAvatarEl.innerHTML = peerAvatarUrl
+			? `<img src="${peerAvatarUrl}" alt="Avatar" loading="lazy" decoding="async">`
+			: `<i class="fas fa-user"></i>`;
+	}
+	// Telefonní tlačítko (tel:)
+	const callBtn = igQ('igCallPhone');
+	if (callBtn) {
+		callBtn.disabled = !igPeerPhone;
+		callBtn.title = igPeerPhone ? `Zavolat: ${igPeerPhone}` : 'Telefon není uveden';
+	}
 	
 	console.log('🔍 igOpenConversation:', {
 		convId,
