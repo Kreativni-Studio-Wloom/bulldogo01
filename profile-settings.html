@@ -1146,9 +1146,11 @@ Prosím kontaktujte podporu.
                 const profileSnap = await getDoc(profileRef);
                 const rootRef = doc(window.firebaseDb, 'users', currentUser.uid);
                 let rootUserType = '';
+                let rootEmail = '';
                 try {
                     const rootSnap = await getDoc(rootRef);
                     rootUserType = normalizeUserType(rootSnap.exists() ? (rootSnap.data()?.userType || rootSnap.data()?.type) : '');
+                    rootEmail = rootSnap.exists() ? (rootSnap.data()?.email || '') : '';
                 } catch (e) { /* noop */ }
                 
                 let userProfile = null;
@@ -1184,6 +1186,14 @@ Prosím kontaktujte podporu.
                     // Uložit základní profil
                     await setDoc(profileRef, userProfile, { merge: true });
                     console.log('✅ Automaticky vytvořen základní profil:', userProfile);
+                }
+
+                // Email fallback: někdy je v root users/{uid} nebo jen v Auth profilu
+                const resolvedEmail = (userProfile?.email || '').toString().trim() || (currentUser.email || '').toString().trim() || (rootEmail || '').toString().trim();
+                if (userProfile && (!userProfile.email || !String(userProfile.email).trim()) && resolvedEmail) {
+                    try { await setDoc(profileRef, { email: resolvedEmail }, { merge: true }); } catch (e) { /* noop */ }
+                    // udržet i v paměti pro updateFormFields
+                    try { userProfile.email = resolvedEmail; } catch (e) { /* noop */ }
                 }
 
                 // Uložit/propagovat userType do UI (Hobby vs Firma)
@@ -1269,10 +1279,13 @@ Prosím kontaktujte podporu.
             applyUserTypeToSettingsUI(resolvedType);
             
             // Osobní informace - vždy prefilled
+            const authEmail = (window.firebaseAuth?.currentUser?.email || '').toString().trim();
+            const profileEmail = (userProfile?.email || '').toString().trim();
+            const emailValue = profileEmail || authEmail || '';
             const personalFields = {
                 'firstName': userProfile?.firstName || '',
                 'lastName': userProfile?.lastName || '',
-                'email': userProfile?.email || '',
+                'email': emailValue,
                 'phone': userProfile?.phone || '+420',
                 'city': userProfile?.city || '',
                 'bio': userProfile?.bio || ''
