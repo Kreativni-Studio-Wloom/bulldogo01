@@ -31,6 +31,28 @@ function igNotify(message, type = 'info') {
 		}
 	} catch (_) {}
 }
+function igExplainFirestoreBlock(err) {
+	const msg = (err && (err.message || err.toString())) ? String(err.message || err.toString()) : '';
+	const code = err?.code ? String(err.code) : '';
+	// Safari často hlásí "due to access control checks" (CORS) u Firestore Listen.
+	const looksLikeCors =
+		/access control checks/i.test(msg) ||
+		/cors/i.test(msg) ||
+		/failed to fetch/i.test(msg) ||
+		/Load failed/i.test(msg) ||
+		/XMLHttpRequest cannot load/i.test(msg);
+	if (looksLikeCors) {
+		igNotify('Firestore je blokovaný (CORS) na této doméně. Pokud testujete na Vercel, je potřeba povolit doménu/API key (nebo použít Firebase Hosting).', 'error');
+		return;
+	}
+	if (code === 'permission-denied') {
+		igNotify('Chybí oprávnění Firestore (permission-denied). Zkontrolujte publikované Firestore Rules ve Firebase Console.', 'error');
+		return;
+	}
+	if (code) {
+		igNotify(`Chat: chyba Firestore (${code}). Otevřete konzoli pro detail.`, 'error');
+	}
+}
 async function igWaitForFirebase(maxMs = 3000) {
 	const start = Date.now();
 	while (Date.now() - start < maxMs) {
@@ -213,9 +235,13 @@ async function igStartConversationsListener(uid) {
 					}
 				}
 			}
-		}, (err) => console.warn('Chats listener error:', err));
+		}, (err) => {
+			console.warn('Chats listener error:', err);
+			igExplainFirestoreBlock(err);
+		});
 	} catch (e) {
 		console.warn('igStartConversationsListener failed', e);
+		igExplainFirestoreBlock(e);
 	}
 }
 
@@ -305,6 +331,7 @@ async function igEnsureChatWith(peerUid, listingId, listingTitle) {
 		return chatId;
 	} catch (e) {
 		console.warn('igEnsureChatWith failed', e);
+		igExplainFirestoreBlock(e);
 		return null;
 	}
 }
@@ -679,9 +706,13 @@ async function igStartMessagesListener(chatId) {
 			});
 			igMessagesByConvId[chatId] = list;
 			if (igSelectedConvId === chatId) igRenderMessages();
-		}, (err) => console.warn('Messages listener error', err));
+		}, (err) => {
+			console.warn('Messages listener error', err);
+			igExplainFirestoreBlock(err);
+		});
 	} catch (e) {
 		console.warn('igStartMessagesListener failed', e);
+		igExplainFirestoreBlock(e);
 	}
 }
 
