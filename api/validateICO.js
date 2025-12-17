@@ -9,10 +9,12 @@ export default async function handler(req, res) {
   const isAllowed =
     allowOrigins.includes(origin) || /\.vercel\.app$/.test(origin || '');
 
-  res.setHeader(
-    'Access-Control-Allow-Origin',
-    isAllowed ? origin : 'https://bulldogo.cz'
-  );
+  // Allow all Vercel preview deployments
+  if (isAllowed && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://bulldogo.cz');
+  }
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
