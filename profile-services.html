@@ -498,7 +498,7 @@
             // proto bereme aktuální stav přímo z Firestore.
             try {
                 if (!window.firebaseAuth?.currentUser) {
-                    showMessage('Musíte být přihlášeni!', 'error');
+                    notify('Musíte být přihlášeni!', 'error');
                     return;
                 }
                 window.__toggleServiceBusy = window.__toggleServiceBusy || {};
@@ -514,11 +514,11 @@
                 const newStatus = actualStatus === 'active' ? 'inactive' : 'active';
                 await updateDoc(ref, { status: newStatus, updatedAt: new Date() });
 
-                showMessage(`Služba byla ${newStatus === 'active' ? 'aktivována' : 'deaktivována'}!`, 'success');
+                notify(`Služba byla ${newStatus === 'active' ? 'aktivována' : 'deaktivována'}!`, 'success');
                 loadServicesData(); // Reload data
             } catch (error) {
                 console.error('Chyba při změně stavu služby:', error);
-                showMessage('Nepodařilo se změnit stav služby.', 'error');
+                notify('Nepodařilo se změnit stav služby.', 'error');
             } finally {
                 try { if (window.__toggleServiceBusy) window.__toggleServiceBusy[serviceId] = false; } catch (_) {}
             }
@@ -529,19 +529,19 @@
                 if (!confirm('Opravdu chcete smazat tento inzerát? Tuto akci nelze vrátit.')) return;
                 const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
                 await deleteDoc(doc(window.firebaseDb, 'users', window.firebaseAuth.currentUser.uid, 'inzeraty', serviceId));
-                showMessage('Služba byla smazána.', 'success');
+                notify('Služba byla smazána.', 'success');
                 loadServicesData();
             } catch (error) {
                 console.error('Chyba při mazání služby:', error);
-                showMessage('Nepodařilo se smazat službu.', 'error');
+                notify('Nepodařilo se smazat službu.', 'error');
             }
         }
 
-        // Zachovat stejný vzhled oznámení jako po přihlášení (auth.js)
-        const __authShowMessage = window.showMessage;
-        function showMessage(message, type = 'info', options = {}) {
-            if (typeof __authShowMessage === 'function' && __authShowMessage !== showMessage) {
-                return __authShowMessage(message, type, options);
+        // Oznámení: použij stejné toast oznámení jako auth.js (přihlášení), fallback jen když auth.js není dostupný
+        function notify(message, type = 'info', options = {}) {
+            const globalShow = window.showMessage;
+            if (typeof globalShow === 'function') {
+                return globalShow(message, type, options);
             }
             // Fallback (kdyby auth.js nebyl načten)
             const messageDiv = document.createElement('div');
