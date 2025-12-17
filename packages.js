@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePackages();
     initializeAuthState();
     setupPackagesUserTypeFilter();
+    try { updatePackagesPricingLayout(); } catch (_) {}
     // Po načtení stránky vyčkej na Firebase a načti stav balíčku
     (function waitAndLoadPlan(){
         if (window.firebaseAuth && window.firebaseDb) {
@@ -56,6 +57,14 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
 });
 
+function updatePackagesPricingLayout() {
+    const grid = document.querySelector('.pricing-grid');
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll('.pricing-card[data-plan]'));
+    const visible = cards.filter((c) => c.style.display !== 'none');
+    grid.classList.toggle('single-plan', visible.length === 1);
+}
+
 // Spolehlivé filtrování balíčků až po vyřešení auth state (currentUser != null).
 function setupPackagesUserTypeFilter() {
     (async () => {
@@ -74,6 +83,7 @@ function setupPackagesUserTypeFilter() {
                     document.querySelectorAll('.pricing-card[data-plan]').forEach((card) => {
                         card.style.display = '';
                     });
+                    try { updatePackagesPricingLayout(); } catch (_) {}
                     return;
                 }
 
@@ -86,6 +96,7 @@ function setupPackagesUserTypeFilter() {
                     if (visible.length <= 1) break;
                     await new Promise(r => setTimeout(r, 200));
                 }
+                try { updatePackagesPricingLayout(); } catch (_) {}
             });
         } catch (e) {
             console.warn('setupPackagesUserTypeFilter failed:', e);
@@ -147,6 +158,7 @@ async function filterPackagesByUserType() {
             const plan = card.getAttribute('data-plan');
             card.style.display = (plan === allowedPlan) ? '' : 'none';
         });
+        try { updatePackagesPricingLayout(); } catch (_) {}
 
         // Pokud byl vybraný "jiný" plán, reset
         if (window.selectedPlan && window.selectedPlan.plan && window.selectedPlan.plan !== allowedPlan) {

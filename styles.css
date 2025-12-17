@@ -1154,6 +1154,12 @@
     align-items: stretch; /* všechny karty mají stejnou výšku v řádku */
 }
 
+/* Když je po filtrování vidět jen 1 balíček, ať není přehnaně široký */
+.pricing-grid.single-plan {
+    grid-template-columns: 1fr;
+    max-width: 620px;
+}
+
 .pricing-card {
     background:
         linear-gradient(135deg, rgba(247, 124, 0, 0.18) 0%, rgba(253, 240, 2, 0.12) 100%),
