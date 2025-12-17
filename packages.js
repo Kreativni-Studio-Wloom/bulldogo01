@@ -65,6 +65,25 @@ function updatePackagesPricingLayout() {
     grid.classList.toggle('single-plan', visible.length === 1);
 }
 
+function setPricingButtonsMode(mode) {
+    // mode: 'select' | 'manage'
+    document.querySelectorAll('.btn-pricing[data-plan]').forEach((btn) => {
+        // uložit default HTML jen jednou
+        if (!btn.getAttribute('data-default-html')) {
+            btn.setAttribute('data-default-html', btn.innerHTML || '');
+        }
+        if (mode === 'manage') {
+            btn.setAttribute('data-manage', '1');
+            btn.innerHTML = '<i class="fas fa-cog"></i> Spravovat balíček';
+        } else {
+            btn.removeAttribute('data-manage');
+            // obnovit původní text tlačítka
+            const html = btn.getAttribute('data-default-html') || '';
+            if (html) btn.innerHTML = html;
+        }
+    });
+}
+
 // Spolehlivé filtrování balíčků až po vyřešení auth state (currentUser != null).
 function setupPackagesUserTypeFilter() {
     (async () => {
@@ -84,6 +103,7 @@ function setupPackagesUserTypeFilter() {
                         card.style.display = '';
                     });
                     try { updatePackagesPricingLayout(); } catch (_) {}
+                    try { setPricingButtonsMode('select'); } catch (_) {}
                     return;
                 }
 
@@ -97,6 +117,8 @@ function setupPackagesUserTypeFilter() {
                     await new Promise(r => setTimeout(r, 200));
                 }
                 try { updatePackagesPricingLayout(); } catch (_) {}
+                // Po přihlášení vždy načti aktuální plán a případně přepni CTA na "Spravovat balíček"
+                try { await loadCurrentPlan(); } catch (_) {}
             });
         } catch (e) {
             console.warn('setupPackagesUserTypeFilter failed:', e);
@@ -666,19 +688,8 @@ async function loadCurrentPlan() {
             }
         }
 
-        // Pokud má uživatel aktivní plán, na kartách místo výběru nabídnout správu
-        try {
-            document.querySelectorAll('.btn-pricing[data-plan]').forEach((btn) => {
-                if (!isActivePlan) {
-                    // návrat do defaultu (když plán není aktivní)
-                    btn.removeAttribute('data-manage');
-                    btn.disabled = false;
-                    return;
-                }
-                btn.setAttribute('data-manage', '1');
-                btn.innerHTML = '<i class="fas fa-cog"></i> Spravovat balíček';
-            });
-        } catch (_) {}
+        // Přepnout CTA podle aktivního plánu
+        try { setPricingButtonsMode(isActivePlan ? 'manage' : 'select'); } catch (_) {}
     } catch (e) {
         console.error('❌ loadCurrentPlan:', e);
     }
