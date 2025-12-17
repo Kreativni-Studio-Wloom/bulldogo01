@@ -556,13 +556,24 @@ async function validateICOWithARES(ico) {
         const isVercel = location.hostname.endsWith('.vercel.app');
         if (isVercel) {
             try {
+                // Explicitně použít správný název (s velkým I)
                 const proxyUrl = `/api/validateICO?ico=${encodeURIComponent(n)}`;
-                const proxyRes = await fetch(proxyUrl, { method: 'GET' });
+                const proxyRes = await fetch(proxyUrl, { 
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
                 if (proxyRes.ok) {
                     const proxyData = await proxyRes.json().catch(() => ({}));
                     if (typeof proxyData?.ok === 'boolean') return proxyData;
+                } else if (proxyRes.status === 503 || proxyRes.status === 404) {
+                    // Pokud proxy selže, pokračovat na Firebase Function
+                    console.warn('Vercel proxy failed, trying Firebase Function');
                 }
-            } catch (_) {}
+            } catch (e) {
+                console.warn('Vercel proxy error:', e);
+            }
         }
         // 1) Zkusit volat Firebase Function (lokálně i v produkci)
         const projectId = (window.firebaseApp && window.firebaseApp.options && window.firebaseApp.options.projectId) || 'inzerio-inzerce';
