@@ -1,3 +1,15 @@
+// Mailchimp popup (sitewide newsletter) – inject once
+(function initMailchimpPopup() {
+    try {
+        if (document.getElementById('mcjs')) return;
+        const s = document.createElement('script');
+        s.id = 'mcjs';
+        s.async = true;
+        s.src = 'https://chimpstatic.com/mcjs-connected/js/users/e223755f97b06a0750d885407/971d5b572a7403c313f3aacc9.js';
+        (document.head || document.documentElement).appendChild(s);
+    } catch (_) {}
+})();
+
 // Sidebar toggle functionality
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
