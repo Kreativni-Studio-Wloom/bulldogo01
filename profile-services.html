@@ -494,22 +494,33 @@
         }
 
         async function toggleServiceStatus(serviceId, currentStatus) {
+            // Pozn.: currentStatus z tlačítka může být zastaralý (uživatel klikne rychle),
+            // proto bereme aktuální stav přímo z Firestore.
             try {
-                const { updateDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                
-                const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-                
-                await updateDoc(doc(window.firebaseDb, 'users', window.firebaseAuth.currentUser.uid, 'inzeraty', serviceId), {
-                    status: newStatus,
-                    updatedAt: new Date()
-                });
-                
-                showMessage(`Služba byla ${newStatus === 'active' ? 'aktivována' : 'pozastavena'}!`, 'success');
+                if (!window.firebaseAuth?.currentUser) {
+                    showMessage('Musíte být přihlášeni!', 'error');
+                    return;
+                }
+                window.__toggleServiceBusy = window.__toggleServiceBusy || {};
+                if (window.__toggleServiceBusy[serviceId]) return;
+                window.__toggleServiceBusy[serviceId] = true;
+
+                const { getDoc, updateDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                const ref = doc(window.firebaseDb, 'users', window.firebaseAuth.currentUser.uid, 'inzeraty', serviceId);
+                const snap = await getDoc(ref);
+                const data = snap.exists() ? (snap.data() || {}) : {};
+                const actualStatus = (data.status || currentStatus || 'active').toString().trim().toLowerCase();
+
+                const newStatus = actualStatus === 'active' ? 'inactive' : 'active';
+                await updateDoc(ref, { status: newStatus, updatedAt: new Date() });
+
+                showMessage(`Služba byla ${newStatus === 'active' ? 'aktivována' : 'deaktivována'}!`, 'success');
                 loadServicesData(); // Reload data
-                
             } catch (error) {
                 console.error('Chyba při změně stavu služby:', error);
                 showMessage('Nepodařilo se změnit stav služby.', 'error');
+            } finally {
+                try { if (window.__toggleServiceBusy) window.__toggleServiceBusy[serviceId] = false; } catch (_) {}
             }
         }
 
@@ -526,16 +537,18 @@
             }
         }
 
-        function showMessage(message, type = 'info') {
+        // Zachovat stejný vzhled oznámení jako po přihlášení (auth.js)
+        const __authShowMessage = window.showMessage;
+        function showMessage(message, type = 'info', options = {}) {
+            if (typeof __authShowMessage === 'function' && __authShowMessage !== showMessage) {
+                return __authShowMessage(message, type, options);
+            }
+            // Fallback (kdyby auth.js nebyl načten)
             const messageDiv = document.createElement('div');
             messageDiv.className = `message message-${type}`;
             messageDiv.textContent = message;
-            
             document.body.appendChild(messageDiv);
-            
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 5000);
+            setTimeout(() => messageDiv.remove(), 5000);
         }
 
         // Load actual user data
