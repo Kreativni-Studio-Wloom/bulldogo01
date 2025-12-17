@@ -632,7 +632,9 @@ async function loadCurrentPlan() {
         const cancelInfo = document.getElementById('cancelInfo');
         const btnCancel = document.getElementById('btnCancelPlan');
         const btnUndo = document.getElementById('btnUndoCancel');
-        if (!user || !window.firebaseDb || !pPlan) return;
+        // Pozn.: packages.html nemusí mít sekci "aktuální balíček", ale i tak potřebujeme načíst plán
+        // kvůli přepnutí CTA na "Spravovat balíček".
+        if (!user || !window.firebaseDb) return;
         const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
         const ref = doc(window.firebaseDb, 'users', user.uid, 'profile', 'profile');
         const snap = await getDoc(ref);
@@ -645,18 +647,23 @@ async function loadCurrentPlan() {
         }
         // Aktivní plán = existuje a ještě nevypršel
         const isActivePlan = plan && plan !== 'none' && (!planPeriodEnd || (new Date() < planPeriodEnd));
-        const planLabel = plan === 'business' ? 'Firma' : plan === 'hobby' ? 'Hobby' : 'Žádný';
-        pPlan.textContent = planLabel;
-        pEnd.textContent = planPeriodEnd ? planPeriodEnd.toLocaleDateString('cs-CZ') : '-';
-        if (planCancelAt) {
-            cancelInfo.style.display = '';
-            pCancel.textContent = planCancelAt.toLocaleDateString('cs-CZ');
-            if (btnCancel) btnCancel.style.display = 'none';
-            if (btnUndo) btnUndo.style.display = '';
-        } else {
-            cancelInfo.style.display = 'none';
-            if (btnCancel) btnCancel.style.display = plan === 'none' ? 'none' : '';
-            if (btnUndo) btnUndo.style.display = 'none';
+        // Pokud je na stránce sekce s aktuálním plánem, vyplnit ji (jinak přeskočit)
+        if (pPlan) {
+            const planLabel = plan === 'business' ? 'Firma' : plan === 'hobby' ? 'Hobby' : 'Žádný';
+            pPlan.textContent = planLabel;
+            if (pEnd) pEnd.textContent = planPeriodEnd ? planPeriodEnd.toLocaleDateString('cs-CZ') : '-';
+            if (cancelInfo) {
+                if (planCancelAt) {
+                    cancelInfo.style.display = '';
+                    if (pCancel) pCancel.textContent = planCancelAt.toLocaleDateString('cs-CZ');
+                    if (btnCancel) btnCancel.style.display = 'none';
+                    if (btnUndo) btnUndo.style.display = '';
+                } else {
+                    cancelInfo.style.display = 'none';
+                    if (btnCancel) btnCancel.style.display = plan === 'none' ? 'none' : '';
+                    if (btnUndo) btnUndo.style.display = 'none';
+                }
+            }
         }
 
         // Pokud má uživatel aktivní plán, na kartách místo výběru nabídnout správu
