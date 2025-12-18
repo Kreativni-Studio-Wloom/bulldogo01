@@ -26,11 +26,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.enforceExpiredPlanAds = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.cleanupInactiveUsers = exports.validateICO = void 0;
+exports.sendWelcomeEmail = exports.enforceExpiredPlanAds = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.cleanupInactiveUsers = exports.validateICO = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const axios_1 = __importDefault(require("axios"));
 const cors_1 = __importDefault(require("cors"));
+const nodemailer = __importStar(require("nodemailer"));
 admin.initializeApp();
 const corsHandler = (0, cors_1.default)({ origin: true });
 function toDateMaybe(v) {
@@ -782,5 +783,253 @@ exports.enforceExpiredPlanAds = functions
     }
     functions.logger.info("✅ enforceExpiredPlanAds finished", { processed, inactivated, deleted });
     return null;
+});
+// ===============================================
+// SMTP Email konfigurace pro Hostinger
+// ===============================================
+const smtpTransporter = nodemailer.createTransport({
+    host: "smtp.hostinger.com",
+    port: 465,
+    secure: true,
+    auth: {
+        user: "info@bulldogo.cz",
+        pass: "Fotbal1997.",
+    },
+});
+/**
+ * Načte jméno uživatele z Firestore profilu
+ */
+async function getUserNameFromProfile(uid) {
+    try {
+        const db = admin.firestore();
+        const profileDoc = await db.doc(`users/${uid}/profile/profile`).get();
+        if (profileDoc.exists) {
+            const data = profileDoc.data();
+            // Priorita: firstName, pak name, pak companyName
+            if (data.firstName) {
+                return data.firstName;
+            }
+            if (data.name && data.name !== "Uživatel" && data.name !== "Firma") {
+                // Vezmi jen první jméno pokud je celé jméno
+                const firstName = data.name.split(" ")[0];
+                return firstName;
+            }
+            if (data.companyName) {
+                return data.companyName;
+            }
+        }
+        return "uživateli";
+    }
+    catch (error) {
+        return "uživateli";
+    }
+}
+/**
+ * Generuje HTML šablonu uvítacího emailu
+ */
+function generateWelcomeEmailHTML(userName) {
+    return `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vítejte na Bulldogo.cz</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%); min-height: 100vh;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <!-- Hlavní kontejner -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Logo sekce -->
+          <tr>
+            <td align="center" style="padding-bottom: 30px;">
+              <table role="presentation" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%); border-radius: 20px; padding: 15px 25px; box-shadow: 0 10px 40px rgba(255, 106, 0, 0.3);">
+                    <span style="font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 2px;">
+                      B<span style="background: linear-gradient(90deg, #ffffff 0%, #ffd700 100%); -webkit-background-clip: text; background-clip: text;">ULLDOGO</span>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Hlavní karta -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%); border-radius: 24px; box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1); overflow: hidden;">
+                
+                <!-- Oranžový header pruh -->
+                <tr>
+                  <td style="background: linear-gradient(90deg, #ff6a00 0%, #ffa62b 50%, #fcd34d 100%); height: 8px;"></td>
+                </tr>
+                
+                <!-- Ikona obálky -->
+                <tr>
+                  <td align="center" style="padding: 40px 0 20px 0;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 50%; width: 100px; height: 100px; text-align: center; line-height: 100px; box-shadow: 0 10px 30px rgba(255, 166, 43, 0.3);">
+                          <span style="font-size: 50px;">🎉</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Pozdrav -->
+                <tr>
+                  <td align="center" style="padding: 0 40px 20px 40px;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #1a1a2e; line-height: 1.3;">
+                      Ahoj, ${userName}! 👋
+                    </h1>
+                  </td>
+                </tr>
+                
+                <!-- Hlavní text -->
+                <tr>
+                  <td align="center" style="padding: 0 40px 30px 40px;">
+                    <p style="margin: 0 0 20px 0; font-size: 18px; line-height: 1.7; color: #4a5568;">
+                      <strong style="color: #ff6a00;">Děkujeme za registraci</strong> na portálu <strong>Bulldogo.cz</strong>!
+                    </p>
+                    <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #718096;">
+                      Jsme rádi, že jste se stali součástí naší komunity. Nyní můžete využívat všechny výhody našeho portálu – <strong>vytvářet inzeráty</strong>, <strong>hledat služby</strong> a <strong>spojovat se s profesionály</strong> po celé České republice.
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Výhody sekce -->
+                <tr>
+                  <td style="padding: 0 40px 30px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #fff8eb 0%, #fff3e0 100%); border-radius: 16px; border: 1px solid #ffe0b2;">
+                      <tr>
+                        <td style="padding: 25px;">
+                          <p style="margin: 0 0 15px 0; font-size: 14px; font-weight: 700; color: #ff6a00; text-transform: uppercase; letter-spacing: 1px;">
+                            Co vás čeká?
+                          </p>
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <span style="color: #22c55e; font-size: 18px;">✓</span>
+                                <span style="margin-left: 10px; color: #4a5568; font-size: 15px;">Snadné vytváření inzerátů</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <span style="color: #22c55e; font-size: 18px;">✓</span>
+                                <span style="margin-left: 10px; color: #4a5568; font-size: 15px;">Ověření firemních profilu</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <span style="color: #22c55e; font-size: 18px;">✓</span>
+                                <span style="margin-left: 10px; color: #4a5568; font-size: 15px;">Integrovaný chat se zákazníky</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <span style="color: #22c55e; font-size: 18px;">✓</span>
+                                <span style="margin-left: 10px; color: #4a5568; font-size: 15px;">Systém hodnocení a recenzí</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- CTA tlačítko -->
+                <tr>
+                  <td align="center" style="padding: 0 40px 40px 40px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="background: linear-gradient(135deg, #ff6a00 0%, #ffa62b 100%); border-radius: 12px; box-shadow: 0 8px 25px rgba(255, 106, 0, 0.35);">
+                          <a href="https://bulldogo.cz/services.html" target="_blank" style="display: inline-block; padding: 16px 40px; font-size: 16px; font-weight: 700; color: #ffffff; text-decoration: none; letter-spacing: 0.5px;">
+                            PROHLÉDNOUT SLUŽBY →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 40px 20px 20px 20px;">
+              <p style="margin: 0 0 10px 0; font-size: 14px; color: #a0aec0;">
+                „Služby jednoduše. Pro každého."
+              </p>
+              <p style="margin: 0 0 20px 0; font-size: 13px; color: #718096;">
+                <a href="https://bulldogo.cz" style="color: #ffa62b; text-decoration: none;">bulldogo.cz</a> &nbsp;|&nbsp;
+                <a href="mailto:support@bulldogo.cz" style="color: #ffa62b; text-decoration: none;">support@bulldogo.cz</a> &nbsp;|&nbsp;
+                <a href="tel:+420605121023" style="color: #ffa62b; text-decoration: none;">+420 605 121 023</a>
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #4a5568;">
+                © 2025 BULLDOGO. Všechna práva vyhrazena.
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+}
+/**
+ * Firebase Auth Trigger - Odešle uvítací email při vytvoření nového uživatele
+ */
+exports.sendWelcomeEmail = functions
+    .region("europe-west1")
+    .auth.user()
+    .onCreate(async (user) => {
+    const email = user.email;
+    if (!email) {
+        functions.logger.warn("Nový uživatel nemá email, přeskakuji odeslání uvítacího emailu", { uid: user.uid });
+        return null;
+    }
+    // Počkáme chvíli, aby se profil stihl vytvořit v databázi
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const userName = await getUserNameFromProfile(user.uid);
+    const mailOptions = {
+        from: {
+            name: "BULLDOGO",
+            address: "info@bulldogo.cz",
+        },
+        to: email,
+        subject: "🎉 Vítejte na Bulldogo.cz!",
+        html: generateWelcomeEmailHTML(userName),
+        text: `Ahoj ${userName}!\n\nDěkujeme za registraci na portálu Bulldogo.cz!\n\nJsme rádi, že jste se stali součástí naší komunity. Nyní můžete využívat všechny výhody našeho portálu – vytvářet inzeráty, hledat služby a spojovat se s profesionály po celé České republice.\n\nNavštivte nás: https://bulldogo.cz\n\n„Služby jednoduše. Pro každého."\n\n© 2025 BULLDOGO`,
+    };
+    try {
+        await smtpTransporter.sendMail(mailOptions);
+        functions.logger.info("✅ Uvítací email úspěšně odeslán", {
+            uid: user.uid,
+            email: email,
+            userName: userName
+        });
+        return null;
+    }
+    catch (error) {
+        functions.logger.error("❌ Chyba při odesílání uvítacího emailu", {
+            uid: user.uid,
+            email: email,
+            error: error === null || error === void 0 ? void 0 : error.message,
+            code: error === null || error === void 0 ? void 0 : error.code
+        });
+        // Neházíme chybu, aby se registrace nedostala do chybového stavu
+        return null;
+    }
 });
 //# sourceMappingURL=index.js.map
