@@ -338,9 +338,10 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // Při načtení stránky se zadaným hashem zajistit správné doscrollování
-document.addEventListener('DOMContentLoaded', () => {
+function scrollToHash() {
     const h = window.location.hash;
     if (!h) return;
+    
     if (h === '#contact') {
         const footerBottom = document.querySelector('.footer-bottom') || document.querySelector('footer');
         if (footerBottom) {
@@ -350,8 +351,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return;
     }
+    
     const target = document.querySelector(h);
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (target) {
+        // Offset pro případný fixní header
+        const offset = 20;
+        const elementPosition = target.getBoundingClientRect().top + window.pageYOffset;
+        window.scrollTo({
+            top: elementPosition - offset,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Spustit scrollování po načtení DOM
+document.addEventListener('DOMContentLoaded', () => {
+    // Malé zpoždění pro zajištění správného výpočtu pozice
+    setTimeout(scrollToHash, 100);
+});
+
+// Spustit také po úplném načtení stránky (včetně obrázků) pro přesnější pozici
+window.addEventListener('load', () => {
+    if (window.location.hash) {
+        setTimeout(scrollToHash, 200);
+    }
 });
 
 // Chat link handling with auth check
