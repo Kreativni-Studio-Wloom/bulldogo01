@@ -364,15 +364,56 @@ function scrollToHash() {
     }
 }
 
+// Počkat na načtení inzerátů (pro #features hash)
+function waitForAdsAndScroll() {
+    const h = window.location.hash;
+    if (!h) return;
+    
+    const servicesGrid = document.getElementById('servicesGrid');
+    
+    // Pokud je to #features a existuje servicesGrid, počkáme na načtení inzerátů
+    if (h === '#features' && servicesGrid) {
+        // Pokud už jsou inzeráty načtené (více než 0 dětí nebo má třídu indikující načtení)
+        if (servicesGrid.children.length > 0) {
+            // Inzeráty už jsou načtené, scrollovat hned
+            setTimeout(scrollToHash, 50);
+            return;
+        }
+        
+        // Jinak čekáme pomocí MutationObserver
+        const observer = new MutationObserver((mutations, obs) => {
+            // Kontrola, zda byly přidány inzeráty
+            if (servicesGrid.children.length > 0) {
+                obs.disconnect();
+                // Malé zpoždění pro zajištění vykreslení
+                setTimeout(scrollToHash, 100);
+            }
+        });
+        
+        observer.observe(servicesGrid, { childList: true, subtree: true });
+        
+        // Fallback: pokud se do 5 sekund nic nenačte, scrollovat přesto
+        setTimeout(() => {
+            observer.disconnect();
+            scrollToHash();
+        }, 5000);
+        
+        return;
+    }
+    
+    // Pro ostatní hashe scrollovat normálně
+    scrollToHash();
+}
+
 // Spustit scrollování po načtení DOM
 document.addEventListener('DOMContentLoaded', () => {
-    // Malé zpoždění pro zajištění správného výpočtu pozice
-    setTimeout(scrollToHash, 100);
+    // Použít vylepšenou funkci, která čeká na načtení inzerátů
+    waitForAdsAndScroll();
 });
 
 // Spustit také po úplném načtení stránky (včetně obrázků) pro přesnější pozici
 window.addEventListener('load', () => {
-    if (window.location.hash) {
+    if (window.location.hash && window.location.hash !== '#features') {
         setTimeout(scrollToHash, 200);
     }
 });
