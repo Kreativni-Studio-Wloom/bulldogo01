@@ -832,3 +832,147 @@ function formatDate(date) {
 
 // Show error (deduplicated)
 // (pozor: funkce již definována výše)
+
+// ==========================================
+// REPORT AD FUNCTIONALITY
+// ==========================================
+
+// Open report modal
+function openReportModal() {
+    const modal = document.getElementById('reportAdModal');
+    const titleEl = document.getElementById('reportAdTitle');
+    
+    if (!currentAd) {
+        alert('Chyba: Inzerát nebyl načten');
+        return;
+    }
+    
+    // Set ad title in modal
+    if (titleEl) {
+        titleEl.textContent = currentAd.title || 'Bez názvu';
+    }
+    
+    // Reset form
+    const reasonSelect = document.getElementById('reportReason');
+    const descriptionTextarea = document.getElementById('reportDescription');
+    if (reasonSelect) reasonSelect.value = '';
+    if (descriptionTextarea) descriptionTextarea.value = '';
+    
+    // Show modal
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+window.openReportModal = openReportModal;
+
+// Close report modal
+function closeReportModal() {
+    const modal = document.getElementById('reportAdModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+window.closeReportModal = closeReportModal;
+
+// Submit report
+async function submitReport() {
+    const reasonSelect = document.getElementById('reportReason');
+    const descriptionTextarea = document.getElementById('reportDescription');
+    const submitBtn = document.getElementById('submitReportBtn');
+    
+    const reason = reasonSelect ? reasonSelect.value : '';
+    const description = descriptionTextarea ? descriptionTextarea.value.trim() : '';
+    
+    if (!reason) {
+        alert('Vyberte prosím důvod nahlášení');
+        return;
+    }
+    
+    if (!currentAd) {
+        alert('Chyba: Inzerát nebyl načten');
+        return;
+    }
+    
+    // Get URL params for ad ID and user ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const adId = urlParams.get('id');
+    const adOwnerId = urlParams.get('userId');
+    
+    // Get current user info
+    let reporterName = 'Anonymní uživatel';
+    let reporterEmail = '';
+    let reporterUid = '';
+    
+    if (window.firebaseAuth && window.firebaseAuth.currentUser) {
+        const user = window.firebaseAuth.currentUser;
+        reporterEmail = user.email || '';
+        reporterUid = user.uid || '';
+        
+        // Try to get name from profile
+        try {
+            const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const profileDoc = await getDoc(doc(window.firebaseDb, 'users', user.uid, 'profile', 'profile'));
+            if (profileDoc.exists()) {
+                const profile = profileDoc.data();
+                reporterName = profile.name || profile.firstName || profile.companyName || reporterEmail || 'Přihlášený uživatel';
+            }
+        } catch (e) {
+            reporterName = reporterEmail || 'Přihlášený uživatel';
+        }
+    }
+    
+    // Disable button
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Odesílám...';
+    }
+    
+    try {
+        // Call Firebase function to send report
+        const response = await fetch('https://europe-west1-inzerio-inzerce.cloudfunctions.net/reportAd', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                adId: adId,
+                adTitle: currentAd.title || 'Bez názvu',
+                adOwnerId: adOwnerId,
+                adOwnerName: adOwner?.name || adOwner?.companyName || 'Neznámý',
+                adOwnerEmail: adOwner?.email || '',
+                reporterUid: reporterUid,
+                reporterName: reporterName,
+                reporterEmail: reporterEmail,
+                reason: reason,
+                description: description,
+            }),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ Nahlášení bylo úspěšně odesláno. Děkujeme za váš podnět!');
+            closeReportModal();
+        } else {
+            throw new Error(result.error || 'Neznámá chyba');
+        }
+    } catch (error) {
+        console.error('Report error:', error);
+        alert('❌ Nepodařilo se odeslat nahlášení: ' + (error.message || 'Zkuste to prosím později'));
+    } finally {
+        // Re-enable button
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Odeslat nahlášení';
+        }
+    }
+}
+window.submitReport = submitReport;
+
+// Close modal on outside click
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('reportAdModal');
+    if (e.target === modal) {
+        closeReportModal();
+    }
+});

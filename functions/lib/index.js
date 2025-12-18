@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendWelcomeEmail = exports.sendNewMessageEmail = exports.sendProfileChangeEmail = exports.enforceExpiredPlanAds = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.cleanupInactiveUsers = exports.sendInactivityWarningEmails = exports.validateICO = void 0;
+exports.sendWelcomeEmail = exports.sendNewMessageEmail = exports.sendProfileChangeEmail = exports.enforceExpiredPlanAds = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.cleanupInactiveUsers = exports.reportAd = exports.sendInactivityWarningEmails = exports.validateICO = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const axios_1 = __importDefault(require("axios"));
@@ -518,6 +518,537 @@ exports.sendInactivityWarningEmails = functions
     return null;
 });
 /**
+ * Mapování důvodů nahlášení na české popisky
+ */
+const reportReasonLabels = {
+    spam: "Spam nebo podvodný inzerát",
+    inappropriate: "Nevhodný obsah",
+    misleading: "Zavádějící informace",
+    wrong_category: "Špatná kategorie",
+    duplicate: "Duplicitní inzerát",
+    contact_issue: "Problém s kontaktem",
+    other: "Jiný důvod",
+};
+/**
+ * Generuje HTML šablonu emailu o nahlášení inzerátu (pro majitele)
+ */
+function generateReportEmailForOwnerHTML(ownerName, adTitle, adId, reporterName, reason, description) {
+    const reasonLabel = reportReasonLabels[reason] || reason;
+    return `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nahlášení inzerátu - Bulldogo.cz</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ffffff; min-height: 100vh;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #ffffff;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 30px;">
+              <table role="presentation" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%); border-radius: 20px; padding: 15px 25px; box-shadow: 0 10px 40px rgba(255, 106, 0, 0.3);">
+                    <span style="font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 2px;">BULLDOGO</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Karta -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%); border-radius: 24px; box-shadow: 0 25px 80px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                
+                <tr>
+                  <td style="background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%); height: 8px;"></td>
+                </tr>
+                
+                <tr>
+                  <td align="center" style="padding: 40px 0 20px 0;">
+                    <span style="font-size: 50px;">⚠️</span>
+                  </td>
+                </tr>
+                
+                <tr>
+                  <td align="center" style="padding: 0 40px 20px 40px;">
+                    <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #1a1a2e;">
+                      Váš inzerát byl nahlášen
+                    </h1>
+                  </td>
+                </tr>
+                
+                <tr>
+                  <td style="padding: 0 40px 25px 40px;">
+                    <p style="margin: 0 0 15px 0; font-size: 16px; color: #4a5568;">
+                      Ahoj, <strong>${ownerName}</strong>!
+                    </p>
+                    <p style="margin: 0; font-size: 16px; color: #718096;">
+                      Uživatel nahlásil váš inzerát. Prosím zkontrolujte, zda je vše v pořádku.
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Detail inzerátu -->
+                <tr>
+                  <td style="padding: 0 40px 20px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f8f9fa; border-radius: 12px; border: 1px solid #e5e7eb;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Nahlášený inzerát</p>
+                          <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 700; color: #1a1a2e;">${adTitle}</p>
+                          <p style="margin: 0; font-size: 13px; color: #9ca3af;">ID: ${adId}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Důvod -->
+                <tr>
+                  <td style="padding: 0 40px 20px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #fffbeb; border-radius: 12px; border: 1px solid #fde68a;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p style="margin: 0 0 8px 0; font-size: 13px; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">Důvod nahlášení</p>
+                          <p style="margin: 0; font-size: 16px; font-weight: 600; color: #92400e;">${reasonLabel}</p>
+                          ${description ? `<p style="margin: 12px 0 0 0; font-size: 14px; color: #78716c; border-top: 1px solid #fde68a; padding-top: 12px;">${description}</p>` : ""}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Nahlašovatel -->
+                <tr>
+                  <td style="padding: 0 40px 20px 40px;">
+                    <p style="margin: 0; font-size: 14px; color: #6b7280;">
+                      <strong>Nahlásil:</strong> ${reporterName}
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Co dělat -->
+                <tr>
+                  <td style="padding: 0 40px 25px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #ecfdf5; border-radius: 12px; border: 1px solid #a7f3d0;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #065f46;">✅ Co můžete udělat?</p>
+                          <ul style="margin: 0; padding-left: 20px; color: #047857; font-size: 14px; line-height: 1.8;">
+                            <li>Zkontrolujte obsah inzerátu</li>
+                            <li>Upravte případné nepřesnosti</li>
+                            <li>Pokud je vše v pořádku, nemusíte nic dělat</li>
+                          </ul>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- CTA -->
+                <tr>
+                  <td align="center" style="padding: 0 40px 30px 40px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="background: linear-gradient(135deg, #ff6a00 0%, #ffa62b 100%); border-radius: 12px;">
+                          <a href="https://bulldogo.cz/my-ads.html" target="_blank" style="display: inline-block; padding: 16px 40px; font-size: 16px; font-weight: 700; color: #ffffff; text-decoration: none;">
+                            ZKONTROLOVAT MÉ INZERÁTY →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Podpora -->
+                <tr>
+                  <td align="center" style="padding: 0 40px 40px 40px;">
+                    <p style="margin: 0; font-size: 14px; color: #6b7280;">
+                      Máte otázky? Kontaktujte 
+                      <a href="mailto:support@bulldogo.cz" style="color: #ff6a00;">support@bulldogo.cz</a>
+                    </p>
+                  </td>
+                </tr>
+                
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 40px 20px 20px 20px;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">© 2025 BULLDOGO. Všechna práva vyhrazena.</p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+}
+/**
+ * Generuje HTML šablonu emailu o nahlášení inzerátu (pro admina)
+ */
+function generateReportEmailForAdminHTML(adTitle, adId, adOwnerName, adOwnerEmail, reporterName, reporterEmail, reason, description) {
+    const reasonLabel = reportReasonLabels[reason] || reason;
+    return `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nahlášení inzerátu - Admin</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f3f4f6;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+          
+          <tr>
+            <td style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px;">🚨 Nové nahlášení inzerátu</h1>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 30px;">
+              
+              <!-- Inzerát -->
+              <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 14px; text-transform: uppercase;">📋 Nahlášený inzerát</h3>
+                <p style="margin: 0 0 8px 0;"><strong>Název:</strong> ${adTitle}</p>
+                <p style="margin: 0 0 8px 0;"><strong>ID:</strong> ${adId}</p>
+                <p style="margin: 0;"><strong>URL:</strong> <a href="https://bulldogo.cz/ad-detail.html?id=${adId}" style="color: #ff6a00;">Zobrazit inzerát</a></p>
+              </div>
+              
+              <!-- Majitel -->
+              <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 14px; text-transform: uppercase;">👤 Majitel inzerátu</h3>
+                <p style="margin: 0 0 8px 0;"><strong>Jméno:</strong> ${adOwnerName}</p>
+                <p style="margin: 0;"><strong>Email:</strong> <a href="mailto:${adOwnerEmail}" style="color: #ff6a00;">${adOwnerEmail || "Neznámý"}</a></p>
+              </div>
+              
+              <!-- Nahlašovatel -->
+              <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 14px; text-transform: uppercase;">🔔 Nahlašovatel</h3>
+                <p style="margin: 0 0 8px 0;"><strong>Jméno:</strong> ${reporterName}</p>
+                <p style="margin: 0;"><strong>Email:</strong> <a href="mailto:${reporterEmail}" style="color: #ff6a00;">${reporterEmail || "Nepřihlášený"}</a></p>
+              </div>
+              
+              <!-- Důvod -->
+              <div style="background: #fef3c7; border-radius: 12px; padding: 20px; border: 1px solid #fcd34d;">
+                <h3 style="margin: 0 0 12px 0; color: #92400e; font-size: 14px; text-transform: uppercase;">⚠️ Důvod nahlášení</h3>
+                <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #92400e;">${reasonLabel}</p>
+                ${description ? `<p style="margin: 12px 0 0 0; color: #78716c; border-top: 1px solid #fcd34d; padding-top: 12px;">${description}</p>` : ""}
+              </div>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 0 30px 30px 30px; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #9ca3af;">
+                Tento email byl automaticky vygenerován systémem Bulldogo.cz
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+}
+/**
+ * HTTPS endpoint pro nahlášení inzerátu
+ */
+exports.reportAd = functions.region("europe-west1").https.onRequest(async (req, res) => {
+    return corsHandler(req, res, async () => {
+        try {
+            if (req.method !== "POST") {
+                res.status(405).json({ success: false, error: "Method not allowed" });
+                return;
+            }
+            const { adId, adTitle, adOwnerId, adOwnerName, adOwnerEmail, reporterUid, reporterName, reporterEmail, reason, description, } = req.body;
+            if (!adId || !reason) {
+                res.status(400).json({ success: false, error: "Missing required fields" });
+                return;
+            }
+            const db = admin.firestore();
+            // Get owner email from Firestore if not provided
+            let ownerEmail = adOwnerEmail;
+            let ownerName = adOwnerName || "Majitel inzerátu";
+            if (adOwnerId && !ownerEmail) {
+                try {
+                    const ownerProfile = await db.doc(`users/${adOwnerId}/profile/profile`).get();
+                    if (ownerProfile.exists) {
+                        const data = ownerProfile.data();
+                        ownerEmail = (data === null || data === void 0 ? void 0 : data.email) || "";
+                        ownerName = (data === null || data === void 0 ? void 0 : data.name) || (data === null || data === void 0 ? void 0 : data.firstName) || (data === null || data === void 0 ? void 0 : data.companyName) || ownerName;
+                    }
+                }
+                catch (e) {
+                    functions.logger.debug("Could not fetch owner profile", { adOwnerId });
+                }
+            }
+            // Save report to Firestore
+            await db.collection("reports").add({
+                adId,
+                adTitle: adTitle || "",
+                adOwnerId: adOwnerId || "",
+                adOwnerEmail: ownerEmail || "",
+                reporterUid: reporterUid || "",
+                reporterName: reporterName || "Anonymní",
+                reporterEmail: reporterEmail || "",
+                reason,
+                description: description || "",
+                status: "pending",
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            // Send email to ad owner
+            if (ownerEmail) {
+                try {
+                    await smtpTransporter.sendMail({
+                        from: { name: "BULLDOGO", address: "info@bulldogo.cz" },
+                        to: ownerEmail,
+                        subject: `⚠️ Váš inzerát "${adTitle}" byl nahlášen`,
+                        html: generateReportEmailForOwnerHTML(ownerName, adTitle || "Bez názvu", adId, reporterName || "Anonymní uživatel", reason, description || ""),
+                    });
+                    functions.logger.info("Report email sent to owner", { ownerEmail, adId });
+                }
+                catch (e) {
+                    functions.logger.error("Failed to send report email to owner", { error: e === null || e === void 0 ? void 0 : e.message });
+                }
+            }
+            // Send copy to admin
+            try {
+                await smtpTransporter.sendMail({
+                    from: { name: "BULLDOGO", address: "info@bulldogo.cz" },
+                    to: "support@bulldogo.cz",
+                    subject: `🚨 Nahlášení inzerátu: ${adTitle}`,
+                    html: generateReportEmailForAdminHTML(adTitle || "Bez názvu", adId, ownerName, ownerEmail || "", reporterName || "Anonymní", reporterEmail || "", reason, description || ""),
+                });
+                functions.logger.info("Report email sent to admin", { adId });
+            }
+            catch (e) {
+                functions.logger.error("Failed to send report email to admin", { error: e === null || e === void 0 ? void 0 : e.message });
+            }
+            res.status(200).json({ success: true });
+        }
+        catch (error) {
+            functions.logger.error("Report ad error", { error: error === null || error === void 0 ? void 0 : error.message });
+            res.status(500).json({ success: false, error: (error === null || error === void 0 ? void 0 : error.message) || "Internal error" });
+        }
+    });
+});
+/**
+ * Generuje HTML šablonu emailu o smazání účtu
+ */
+function generateAccountDeletedEmailHTML(userName) {
+    return `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Účet byl smazán - Bulldogo.cz</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ffffff; min-height: 100vh;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #ffffff;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <!-- Hlavní kontejner -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Logo sekce -->
+          <tr>
+            <td align="center" style="padding-bottom: 30px;">
+              <table role="presentation" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%); border-radius: 20px; padding: 15px 25px; box-shadow: 0 10px 40px rgba(255, 106, 0, 0.3);">
+                    <span style="font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 2px;">
+                      B<span style="background: linear-gradient(90deg, #ffffff 0%, #ffd700 100%); -webkit-background-clip: text; background-clip: text;">ULLDOGO</span>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Hlavní karta -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%); border-radius: 24px; box-shadow: 0 25px 80px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05); overflow: hidden;">
+                
+                <!-- Šedý header pruh -->
+                <tr>
+                  <td style="background: linear-gradient(90deg, #6b7280 0%, #9ca3af 50%, #d1d5db 100%); height: 8px;"></td>
+                </tr>
+                
+                <!-- Ikona -->
+                <tr>
+                  <td align="center" style="padding: 40px 0 20px 0;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 50%; width: 100px; height: 100px; text-align: center; line-height: 100px; box-shadow: 0 10px 30px rgba(107, 114, 128, 0.2);">
+                          <span style="font-size: 50px;">👋</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Pozdrav -->
+                <tr>
+                  <td align="center" style="padding: 0 40px 20px 40px;">
+                    <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #1a1a2e; line-height: 1.3;">
+                      Váš účet byl smazán
+                    </h1>
+                  </td>
+                </tr>
+                
+                <!-- Hlavní text -->
+                <tr>
+                  <td align="center" style="padding: 0 40px 25px 40px;">
+                    <p style="margin: 0 0 15px 0; font-size: 18px; line-height: 1.7; color: #4a5568;">
+                      Ahoj, <strong style="color: #1a1a2e;">${userName}</strong>!
+                    </p>
+                    <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #718096;">
+                      Váš účet na <strong>Bulldogo.cz</strong> byl z důvodu dlouhodobé neaktivity 
+                      <strong>trvale smazán</strong>.
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Info box -->
+                <tr>
+                  <td style="padding: 0 40px 25px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f8f9fa; border-radius: 16px; border: 1px solid #e5e7eb;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p style="margin: 0 0 12px 0; font-size: 15px; line-height: 1.6; color: #4a5568;">
+                            <strong>Co bylo smazáno:</strong>
+                          </p>
+                          <ul style="margin: 0; padding-left: 20px; color: #6b7280; font-size: 14px; line-height: 1.8;">
+                            <li>Váš profil a osobní údaje</li>
+                            <li>Všechny vaše inzeráty</li>
+                            <li>Recenze a hodnocení</li>
+                            <li>Zprávy a konverzace</li>
+                          </ul>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Varování -->
+                <tr>
+                  <td style="padding: 0 40px 25px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 12px; border: 1px solid #fecaca;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #991b1b;">
+                            <strong>⚠️ Tato akce je nevratná.</strong><br>
+                            Data již nelze obnovit.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Poděkování -->
+                <tr>
+                  <td style="padding: 0 40px 30px 40px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #fff8eb 0%, #fff3e0 100%); border-radius: 16px; border: 1px solid #ffe0b2;">
+                      <tr>
+                        <td align="center" style="padding: 25px;">
+                          <p style="margin: 0; font-size: 18px; line-height: 1.6; color: #92400e;">
+                            <strong>🧡 Děkujeme, že jste byli součástí Bulldogo!</strong>
+                          </p>
+                          <p style="margin: 12px 0 0 0; font-size: 15px; color: #b45309;">
+                            Pokud se rozhodnete vrátit, budeme rádi. Můžete si kdykoliv vytvořit nový účet.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- CTA tlačítko -->
+                <tr>
+                  <td align="center" style="padding: 0 40px 40px 40px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="background: linear-gradient(135deg, #ff6a00 0%, #ffa62b 100%); border-radius: 12px; box-shadow: 0 8px 25px rgba(255, 106, 0, 0.35);">
+                          <a href="https://bulldogo.cz/" target="_blank" style="display: inline-block; padding: 16px 40px; font-size: 16px; font-weight: 700; color: #ffffff; text-decoration: none; letter-spacing: 0.5px;">
+                            VYTVOŘIT NOVÝ ÚČET →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 40px 20px 20px 20px;">
+              <p style="margin: 0 0 10px 0; font-size: 14px; color: #6b7280;">
+                „Služby jednoduše. Pro každého."
+              </p>
+              <p style="margin: 0 0 20px 0; font-size: 13px; color: #4a5568;">
+                <a href="https://bulldogo.cz" style="color: #ff6a00; text-decoration: none;">bulldogo.cz</a> &nbsp;|&nbsp;
+                <a href="mailto:support@bulldogo.cz" style="color: #ff6a00; text-decoration: none;">support@bulldogo.cz</a> &nbsp;|&nbsp;
+                <a href="tel:+420605121023" style="color: #ff6a00; text-decoration: none;">+420 605 121 023</a>
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                © 2025 BULLDOGO. Všechna práva vyhrazena.
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+}
+/**
+ * Odešle email o smazání účtu
+ */
+async function sendAccountDeletedEmail(email, userName) {
+    const mailOptions = {
+        from: {
+            name: "BULLDOGO",
+            address: "info@bulldogo.cz",
+        },
+        to: email,
+        subject: "👋 Váš účet na Bulldogo.cz byl smazán",
+        html: generateAccountDeletedEmailHTML(userName),
+        text: `Ahoj ${userName}!\n\nVáš účet na Bulldogo.cz byl z důvodu dlouhodobé neaktivity trvale smazán.\n\nCo bylo smazáno:\n- Váš profil a osobní údaje\n- Všechny vaše inzeráty\n- Recenze a hodnocení\n- Zprávy a konverzace\n\n⚠️ Tato akce je nevratná. Data již nelze obnovit.\n\n🧡 Děkujeme, že jste byli součástí Bulldogo! Pokud se rozhodnete vrátit, můžete si kdykoliv vytvořit nový účet na https://bulldogo.cz\n\n© 2025 BULLDOGO`,
+    };
+    await smtpTransporter.sendMail(mailOptions);
+}
+/**
  * Scheduled cleanup of inactive accounts.
  * Smaže účty, které se nepřihlásily déle než 6 měsíců,
  * včetně základních dat ve Firestore (profil, inzeráty, recenze, zprávy).
@@ -608,6 +1139,7 @@ exports.cleanupInactiveUsers = functions
     .onRun(async () => {
     var _a, _b;
     const auth = admin.auth();
+    const db = admin.firestore();
     const cutoff = Date.now() - INACTIVITY_DELETE_MONTHS * 30 * MILLIS_IN_DAY;
     let nextPageToken = undefined;
     let deletedCount = 0;
@@ -625,15 +1157,48 @@ exports.cleanupInactiveUsers = functions
                     email: (_a = user.email) !== null && _a !== void 0 ? _a : null,
                     lastSignIn: (_b = user.metadata.lastSignInTime) !== null && _b !== void 0 ? _b : user.metadata.creationTime,
                 });
+                // Získat jméno uživatele před smazáním pro email
+                let userName = "uživateli";
+                const email = user.email;
+                try {
+                    const profileDoc = await db.doc(`users/${user.uid}/profile/profile`).get();
+                    if (profileDoc.exists) {
+                        const profileData = profileDoc.data();
+                        if (profileData === null || profileData === void 0 ? void 0 : profileData.firstName) {
+                            userName = profileData.firstName;
+                        }
+                        else if ((profileData === null || profileData === void 0 ? void 0 : profileData.name) && profileData.name !== "Uživatel" && profileData.name !== "Firma") {
+                            userName = profileData.name.split(" ")[0];
+                        }
+                        else if (profileData === null || profileData === void 0 ? void 0 : profileData.companyName) {
+                            userName = profileData.companyName;
+                        }
+                    }
+                }
+                catch (e) {
+                    // Ignorovat chyby při získávání jména
+                }
+                // Smazat data uživatele
                 try {
                     await deleteUserData(user.uid);
                 }
                 catch (err) {
                     functions.logger.error("Failed to delete Firestore data for inactive user", { uid: user.uid, error: err === null || err === void 0 ? void 0 : err.message });
                 }
+                // Smazat Auth účet
                 try {
                     await auth.deleteUser(user.uid);
                     deletedCount += 1;
+                    // Odeslat email o smazání účtu (po úspěšném smazání)
+                    if (email) {
+                        try {
+                            await sendAccountDeletedEmail(email, userName);
+                            functions.logger.info("📧 Email o smazání účtu odeslán", { email, userName });
+                        }
+                        catch (emailErr) {
+                            functions.logger.error("Failed to send account deleted email", { email, error: emailErr === null || emailErr === void 0 ? void 0 : emailErr.message });
+                        }
+                    }
                 }
                 catch (err) {
                     functions.logger.error("Failed to delete auth user", { uid: user.uid, error: err === null || err === void 0 ? void 0 : err.message });
