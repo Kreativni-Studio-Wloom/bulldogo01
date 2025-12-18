@@ -1887,10 +1887,12 @@ export const onPlanCancelled = functions
     const hadActivePlan = planBefore === "hobby" || planBefore === "business";
     const hasActivePlan = planAfter === "hobby" || planAfter === "business";
     
+    const db = admin.firestore();
+    
+    // PŘÍPAD 1: Zrušení předplatného (měl plán, teď nemá)
     if (hadActivePlan && !hasActivePlan) {
       functions.logger.info("🚫 Plan cancelled for user, deactivating ads", { userId, planBefore, planAfter });
       
-      const db = admin.firestore();
       const nowTs = admin.firestore.FieldValue.serverTimestamp();
       
       // Pozastavit všechny aktivní inzeráty uživatele
@@ -1927,6 +1929,56 @@ export const onPlanCancelled = functions
       }
       
       functions.logger.info("✅ Deactivated ads due to plan cancellation", { userId, deactivated });
+      return null;
+    }
+    
+    // PŘÍPAD 2: Obnovení předplatného (neměl plán, teď má)
+    if (!hadActivePlan && hasActivePlan) {
+      functions.logger.info("✅ Plan renewed for user, clearing expired markers", { userId, planBefore, planAfter });
+      
+      // Vyčistit inactiveReason z inzerátů, které byly pozastaveny kvůli vypršení předplatného
+      const expiredAdsSnap = await db.collection(`users/${userId}/inzeraty`).where("inactiveReason", "==", "plan_expired").get();
+      
+      if (expiredAdsSnap.empty) {
+        functions.logger.info("No expired ads to clean for user", { userId });
+        return null;
+      }
+      
+      let batch = db.batch();
+      let ops = 0;
+      let cleaned = 0;
+      
+      for (const adDoc of expiredAdsSnap.docs) {
+        batch.update(adDoc.ref, {
+          inactiveReason: admin.firestore.FieldValue.delete(),
+          inactiveAt: admin.firestore.FieldValue.delete(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        ops++;
+        cleaned++;
+        
+        if (ops >= 450) {
+          await batch.commit();
+          batch = db.batch();
+          ops = 0;
+        }
+      }
+      
+      if (ops > 0) {
+        await batch.commit();
+      }
+      
+      // Vyčistit planExpiredAt z profilu
+      await change.after.ref.set(
+        {
+          planExpiredAt: admin.firestore.FieldValue.delete(),
+          planExpiredProcessedAt: admin.firestore.FieldValue.delete(),
+        },
+        { merge: true }
+      );
+      
+      functions.logger.info("✅ Cleaned expired markers for renewed user", { userId, cleaned });
+      return null;
     }
     
     return null;

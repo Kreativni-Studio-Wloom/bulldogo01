@@ -528,10 +528,20 @@ async function toggleAdStatus(adId, targetStatus) {
             }
         }
         
-        await updateDoc(doc(window.firebaseDb, 'users', window.firebaseAuth.currentUser.uid, 'inzeraty', adId), {
+        // Připravit data pro aktualizaci
+        const updateData = {
             status: newStatus,
             updatedAt: new Date()
-        });
+        };
+        
+        // Při aktivaci vymazat inactiveReason a inactiveAt
+        if (newStatus === 'active') {
+            const { deleteField } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            updateData.inactiveReason = deleteField();
+            updateData.inactiveAt = deleteField();
+        }
+        
+        await updateDoc(doc(window.firebaseDb, 'users', window.firebaseAuth.currentUser.uid, 'inzeraty', adId), updateData);
         
         showMessage(`Inzerát byl ${newStatus === 'active' ? 'aktivován' : 'pozastaven'}!`, 'success');
         loadUserAds(); // Obnovit seznam
