@@ -101,6 +101,7 @@ async function loadAllUsers() {
                 const profileData = profileSnap.data();
                 userData.name = profileData.name || userData.name || userDoc.data().email || 'Bez jména';
                 userData.email = profileData.email || userData.email || userDoc.data().email || 'Bez emailu';
+                userData.plan = profileData.plan || null; // Balíček uživatele
             }
             allUsers.push(userData);
         }
@@ -115,25 +116,76 @@ async function loadAllUsers() {
 async function loadAllAds() {
     try {
         const { getDocs, collection, collectionGroup } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-        const cgSnapshot = await getDocs(collectionGroup(window.firebaseDb, 'inzeraty'));
         allAds = [];
         
-        cgSnapshot.forEach((docSnap) => {
-            const data = docSnap.data() || {};
-            const userIdFromPath = docSnap.ref.parent && docSnap.ref.parent.parent ? docSnap.ref.parent.parent.id : undefined;
-            if (!data.userId && userIdFromPath) data.userId = userIdFromPath;
-            allAds.push({ id: docSnap.id, ...data });
-        });
-        
-        if (allAds.length === 0) {
-            const servicesSnapshot = await getDocs(collection(window.firebaseDb, 'services'));
-            servicesSnapshot.forEach((docSnap) => {
+        // Zkusit collectionGroup
+        try {
+            const cgSnapshot = await getDocs(collectionGroup(window.firebaseDb, 'inzeraty'));
+            console.log('CollectionGroup výsledek:', cgSnapshot.size, 'dokumentů');
+            
+            cgSnapshot.forEach((docSnap) => {
                 const data = docSnap.data() || {};
-                allAds.push({ id: docSnap.id, ...data });
+                const userIdFromPath = docSnap.ref.parent && docSnap.ref.parent.parent ? docSnap.ref.parent.parent.id : undefined;
+                if (!data.userId && userIdFromPath) data.userId = userIdFromPath;
+                allAds.push({ id: docSnap.id, userId: data.userId || userIdFromPath, ...data });
             });
+            
+            console.log('Načteno inzerátů z users/{uid}/inzeraty:', allAds.length);
+        } catch (cgError) {
+            console.warn('Chyba při načítání přes collectionGroup:', cgError.message);
         }
         
-        console.log('Načteno inzerátů:', allAds.length);
+        // Fallback na services
+        if (allAds.length === 0) {
+            try {
+                const servicesSnapshot = await getDocs(collection(window.firebaseDb, 'services'));
+                console.log('Services kolekce výsledek:', servicesSnapshot.size, 'dokumentů');
+                
+                servicesSnapshot.forEach((docSnap) => {
+                    const data = docSnap.data() || {};
+                    allAds.push({ id: docSnap.id, ...data });
+                });
+                
+                console.log('Načteno inzerátů z fallback kolekce services:', allAds.length);
+            } catch (servicesError) {
+                console.warn('Chyba při načítání z kolekce services:', servicesError.message);
+            }
+        }
+        
+        // Pokud stále nic, projít všechny uživatele
+        if (allAds.length === 0) {
+            console.warn('Stále žádné inzeráty, zkouším projít všechny uživatele...');
+            try {
+                const usersSnapshot = await getDocs(collection(window.firebaseDb, 'users'));
+                let totalAds = 0;
+                
+                for (const userDoc of usersSnapshot.docs) {
+                    const userId = userDoc.id;
+                    try {
+                        const userAdsRef = collection(window.firebaseDb, 'users', userId, 'inzeraty');
+                        const userAdsSnapshot = await getDocs(userAdsRef);
+                        
+                        userAdsSnapshot.forEach((adDoc) => {
+                            const data = adDoc.data() || {};
+                            allAds.push({
+                                id: adDoc.id,
+                                userId: userId,
+                                ...data
+                            });
+                            totalAds++;
+                        });
+                    } catch (userError) {
+                        console.warn(`Chyba při načítání inzerátů pro uživatele ${userId}:`, userError.message);
+                    }
+                }
+                
+                console.log('Načteno inzerátů procházením uživatelů:', totalAds);
+            } catch (usersError) {
+                console.error('Chyba při procházení uživatelů:', usersError);
+            }
+        }
+        
+        console.log('Celkem načteno inzerátů:', allAds.length);
     } catch (error) {
         console.error('Chyba při načítání inzerátů:', error);
     }
@@ -177,6 +229,50 @@ function displayStats() {
         const month = date.toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' });
         monthlyStats[month] = (monthlyStats[month] || 0) + 1;
     });
+    
+    // Statistiky návštěvnosti podle dnů (posledních 30 dní)
+    const dailyViewsStats = {};
+    const now = new Date();
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateKey = date.toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit' });
+        dailyViewsStats[dateKey] = 0;
+    }
+    // Simulace návštěvnosti z views (v reálném případě by to mělo být z analytics)
+    allAds.forEach(ad => {
+        if (ad.views && ad.views > 0) {
+            const adDate = ad.createdAt?.toDate ? ad.createdAt.toDate() : (ad.createdAt ? new Date(ad.createdAt) : new Date());
+            const daysSinceCreation = Math.floor((now - adDate) / (1000 * 60 * 60 * 24));
+            if (daysSinceCreation >= 0 && daysSinceCreation < 30) {
+                const dateKey = new Date(adDate.getTime() + daysSinceCreation * 24 * 60 * 60 * 1000).toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit' });
+                if (dailyViewsStats[dateKey] !== undefined) {
+                    dailyViewsStats[dateKey] += Math.floor(ad.views / 30); // Rozdělit views na dny
+                }
+            }
+        }
+    });
+    
+    // Statistiky prodeje balíčků
+    const packageStats = {};
+    allUsers.forEach(user => {
+        const plan = user.plan || 'bez_planu';
+        packageStats[plan] = (packageStats[plan] || 0) + 1;
+    });
+    
+    // TOP inzeráty statistiky (nejoblíbenější kategorie a lokace)
+    const topAdsList = allAds.filter(ad => ad.isTop === true);
+    const topCategoryStats = {};
+    const topLocationStats = {};
+    topAdsList.forEach(ad => {
+        const cat = ad.category || 'Neuvedeno';
+        const loc = ad.location || 'Neuvedeno';
+        topCategoryStats[cat] = (topCategoryStats[cat] || 0) + 1;
+        topLocationStats[loc] = (topLocationStats[loc] || 0) + 1;
+    });
+    
+    // TOP inzeráty podle zobrazení
+    const topAdsByViews = [...allAds].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
     
     // Doporučení
     const recommendations = [];
@@ -259,9 +355,38 @@ function displayStats() {
             </div>
         </div>
         
+        <div class="stats-grid" style="margin-top: 2rem;">
+            <div class="stat-box">
+                <h3><i class="fas fa-shopping-cart"></i> Prodeje balíčků</h3>
+                <ul>
+                    ${Object.entries(packageStats).map(([plan, count]) => {
+                        const planName = plan === 'bez_planu' ? 'Bez balíčku' : 
+                                        plan === 'basic' ? 'Základní' :
+                                        plan === 'premium' ? 'Prémiový' :
+                                        plan === 'enterprise' ? 'Enterprise' : plan;
+                        return `<li>${planName}: <strong>${count}</strong></li>`;
+                    }).join('')}
+                    <li>Celkem s balíčkem: <strong>${totalUsers - (packageStats['bez_planu'] || 0)}</strong></li>
+                </ul>
+            </div>
+            <div class="stat-box">
+                <h3><i class="fas fa-fire"></i> TOP inzeráty</h3>
+                <ul>
+                    <li>Celkem TOP: <strong>${topAds}</strong></li>
+                    <li>Nejoblíbenější kategorie: <strong>${Object.keys(topCategoryStats).length > 0 ? Object.entries(topCategoryStats).sort((a, b) => b[1] - a[1])[0][0] : 'Žádná'}</strong></li>
+                    <li>Nejoblíbenější lokace: <strong>${Object.keys(topLocationStats).length > 0 ? Object.entries(topLocationStats).sort((a, b) => b[1] - a[1])[0][0] : 'Žádná'}</strong></li>
+                    <li>Průměr zobrazení TOP: <strong>${topAds > 0 ? Math.round(topAdsList.reduce((sum, ad) => sum + (ad.views || 0), 0) / topAds) : 0}</strong></li>
+                </ul>
+            </div>
+        </div>
+        
         <div class="charts-section">
             <h2><i class="fas fa-chart-line"></i> Grafy</h2>
             <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Návštěvnost (posledních 30 dní)</h3>
+                    <canvas id="trafficChart"></canvas>
+                </div>
                 <div class="chart-container">
                     <h3>Inzeráty podle kategorií</h3>
                     <canvas id="categoryChart"></canvas>
@@ -277,6 +402,10 @@ function displayStats() {
                 <div class="chart-container">
                     <h3>Stav inzerátů</h3>
                     <canvas id="statusChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Prodeje balíčků</h3>
+                    <canvas id="packageChart"></canvas>
                 </div>
             </div>
         </div>
@@ -300,10 +429,38 @@ function displayStats() {
 }
 
 // Vytvoření grafů
-function createCharts(categoryStats, locationStats, monthlyStats, statusStats) {
+function createCharts(categoryStats, locationStats, monthlyStats, statusStats, dailyViewsStats, packageStats) {
     // Zničit existující grafy
     Object.values(charts).forEach(chart => chart.destroy());
     charts = {};
+    
+    // Graf návštěvnosti
+    const trafficCtx = document.getElementById('trafficChart');
+    if (trafficCtx) {
+        const labels = Object.keys(dailyViewsStats);
+        const data = Object.values(dailyViewsStats);
+        charts.traffic = new Chart(trafficCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Zobrazení',
+                    data: data,
+                    borderColor: 'rgba(247, 124, 0, 1)',
+                    backgroundColor: 'rgba(247, 124, 0, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
     
     // Graf kategorií
     const categoryCtx = document.getElementById('categoryChart');

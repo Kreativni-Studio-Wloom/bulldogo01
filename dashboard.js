@@ -69,27 +69,39 @@ async function checkAdminStatusFromFirestore(uid) {
 
 // Zkontrolovat admin přihlášení
 async function checkAdminLogin() {
-    // Zkontrolovat Firebase Auth
+    // Počkat na Firebase Auth pomocí onAuthStateChanged
     const auth = window.firebaseAuth;
-    if (auth && auth.currentUser) {
-        const isAdmin = await checkAdminStatusFromFirestore(auth.currentUser.uid);
-        if (isAdmin) {
-            console.log('✅ Uživatel je admin podle Firestore');
-            localStorage.setItem('adminLoggedIn', 'true');
-            showDashboard();
-            loadDashboardData();
-            return;
-        }
+    if (!auth) {
+        console.log('Firebase Auth není dostupné');
+        showLoginForm();
+        return;
     }
     
-    // Fallback: kontrola localStorage (pro starý dashboard login)
-    const isLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
-    if (isLoggedIn) {
-        showDashboard();
-        loadDashboardData();
-    } else {
-        showLoginForm();
-    }
+    const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    
+    onAuthStateChanged(auth, async (user) => {
+        console.log('Auth state changed na dashboard:', user ? user.email : 'Odhlášen');
+        
+        if (user) {
+            const isAdmin = await checkAdminStatusFromFirestore(user.uid);
+            if (isAdmin) {
+                console.log('✅ Uživatel je admin podle Firestore');
+                localStorage.setItem('adminLoggedIn', 'true');
+                showDashboard();
+                await loadDashboardData();
+                return;
+            }
+        }
+        
+        // Fallback: kontrola localStorage (pro starý dashboard login)
+        const isLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
+        if (isLoggedIn) {
+            showDashboard();
+            await loadDashboardData();
+        } else {
+            showLoginForm();
+        }
+    });
 }
 
 // Nastavení event listenerů
@@ -254,31 +266,76 @@ async function loadAllUsers() {
 async function loadAllAds() {
     try {
         const { getDocs, collection, collectionGroup } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-        
-        console.log('Načítám inzeráty přes collectionGroup("inzeraty")...');
-        const cgSnapshot = await getDocs(collectionGroup(window.firebaseDb, 'inzeraty'));
         allAds = [];
         
-        cgSnapshot.forEach((docSnap) => {
-            const data = docSnap.data() || {};
-            const userIdFromPath = docSnap.ref.parent && docSnap.ref.parent.parent ? docSnap.ref.parent.parent.id : undefined;
-            if (!data.userId && userIdFromPath) data.userId = userIdFromPath;
-            allAds.push({ id: docSnap.id, ...data });
-        });
-        
-        console.log('Načteno inzerátů z users/{uid}/inzeraty:', allAds.length);
-        
-        // Fallback: pokud nic nenačteme z nové struktury, zkus starou kolekci 'services'
-        if (allAds.length === 0) {
-            console.warn('Nenalezeny žádné inzeráty v users/{uid}/inzeraty, zkouším fallback na kolekci "services"');
-            const servicesSnapshot = await getDocs(collection(window.firebaseDb, 'services'));
-            servicesSnapshot.forEach((docSnap) => {
+        // Zkusit collectionGroup
+        try {
+            const cgSnapshot = await getDocs(collectionGroup(window.firebaseDb, 'inzeraty'));
+            console.log('CollectionGroup výsledek:', cgSnapshot.size, 'dokumentů');
+            
+            cgSnapshot.forEach((docSnap) => {
                 const data = docSnap.data() || {};
-                allAds.push({ id: docSnap.id, ...data });
+                const userIdFromPath = docSnap.ref.parent && docSnap.ref.parent.parent ? docSnap.ref.parent.parent.id : undefined;
+                if (!data.userId && userIdFromPath) data.userId = userIdFromPath;
+                allAds.push({ id: docSnap.id, userId: data.userId || userIdFromPath, ...data });
             });
-            console.log('Načteno inzerátů z fallback kolekce services:', allAds.length);
+            
+            console.log('Načteno inzerátů z users/{uid}/inzeraty:', allAds.length);
+        } catch (cgError) {
+            console.warn('Chyba při načítání přes collectionGroup:', cgError.message);
         }
         
+        // Fallback na services
+        if (allAds.length === 0) {
+            try {
+                const servicesSnapshot = await getDocs(collection(window.firebaseDb, 'services'));
+                console.log('Services kolekce výsledek:', servicesSnapshot.size, 'dokumentů');
+                
+                servicesSnapshot.forEach((docSnap) => {
+                    const data = docSnap.data() || {};
+                    allAds.push({ id: docSnap.id, ...data });
+                });
+                
+                console.log('Načteno inzerátů z fallback kolekce services:', allAds.length);
+            } catch (servicesError) {
+                console.warn('Chyba při načítání z kolekce services:', servicesError.message);
+            }
+        }
+        
+        // Pokud stále nic, projít všechny uživatele
+        if (allAds.length === 0) {
+            console.warn('Stále žádné inzeráty, zkouším projít všechny uživatele...');
+            try {
+                const usersSnapshot = await getDocs(collection(window.firebaseDb, 'users'));
+                let totalAds = 0;
+                
+                for (const userDoc of usersSnapshot.docs) {
+                    const userId = userDoc.id;
+                    try {
+                        const userAdsRef = collection(window.firebaseDb, 'users', userId, 'inzeraty');
+                        const userAdsSnapshot = await getDocs(userAdsRef);
+                        
+                        userAdsSnapshot.forEach((adDoc) => {
+                            const data = adDoc.data() || {};
+                            allAds.push({
+                                id: adDoc.id,
+                                userId: userId,
+                                ...data
+                            });
+                            totalAds++;
+                        });
+                    } catch (userError) {
+                        console.warn(`Chyba při načítání inzerátů pro uživatele ${userId}:`, userError.message);
+                    }
+                }
+                
+                console.log('Načteno inzerátů procházením uživatelů:', totalAds);
+            } catch (usersError) {
+                console.error('Chyba při procházení uživatelů:', usersError);
+            }
+        }
+        
+        console.log('Celkem načteno inzerátů:', allAds.length);
     } catch (error) {
         console.error('Chyba při načítání inzerátů:', error);
         throw error;
