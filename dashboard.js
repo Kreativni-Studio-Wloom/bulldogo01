@@ -89,6 +89,11 @@ async function checkAdminLogin() {
                 localStorage.setItem('adminLoggedIn', 'true');
                 showDashboard();
                 await loadDashboardData();
+                
+                // Zobrazit admin menu
+                if (typeof window.checkAndShowAdminMenu === 'function') {
+                    setTimeout(() => window.checkAndShowAdminMenu(), 500);
+                }
                 return;
             }
         }
@@ -98,6 +103,11 @@ async function checkAdminLogin() {
         if (isLoggedIn) {
             showDashboard();
             await loadDashboardData();
+            
+            // Zobrazit admin menu
+            if (typeof window.checkAndShowAdminMenu === 'function') {
+                setTimeout(() => window.checkAndShowAdminMenu(), 500);
+            }
         } else {
             showLoginForm();
         }
