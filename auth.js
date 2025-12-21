@@ -815,18 +815,60 @@ async function logout(options = {}) {
     }
 }
 
+// Kontrola admin statusu uživatele
+async function checkAdminStatus(user) {
+    if (!user || !user.uid) return false;
+    
+    try {
+        const db = firebaseDb || window.firebaseDb;
+        if (!db) return false;
+        
+        const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        
+        // Zkontrolovat profil uživatele pro admin flag
+        const profileRef = doc(db, 'users', user.uid, 'profile', 'profile');
+        const profileSnap = await getDoc(profileRef);
+        
+        if (profileSnap.exists()) {
+            const profileData = profileSnap.data();
+            // Admin může být označen přes pole 'isAdmin' nebo 'role: admin'
+            if (profileData.isAdmin === true || profileData.role === 'admin') {
+                return true;
+            }
+        }
+        
+        // Fallback: kontrola přes email (pro rychlé nastavení)
+        const adminEmails = ['admin@bulldogo.cz', 'support@bulldogo.cz'];
+        if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+            return true;
+        }
+        
+        // Fallback: kontrola localStorage (pro dashboard login)
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            return true;
+        }
+        
+        return false;
+    } catch (error) {
+        console.error('Chyba při kontrole admin statusu:', error);
+        return false;
+    }
+}
+
 // Aktualizace UI podle stavu přihlášení
-function updateUI(user) {
+async function updateUI(user) {
     console.log('🔄 Aktualizuji UI pro uživatele:', user ? user.email : 'Odhlášen');
     console.log('🔄 updateUI volána na stránce:', window.location.pathname);
     console.log('🔄 updateUI volána v čase:', new Date().toLocaleTimeString());
     
     const authSection = document.querySelector('.auth-section');
     const userProfileSection = document.querySelector('.user-profile-section');
+    const adminSection = document.getElementById('adminSection');
     
     console.log('🔍 UI elementy:', { 
         authSection: !!authSection, 
         userProfileSection: !!userProfileSection,
+        adminSection: !!adminSection,
         authSectionDisplay: authSection ? authSection.style.display : 'N/A',
         userProfileSectionDisplay: userProfileSection ? userProfileSection.style.display : 'N/A'
     });
@@ -935,10 +977,27 @@ function updateUI(user) {
         
         // Zobrazit tlačítko pro přidání služby
         showAddServiceButton();
+        
+        // Kontrola admin statusu a zobrazení admin menu
+        checkAdminStatus(user).then(isAdmin => {
+            const adminSection = document.getElementById('adminSection');
+            if (adminSection) {
+                if (isAdmin) {
+                    adminSection.style.display = 'block';
+                    console.log('✅ Admin menu zobrazeno');
+                } else {
+                    adminSection.style.display = 'none';
+                }
+            }
+        });
     } else {
         // Uživatel není přihlášen
         if (authSection) authSection.style.display = 'flex';
         if (userProfileSection) userProfileSection.style.display = 'none';
+        
+        // Skrýt admin menu
+        const adminSection = document.getElementById('adminSection');
+        if (adminSection) adminSection.style.display = 'none';
         
         hideAddServiceButton();
     }

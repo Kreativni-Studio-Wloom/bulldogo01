@@ -1997,6 +1997,59 @@ body {
     transition-delay: 0.3s;
 }
 
+/* Admin Section */
+.admin-section {
+    padding: 1rem 0.5rem;
+    border-top: 1px solid rgba(255, 215, 0, 0.2);
+    margin-top: 1rem;
+    display: none;
+}
+
+.sidebar:hover .admin-section {
+    padding: 1rem 1.5rem;
+}
+
+.admin-section .nav-section-title {
+    color: #ffd700;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-section .nav-section-title::before {
+    content: '🔒';
+    font-size: 0.9rem;
+}
+
+.admin-section .nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    transition: all 0.3s ease;
+}
+
+.admin-section .nav-link:hover {
+    color: #ffd700;
+    background: rgba(255, 215, 0, 0.1);
+    transform: translateX(3px);
+}
+
+.admin-section .nav-link .nav-icon {
+    color: #ffd700;
+    opacity: 0.9;
+}
+
+.admin-section .nav-link:hover .nav-icon {
+    color: #ffd700;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
 /* Auth Section */
 .auth-section {
     padding: 1rem 0.5rem;
