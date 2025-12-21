@@ -2031,14 +2031,19 @@ body {
 }
 
 .admin-section .nav-link {
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.9);
     transition: all 0.3s ease;
-    background: rgba(255, 215, 0, 0.05);
+    background: rgba(255, 215, 0, 0.08);
     border-left: 3px solid #ffd700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .sidebar:not(:hover) .admin-section .nav-link {
-    justify-content: center;
+    justify-content: flex-start;
+    padding-left: 0.5rem;
+    gap: 0.75rem;
 }
 
 .sidebar:hover .admin-section .nav-link {
@@ -2075,20 +2080,29 @@ body {
 }
 
 .admin-section .nav-text {
-    opacity: 0;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1 !important;
+    transition: all 0.3s ease;
     white-space: nowrap;
     order: 1;
-    transform: translateX(-15px);
-    width: 0;
-    overflow: hidden;
+    transform: translateX(0) !important;
+    width: auto !important;
+    overflow: visible !important;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.sidebar:not(:hover) .admin-section .nav-link {
+    justify-content: flex-start;
+    padding-left: 0.5rem;
+    gap: 0.75rem;
 }
 
 .sidebar:hover .admin-section .nav-text {
     opacity: 1;
     transform: translateX(0);
     width: auto;
-    transition-delay: 0s;
+    color: rgba(255, 255, 255, 0.95);
 }
 
 /* Auth Section */
