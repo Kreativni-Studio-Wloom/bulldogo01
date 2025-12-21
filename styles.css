@@ -2235,6 +2235,14 @@ body {
     margin-left: 0;
 }
 
+/* Admin ikony musí být vždy viditelné */
+.sidebar:not(:hover) .admin-section .nav-link .nav-icon {
+    margin-left: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+}
+
 .btn-register {
     width: 100%;
     background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
