@@ -125,27 +125,90 @@ async function loadAllUsers() {
 async function loadAllAds() {
     try {
         const { getDocs, collection, collectionGroup } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-        const cgSnapshot = await getDocs(collectionGroup(window.firebaseDb, 'inzeraty'));
+        console.log('Načítám inzeráty přes collectionGroup("inzeraty")...');
+        
         allAds = [];
         
-        cgSnapshot.forEach((docSnap) => {
-            const data = docSnap.data() || {};
-            const userIdFromPath = docSnap.ref.parent && docSnap.ref.parent.parent ? docSnap.ref.parent.parent.id : undefined;
-            if (!data.userId && userIdFromPath) data.userId = userIdFromPath;
-            allAds.push({ id: docSnap.id, ...data });
-        });
-        
-        if (allAds.length === 0) {
-            const servicesSnapshot = await getDocs(collection(window.firebaseDb, 'services'));
-            servicesSnapshot.forEach((docSnap) => {
+        // Zkusit collectionGroup pro users/{uid}/inzeraty
+        try {
+            const cgSnapshot = await getDocs(collectionGroup(window.firebaseDb, 'inzeraty'));
+            console.log('CollectionGroup výsledek:', cgSnapshot.size, 'dokumentů');
+            
+            cgSnapshot.forEach((docSnap) => {
                 const data = docSnap.data() || {};
-                allAds.push({ id: docSnap.id, ...data });
+                const userIdFromPath = docSnap.ref.parent && docSnap.ref.parent.parent ? docSnap.ref.parent.parent.id : undefined;
+                if (!data.userId && userIdFromPath) data.userId = userIdFromPath;
+                allAds.push({ 
+                    id: docSnap.id, 
+                    userId: data.userId || userIdFromPath,
+                    ...data 
+                });
             });
+            
+            console.log('Načteno inzerátů z users/{uid}/inzeraty:', allAds.length);
+        } catch (cgError) {
+            console.warn('Chyba při načítání přes collectionGroup:', cgError);
         }
         
-        console.log('Načteno inzerátů:', allAds.length);
+        // Fallback: zkusit starou kolekci 'services'
+        if (allAds.length === 0) {
+            console.warn('Nenalezeny žádné inzeráty v users/{uid}/inzeraty, zkouším fallback na kolekci "services"');
+            try {
+                const servicesSnapshot = await getDocs(collection(window.firebaseDb, 'services'));
+                console.log('Services kolekce výsledek:', servicesSnapshot.size, 'dokumentů');
+                
+                servicesSnapshot.forEach((docSnap) => {
+                    const data = docSnap.data() || {};
+                    allAds.push({ 
+                        id: docSnap.id, 
+                        ...data 
+                    });
+                });
+                
+                console.log('Načteno inzerátů z fallback kolekce services:', allAds.length);
+            } catch (servicesError) {
+                console.error('Chyba při načítání z kolekce services:', servicesError);
+            }
+        }
+        
+        // Pokud stále nic, zkusit projít všechny uživatele a načíst jejich inzeráty
+        if (allAds.length === 0) {
+            console.warn('Stále žádné inzeráty, zkouším projít všechny uživatele...');
+            try {
+                const usersSnapshot = await getDocs(collection(window.firebaseDb, 'users'));
+                let totalAds = 0;
+                
+                for (const userDoc of usersSnapshot.docs) {
+                    const userId = userDoc.id;
+                    const userAdsRef = collection(window.firebaseDb, 'users', userId, 'inzeraty');
+                    const userAdsSnapshot = await getDocs(userAdsRef);
+                    
+                    userAdsSnapshot.forEach((adDoc) => {
+                        const data = adDoc.data() || {};
+                        allAds.push({
+                            id: adDoc.id,
+                            userId: userId,
+                            ...data
+                        });
+                        totalAds++;
+                    });
+                }
+                
+                console.log('Načteno inzerátů procházením uživatelů:', totalAds);
+            } catch (usersError) {
+                console.error('Chyba při procházení uživatelů:', usersError);
+            }
+        }
+        
+        console.log('Celkem načteno inzerátů:', allAds.length);
+        
+        if (allAds.length === 0) {
+            console.warn('⚠️ Nebyly nalezeny žádné inzeráty v databázi');
+        }
+        
     } catch (error) {
         console.error('Chyba při načítání inzerátů:', error);
+        showMessage('Nepodařilo se načíst inzeráty.', 'error');
     }
 }
 
