@@ -39,17 +39,60 @@ function toggleSidebar() {
     } catch (_) {}
 }
 
-// Mobile menu toggle
+// Mobile menu toggle with improved UX
 function toggleMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
-    sidebar.classList.toggle('mobile-open');
+    const body = document.body;
+    const isOpen = sidebar.classList.contains('mobile-open');
+    
+    if (isOpen) {
+        sidebar.classList.remove('mobile-open');
+        body.classList.remove('sidebar-open');
+        // Remove overlay if exists
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (overlay) overlay.remove();
+    } else {
+        sidebar.classList.add('mobile-open');
+        body.classList.add('sidebar-open');
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1999;
+            animation: fadeIn 0.3s ease;
+        `;
+        overlay.addEventListener('click', toggleMobileMenu);
+        document.body.appendChild(overlay);
+    }
 }
 
 // Close mobile menu when clicking on a link
-document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', () => {
-    const sidebar = document.querySelector('.sidebar');
-    sidebar.classList.remove('mobile-open');
-}));
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('mobile-open')) {
+                toggleMobileMenu();
+            }
+        });
+    });
+    
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('mobile-open')) {
+                toggleMobileMenu();
+            }
+        }
+    });
+});
 
 // Dark mode disabled: force light theme
 function toggleDarkMode() {}
