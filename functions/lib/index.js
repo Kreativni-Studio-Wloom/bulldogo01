@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendWelcomeEmail = exports.sendNewMessageEmail = exports.sendProfileChangeEmail = exports.onPlanCancelled = exports.forceCheckExpiredPlans = exports.enforceExpiredPlanAds = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.cleanupInactiveUsers = exports.reportAd = exports.sendInactivityWarningEmails = exports.validateICO = void 0;
+exports.setAdminStatus = exports.sendWelcomeEmail = exports.sendNewMessageEmail = exports.sendProfileChangeEmail = exports.onPlanCancelled = exports.forceCheckExpiredPlans = exports.enforceExpiredPlanAds = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.cleanupInactiveUsers = exports.reportAd = exports.sendInactivityWarningEmails = exports.validateICO = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const axios_1 = __importDefault(require("axios"));
@@ -125,11 +125,11 @@ async function clearPlanExpiredMarkersForUser(userId) {
 }
 /**
  * validateICO
- * HTTPS endpoint, který proxy-uje dotaz na ARES a sjednotí odpověď.
+ * HTTPS endpoint, který proxy-uje dotaz na HlídačStátu a sjednotí odpověď.
  */
 exports.validateICO = functions.region("europe-west1").https.onRequest(async (req, res) => {
     return corsHandler(req, res, async () => {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f;
         try {
             let networkError = false;
             const raw = (req.method === "GET"
@@ -140,84 +140,49 @@ exports.validateICO = functions.region("europe-west1").https.onRequest(async (re
                 res.status(200).json({ ok: false, reason: "IČO musí mít 8 číslic." });
                 return;
             }
-            // Primární REST JSON API
+            // HlídačStátu API - endpoint pro firmy podle IČO
+            const hlidacToken = ((_c = functions.config().hlidacstatu) === null || _c === void 0 ? void 0 : _c.api_token) || "36a6940d34774a5c90270f60ea73130b";
             try {
-                const url = `https://ares.gov.cz/ekonomicke-subjekty-v-be/v1/ekonomicke-subjekty/${ico}`;
-                const ares = await axios_1.default.get(url, {
+                const url = `https://api.hlidacstatu.cz/api/v2/firmy/ico/${ico}`;
+                const hlidac = await axios_1.default.get(url, {
                     timeout: 7000,
                     headers: {
                         Accept: "application/json",
+                        Authorization: `Token ${hlidacToken}`,
                         "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)",
                     },
                 });
-                const data = ares.data || {};
-                const companyName = data.obchodniJmeno || data.obchodni_jmeno || data.obchodni_name || data.obchodniJméno || null;
-                const seat = data.sidlo || data.sídlo || data.seat || null;
-                if (companyName || data.ico || data.IC) {
-                    res.status(200).json({ ok: true, ico, name: companyName, seat });
+                const data = hlidac.data || {};
+                // HlídačStátu API vrací FirmaDTO: { ico, jmeno, datoveSchranky, zalozena }
+                const companyName = data.jmeno || data.nazev || null;
+                // Pokud API vrátilo data s IČO a jménem, firma existuje
+                if (data.ico && companyName) {
+                    res.status(200).json({ ok: true, ico, name: companyName, seat: null });
                     return;
                 }
             }
             catch (err) {
                 networkError = true;
-                functions.logger.warn("ARES JSON call failed", { status: (_c = err === null || err === void 0 ? void 0 : err.response) === null || _c === void 0 ? void 0 : _c.status, code: err === null || err === void 0 ? void 0 : err.code, message: err === null || err === void 0 ? void 0 : err.message });
-            }
-            // Fallback na staré XML API
-            try {
-                const urlXml1 = `https://wwwinfo.mfcr.cz/cgi-bin/ares/darv_bas.cgi?ico=${ico}`;
-                const xmlRes1 = await axios_1.default.get(urlXml1, {
-                    timeout: 8000,
-                    responseType: "text",
-                    headers: {
-                        Accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
-                        "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)",
-                    },
-                    transformResponse: [(d) => d],
-                });
-                let xml = xmlRes1.data || "";
-                if (!xml || typeof xml !== "string" || xml.length < 50) {
-                    const urlXml2 = `https://wwwinfo.mfcr.cz/cgi-bin/ares/xar.cgi?ico=${ico}&jazyk=cz&xml=1`;
-                    const xmlRes2 = await axios_1.default.get(urlXml2, {
-                        timeout: 8000,
-                        responseType: "text",
-                        headers: {
-                            Accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
-                            "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)",
-                        },
-                        transformResponse: [(d) => d],
-                    });
-                    xml = xmlRes2.data || "";
-                }
-                const icoMatch = xml.match(/<[^>]*ICO[^>]*>\s*([0-9]{8})\s*<\/[^>]*ICO[^>]*>/i);
-                let name = null;
-                const nameMatchOF = xml.match(/<[^>]*OF[^>]*>\s*([^<]+)\s*<\/[^>]*OF[^>]*>/i);
-                const nameMatchObchodniFirma = xml.match(/<Obchodni[_ ]?firma[^>]*>\s*([^<]+)\s*<\/Obchodni[_ ]?firma[^>]*>/i);
-                if (nameMatchOF && nameMatchOF[1])
-                    name = nameMatchOF[1].trim();
-                else if (nameMatchObchodniFirma && nameMatchObchodniFirma[1])
-                    name = nameMatchObchodniFirma[1].trim();
-                if (icoMatch && icoMatch[1]) {
-                    res.status(200).json({ ok: true, ico, name });
+                functions.logger.warn("HlídačStátu API call failed", { status: (_d = err === null || err === void 0 ? void 0 : err.response) === null || _d === void 0 ? void 0 : _d.status, code: err === null || err === void 0 ? void 0 : err.code, message: err === null || err === void 0 ? void 0 : err.message });
+                // Pokud je 404, firma neexistuje
+                if (((_e = err === null || err === void 0 ? void 0 : err.response) === null || _e === void 0 ? void 0 : _e.status) === 404) {
+                    res.status(200).json({ ok: false, reason: "Subjekt s tímto IČO nebyl nalezen." });
                     return;
                 }
-            }
-            catch (err) {
-                networkError = true;
-                functions.logger.warn("ARES XML call failed", { status: (_d = err === null || err === void 0 ? void 0 : err.response) === null || _d === void 0 ? void 0 : _d.status, code: err === null || err === void 0 ? void 0 : err.code, message: err === null || err === void 0 ? void 0 : err.message });
             }
             if (networkError) {
-                res.status(200).json({ ok: false, reason: "ARES je dočasně nedostupný. Zkuste to později." });
+                res.status(200).json({ ok: false, reason: "HlídačStátu je dočasně nedostupný. Zkuste to později." });
                 return;
             }
             res.status(200).json({ ok: false, reason: "Subjekt s tímto IČO nebyl nalezen." });
         }
         catch (error) {
-            const status = (_e = error === null || error === void 0 ? void 0 : error.response) === null || _e === void 0 ? void 0 : _e.status;
+            const status = (_f = error === null || error === void 0 ? void 0 : error.response) === null || _f === void 0 ? void 0 : _f.status;
             if (status === 404) {
                 res.status(200).json({ ok: false, reason: "Subjekt s tímto IČO nebyl nalezen." });
                 return;
             }
-            res.status(200).json({ ok: false, reason: "ARES je dočasně nedostupný. Zkuste to později." });
+            res.status(200).json({ ok: false, reason: "HlídačStátu je dočasně nedostupný. Zkuste to později." });
         }
     });
 });
@@ -2714,5 +2679,49 @@ exports.sendWelcomeEmail = functions
         // Neházíme chybu, aby se registrace nedostala do chybového stavu
         return null;
     }
+});
+/**
+ * Firebase Function - Nastaví admin status pro uživatele
+ * Použití: POST s { uid: "user-uid" } nebo GET s ?uid=user-uid
+ */
+exports.setAdminStatus = functions.region("europe-west1").https.onRequest(async (req, res) => {
+    return corsHandler(req, res, async () => {
+        var _a, _b, _c;
+        try {
+            if (req.method !== "POST" && req.method !== "GET") {
+                res.status(405).json({ error: "Method not allowed. Use POST or GET." });
+                return;
+            }
+            const uid = req.method === "POST" ? (((_a = req.body) === null || _a === void 0 ? void 0 : _a.uid) || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.userId)) : (_c = req.query) === null || _c === void 0 ? void 0 : _c.uid;
+            if (!uid || typeof uid !== "string") {
+                res.status(400).json({ error: "Missing or invalid uid parameter" });
+                return;
+            }
+            const db = admin.firestore();
+            const profileRef = db.collection("users").doc(uid).collection("profile").doc("profile");
+            // Nastavit admin status
+            await profileRef.set({
+                isAdmin: true,
+                role: "admin",
+                adminSetAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            functions.logger.info("✅ Admin status nastaven", { uid });
+            res.status(200).json({
+                success: true,
+                message: "Admin status successfully set",
+                uid: uid,
+            });
+        }
+        catch (error) {
+            functions.logger.error("❌ Chyba při nastavování admin statusu", {
+                error: error === null || error === void 0 ? void 0 : error.message,
+                stack: error === null || error === void 0 ? void 0 : error.stack,
+            });
+            res.status(500).json({
+                error: "Failed to set admin status",
+                message: error === null || error === void 0 ? void 0 : error.message,
+            });
+        }
+    });
 });
 //# sourceMappingURL=index.js.map

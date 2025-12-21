@@ -2857,3 +2857,55 @@ export const sendWelcomeEmail = functions
     }
   });
 
+/**
+ * Firebase Function - Nastaví admin status pro uživatele
+ * Použití: POST s { uid: "user-uid" } nebo GET s ?uid=user-uid
+ */
+export const setAdminStatus = functions.region("europe-west1").https.onRequest(async (req, res) => {
+  return corsHandler(req, res, async () => {
+    try {
+      if (req.method !== "POST" && req.method !== "GET") {
+        res.status(405).json({ error: "Method not allowed. Use POST or GET." });
+        return;
+      }
+
+      const uid = req.method === "POST" ? (req.body?.uid || req.body?.userId) : req.query?.uid;
+      
+      if (!uid || typeof uid !== "string") {
+        res.status(400).json({ error: "Missing or invalid uid parameter" });
+        return;
+      }
+
+      const db = admin.firestore();
+      const profileRef = db.collection("users").doc(uid).collection("profile").doc("profile");
+
+      // Nastavit admin status
+      await profileRef.set(
+        {
+          isAdmin: true,
+          role: "admin",
+          adminSetAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      functions.logger.info("✅ Admin status nastaven", { uid });
+
+      res.status(200).json({
+        success: true,
+        message: "Admin status successfully set",
+        uid: uid,
+      });
+    } catch (error: any) {
+      functions.logger.error("❌ Chyba při nastavování admin statusu", {
+        error: error?.message,
+        stack: error?.stack,
+      });
+      res.status(500).json({
+        error: "Failed to set admin status",
+        message: error?.message,
+      });
+    }
+  });
+});
+
