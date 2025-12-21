@@ -532,5 +532,176 @@ function createCharts(categoryStats, locationStats, monthlyStats, statusStats, d
             }
         });
     }
+    
+    // Graf prodeje balíčků
+    const packageCtx = document.getElementById('packageChart');
+    if (packageCtx && packageStats) {
+        const packageLabels = Object.keys(packageStats).map(plan => {
+            return plan === 'bez_planu' ? 'Bez balíčku' : 
+                   plan === 'basic' ? 'Základní' :
+                   plan === 'premium' ? 'Prémiový' :
+                   plan === 'enterprise' ? 'Enterprise' : plan;
+        });
+        const packageData = Object.values(packageStats);
+        charts.package = new Chart(packageCtx, {
+            type: 'doughnut',
+            data: {
+                labels: packageLabels,
+                datasets: [{
+                    data: packageData,
+                    backgroundColor: [
+                        'rgba(156, 163, 175, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(247, 124, 0, 0.8)',
+                        'rgba(139, 92, 246, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true
+            }
+        });
+    }
+}
+
+// Generování inteligentních doporučení
+function generateIntelligentRecommendations(stats) {
+    const recommendations = [];
+    const { totalUsers, totalAds, activeAds, inactiveAds, topAds, usersWithAds, usersWithoutAds, avgViewsPerAd, totalViews, totalContacts, packageStats, topAdsList, avgAdsPerUser } = stats;
+    
+    // 1. Uživatelé bez inzerátů
+    if (usersWithoutAds > totalUsers * 0.5 && totalUsers > 10) {
+        recommendations.push({
+            type: 'warning',
+            icon: 'fa-users',
+            priority: 1,
+            title: 'Vysoký podíl uživatelů bez inzerátů',
+            text: `${Math.round(usersWithoutAds / totalUsers * 100)}% uživatelů nemá žádné inzeráty. Zvažte onboarding email, tutorial nebo motivaci pro první inzerát.`
+        });
+    } else if (usersWithoutAds > 0 && totalUsers <= 10) {
+        recommendations.push({
+            type: 'info',
+            icon: 'fa-users',
+            priority: 3,
+            title: 'Uživatelé bez inzerátů',
+            text: `${usersWithoutAds} uživatelů nemá žádné inzeráty. Zvažte odeslání emailu s tipy, jak začít.`
+        });
+    }
+    
+    // 2. Nízká aktivita
+    if (totalAds === 0 && totalUsers > 0) {
+        recommendations.push({
+            type: 'warning',
+            icon: 'fa-rocket',
+            priority: 1,
+            title: 'Žádné inzeráty',
+            text: 'Máte uživatele, ale žádné inzeráty. Začněte propagovat platformu a motivovat uživatele k vytváření prvních inzerátů.'
+        });
+    }
+    
+    // 3. Nízká návštěvnost
+    if (avgViewsPerAd < 5 && totalAds > 5) {
+        recommendations.push({
+            type: 'warning',
+            icon: 'fa-eye',
+            priority: 1,
+            title: 'Velmi nízká návštěvnost',
+            text: `Průměrně pouze ${avgViewsPerAd} zobrazení na inzerát. Zvažte SEO optimalizaci, propagaci na sociálních sítích nebo zlepšení vyhledávání.`
+        });
+    } else if (avgViewsPerAd < 10 && totalAds > 0) {
+        recommendations.push({
+            type: 'info',
+            icon: 'fa-lightbulb',
+            priority: 2,
+            title: 'Nízká návštěvnost',
+            text: `Průměrně ${avgViewsPerAd} zobrazení na inzerát. Zvažte zlepšení SEO nebo propagaci.`
+        });
+    }
+    
+    // 4. Neaktivní inzeráty
+    if (inactiveAds > activeAds && totalAds > 10) {
+        recommendations.push({
+            type: 'warning',
+            icon: 'fa-exclamation-triangle',
+            priority: 1,
+            title: 'Více neaktivních než aktivních inzerátů',
+            text: `${inactiveAds} neaktivních vs ${activeAds} aktivních. Zkontrolujte, proč uživatelé deaktivují inzeráty a zvažte zlepšení UX.`
+        });
+    } else if (inactiveAds > activeAds * 0.3 && totalAds > 5) {
+        recommendations.push({
+            type: 'info',
+            icon: 'fa-exclamation-triangle',
+            priority: 2,
+            title: 'Mnoho neaktivních inzerátů',
+            text: `${Math.round(inactiveAds / totalAds * 100)}% inzerátů je neaktivních. Zkontrolujte důvody deaktivace.`
+        });
+    }
+    
+    // 5. TOP inzeráty
+    if (topAds === 0 && totalAds > 20) {
+        recommendations.push({
+            type: 'info',
+            icon: 'fa-fire',
+            priority: 2,
+            title: 'Žádné TOP inzeráty',
+            text: 'Zvažte propagaci TOP funkcionality pro zvýšení příjmů. Můžete vytvořit speciální nabídku nebo slevu.'
+        });
+    } else if (topAds > 0 && topAds < totalAds * 0.1) {
+        recommendations.push({
+            type: 'success',
+            icon: 'fa-fire',
+            priority: 3,
+            title: 'TOP inzeráty fungují',
+            text: `${topAds} TOP inzerátů (${Math.round(topAds / totalAds * 100)}%). Zvažte propagaci této funkcionality pro více uživatelů.`
+        });
+    }
+    
+    // 6. Prodeje balíčků
+    const usersWithPackages = totalUsers - (packageStats['bez_planu'] || 0);
+    if (usersWithPackages === 0 && totalUsers > 10) {
+        recommendations.push({
+            type: 'warning',
+            icon: 'fa-shopping-cart',
+            priority: 1,
+            title: 'Žádné prodeje balíčků',
+            text: 'Žádný uživatel nemá aktivní balíček. Zvažte propagaci balíčků nebo speciální nabídku pro první zákazníky.'
+        });
+    } else if (usersWithPackages < totalUsers * 0.1 && totalUsers > 20) {
+        recommendations.push({
+            type: 'info',
+            icon: 'fa-shopping-cart',
+            priority: 2,
+            title: 'Nízký počet prodejů balíčků',
+            text: `Pouze ${Math.round(usersWithPackages / totalUsers * 100)}% uživatelů má balíček. Zvažte zlepšení propagace nebo cenové strategie.`
+        });
+    }
+    
+    // 7. Průměr inzerátů na uživatele
+    if (avgAdsPerUser < 1 && usersWithAds > 0) {
+        recommendations.push({
+            type: 'info',
+            icon: 'fa-list',
+            priority: 2,
+            title: 'Nízký počet inzerátů na uživatele',
+            text: `Průměrně ${avgAdsPerUser} inzerátů na uživatele. Zvažte motivaci uživatelů k vytváření více inzerátů.`
+        });
+    }
+    
+    // 8. Kontakty
+    if (totalContacts === 0 && totalAds > 5) {
+        recommendations.push({
+            type: 'warning',
+            icon: 'fa-comments',
+            priority: 1,
+            title: 'Žádné kontakty',
+            text: 'Uživatelé nevyužívají kontaktní funkci. Zkontrolujte, zda je funkce snadno dostupná a funkční.'
+        });
+    }
+    
+    // Seřadit podle priority
+    recommendations.sort((a, b) => a.priority - b.priority);
+    
+    return recommendations;
 }
 
