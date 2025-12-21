@@ -547,7 +547,7 @@ function normalizeICO(input) {
     return digits.slice(0, 8);
 }
 
-// Ověření IČO – preferuje Firebase Function proxy (CORS-safe), fallback na přímé ARES volání
+// Ověření IČO – preferuje Firebase Function proxy (CORS-safe), fallback na přímé HlídačStátu volání
 async function validateICOWithARES(ico) {
     const n = normalizeICO(ico);
     if (n.length !== 8) return { ok: false, reason: 'IČO musí mít 8 číslic.' };
@@ -588,7 +588,7 @@ async function validateICOWithARES(ico) {
                     const dataLocal = await fnResLocal.json().catch(() => ({}));
                     if (typeof dataLocal?.ok === 'boolean') {
                         if (dataLocal.ok === false && /nedostupn/i.test(dataLocal.reason || '')) {
-                            throw new Error('Emulator ARES nedostupný, zkouším produkci');
+                            throw new Error('Emulator HlídačStátu nedostupný, zkouším produkci');
                         }
                         return dataLocal;
                     }
@@ -609,33 +609,34 @@ async function validateICOWithARES(ico) {
             } catch (_) {}
         }
 
-        // 2) Fallback: přímé ARES REST volání (může selhat na CORS v prohlížeči)
+        // 2) Fallback: přímé HlídačStátu REST volání (může selhat na CORS v prohlížeči)
         // Tento fallback obvykle selže kvůli CORS, ale zkusíme to
+        // POZOR: API token by neměl být v klientském kódu, ale pro testování ho můžeme použít
         try {
-            const urlV1 = `https://ares.gov.cz/ekonomicke-subjekty-v-be/v1/ekonomicke-subjekty/${n}`;
-            const res = await fetch(urlV1, { 
+            const urlV2 = `https://api.hlidacstatu.cz/api/v2/firmy/ico/${n}`;
+            const res = await fetch(urlV2, { 
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Authorization': 'Token 36a6940d34774a5c90270f60ea73130b'
                 }
             });
             if (res.ok) {
                 const data = await res.json().catch(() => ({}));
-                if (data && (data.ico || data.IC || data.obchodniJmeno || data.obchodni_jmeno)) {
-                    const companyName = data.obchodniJmeno || data.obchodni_jmeno || data.obchodni_name || '';
-                    const seat = data.sidlo || data.sídlo || data.seat || null;
-                    return { ok: true, name: companyName, seat };
+                // HlídačStátu API vrací FirmaDTO: { ico, jmeno, datoveSchranky, zalozena }
+                if (data && data.ico && data.jmeno) {
+                    return { ok: true, name: data.jmeno, seat: null };
                 }
             }
         } catch (corsError) {
             // CORS error je očekávaný - prohlížeč blokuje přímé volání
-            console.warn('Direct ARES call blocked by CORS (expected)');
+            console.warn('Direct HlídačStátu call blocked by CORS (expected)');
         }
         
         // Pokud všechny metody selhaly, vrátit obecnou chybovou zprávu
-        return { ok: false, reason: 'ARES je dočasně nedostupný. Zkuste to později.' };
+        return { ok: false, reason: 'HlídačStátu je dočasně nedostupný. Zkuste to později.' };
     } catch (e) {
-        return { ok: false, reason: 'ARES je dočasně nedostupný. Zkuste to později.' };
+        return { ok: false, reason: 'HlídačStátu je dočasně nedostupný. Zkuste to později.' };
     }
 }
 
@@ -656,14 +657,14 @@ async function register(email, password, userData) {
         // Kontrola unikátnosti telefonního čísla před vytvořením účtu
         const rawPhone = userData.phone || '';
         const normalizedPhone = normalizePhone(rawPhone);
-        // Pokud jde o firmu, ověřit IČO přes ARES
+        // Pokud jde o firmu, ověřit IČO přes HlídačStátu
         if (userData.type === 'company') {
             const icoCheck = await validateICOWithARES(userData.ico || '');
             if (!icoCheck.ok) {
                 showMessage(icoCheck.reason || 'IČO se nepodařilo ověřit.', 'error');
                 return;
             }
-            // Volitelně doplnit obchodní název/sídlo z ARES
+            // Volitelně doplnit obchodní název/sídlo z HlídačStátu
             if (!userData.companyName && icoCheck.name) {
                 userData.companyName = icoCheck.name;
             }
@@ -2286,7 +2287,7 @@ function setupEventListeners() {
         });
     }
 
-    // Ověření IČ přes ARES (vedle pole IČ)
+    // Ověření IČ přes HlídačStátu (vedle pole IČ)
     const btnVerifyICO = document.getElementById('btnVerifyICO');
     if (btnVerifyICO) {
         btnVerifyICO.addEventListener('click', async () => {

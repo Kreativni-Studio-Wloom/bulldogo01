@@ -96,7 +96,7 @@ async function clearPlanExpiredMarkersForUser(userId: string): Promise<void> {
 
 /**
  * validateICO
- * HTTPS endpoint, který proxy-uje dotaz na ARES a sjednotí odpověď.
+ * HTTPS endpoint, který proxy-uje dotaz na HlídačStátu a sjednotí odpověď.
  */
 export const validateICO = functions.region("europe-west1").https.onRequest(async (req, res) => {
   return corsHandler(req, res, async () => {
@@ -112,74 +112,38 @@ export const validateICO = functions.region("europe-west1").https.onRequest(asyn
         return;
       }
 
-      // Primární REST JSON API
+      // HlídačStátu API - endpoint pro firmy podle IČO
+      const hlidacToken = functions.config().hlidacstatu?.api_token || "36a6940d34774a5c90270f60ea73130b";
       try {
-        const url = `https://ares.gov.cz/ekonomicke-subjekty-v-be/v1/ekonomicke-subjekty/${ico}`;
-        const ares = await axios.get(url, {
+        const url = `https://api.hlidacstatu.cz/api/v2/firmy/ico/${ico}`;
+        const hlidac = await axios.get(url, {
           timeout: 7000,
           headers: {
             Accept: "application/json",
+            Authorization: `Token ${hlidacToken}`,
             "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)",
           },
         });
-        const data: AnyObj = (ares.data as AnyObj) || {};
-        const companyName =
-          data.obchodniJmeno || data.obchodni_jmeno || data.obchodni_name || data.obchodniJméno || null;
-        const seat = data.sidlo || data.sídlo || data.seat || null;
-        if (companyName || data.ico || data.IC) {
-          res.status(200).json({ ok: true, ico, name: companyName, seat });
+        const data: AnyObj = (hlidac.data as AnyObj) || {};
+        // HlídačStátu API vrací FirmaDTO: { ico, jmeno, datoveSchranky, zalozena }
+        const companyName = data.jmeno || data.nazev || null;
+        // Pokud API vrátilo data s IČO a jménem, firma existuje
+        if (data.ico && companyName) {
+          res.status(200).json({ ok: true, ico, name: companyName, seat: null });
           return;
         }
       } catch (err: any) {
         networkError = true;
-        functions.logger.warn("ARES JSON call failed", { status: err?.response?.status, code: err?.code, message: err?.message });
-      }
-
-      // Fallback na staré XML API
-      try {
-        const urlXml1 = `https://wwwinfo.mfcr.cz/cgi-bin/ares/darv_bas.cgi?ico=${ico}`;
-        const xmlRes1 = await axios.get<string>(urlXml1, {
-          timeout: 8000,
-          responseType: "text",
-          headers: {
-            Accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
-            "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)",
-          },
-          transformResponse: [(d) => d],
-        });
-        let xml = xmlRes1.data || "";
-        if (!xml || typeof xml !== "string" || xml.length < 50) {
-          const urlXml2 = `https://wwwinfo.mfcr.cz/cgi-bin/ares/xar.cgi?ico=${ico}&jazyk=cz&xml=1`;
-          const xmlRes2 = await axios.get<string>(urlXml2, {
-            timeout: 8000,
-            responseType: "text",
-            headers: {
-              Accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
-              "User-Agent": "Bulldogo-Functions/1.0 (+https://bulldogo.cz)",
-            },
-            transformResponse: [(d) => d],
-          });
-          xml = xmlRes2.data || "";
-        }
-
-        const icoMatch = xml.match(/<[^>]*ICO[^>]*>\s*([0-9]{8})\s*<\/[^>]*ICO[^>]*>/i);
-        let name: string | null = null;
-        const nameMatchOF = xml.match(/<[^>]*OF[^>]*>\s*([^<]+)\s*<\/[^>]*OF[^>]*>/i);
-        const nameMatchObchodniFirma = xml.match(/<Obchodni[_ ]?firma[^>]*>\s*([^<]+)\s*<\/Obchodni[_ ]?firma[^>]*>/i);
-        if (nameMatchOF && nameMatchOF[1]) name = nameMatchOF[1].trim();
-        else if (nameMatchObchodniFirma && nameMatchObchodniFirma[1]) name = nameMatchObchodniFirma[1].trim();
-
-        if (icoMatch && icoMatch[1]) {
-          res.status(200).json({ ok: true, ico, name });
+        functions.logger.warn("HlídačStátu API call failed", { status: err?.response?.status, code: err?.code, message: err?.message });
+        // Pokud je 404, firma neexistuje
+        if (err?.response?.status === 404) {
+          res.status(200).json({ ok: false, reason: "Subjekt s tímto IČO nebyl nalezen." });
           return;
         }
-      } catch (err: any) {
-        networkError = true;
-        functions.logger.warn("ARES XML call failed", { status: err?.response?.status, code: err?.code, message: err?.message });
       }
 
       if (networkError) {
-        res.status(200).json({ ok: false, reason: "ARES je dočasně nedostupný. Zkuste to později." });
+        res.status(200).json({ ok: false, reason: "HlídačStátu je dočasně nedostupný. Zkuste to později." });
         return;
       }
       res.status(200).json({ ok: false, reason: "Subjekt s tímto IČO nebyl nalezen." });
@@ -189,7 +153,7 @@ export const validateICO = functions.region("europe-west1").https.onRequest(asyn
         res.status(200).json({ ok: false, reason: "Subjekt s tímto IČO nebyl nalezen." });
         return;
       }
-      res.status(200).json({ ok: false, reason: "ARES je dočasně nedostupný. Zkuste to později." });
+      res.status(200).json({ ok: false, reason: "HlídačStátu je dočasně nedostupný. Zkuste to později." });
     }
   });
 });

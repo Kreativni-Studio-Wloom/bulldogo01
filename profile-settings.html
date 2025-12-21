@@ -634,7 +634,7 @@
             }
         }
 
-        // ---- IČO ověřování (ARES) ----
+        // ---- IČO ověřování (HlídačStátu) ----
         function normalizeICO(input) {
             const digits = (input || '').toString().replace(/\D+/g, '');
             return digits.slice(0, 8);
@@ -651,10 +651,11 @@
                 return fetch(input, { ...rest, signal: ctrl.signal }).finally(() => clearTimeout(t));
             };
 
-            // --- JSON pokusy (nové REST API) ---
+            // --- HlídačStátu API ---
+            // POZOR: API token by neměl být v klientském kódu, ale pro testování ho můžeme použít
+            const hlidacToken = '36a6940d34774a5c90270f60ea73130b';
             const baseJson = [
-                `https://ares.gov.cz/ekonomicke-subjekty-v-be/v1/ekonomicke-subjekty/${n}`,
-                `https://ares.gov.cz/ekonomicke-subjekty-v-be/ekonomicke-subjekty/${n}`
+                `https://api.hlidacstatu.cz/api/v2/firmy/ico/${n}`
             ];
             const localProxy = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
                 ? baseJson.map(u => `http://localhost:8010/${u.replace('https://','')}`) : [];
@@ -670,69 +671,32 @@
             for (const directUrl of jsonCandidates) {
                 // Direct
                 try {
-                    const r = await fetchWithTimeout(directUrl, { headers: { 'Accept': 'application/json' }, timeoutMs: 3000 });
+                    const r = await fetchWithTimeout(directUrl, { 
+                        headers: { 
+                            'Accept': 'application/json',
+                            'Authorization': `Token ${hlidacToken}`
+                        }, 
+                        timeoutMs: 3000 
+                    });
                     if (r.ok) {
                         const data = await r.json().catch(() => null);
                         if (data) {
-                            const name = data.obchodniJmeno || data.obchodni_name || data.obchodni_jmeno || data.nazevSubjektu || '';
-                            const sidlo = data.sidlo || data.sídlo || data.adresaSidla || null;
-                            if (name || sidlo) return { ok: true, name, seat: sidlo };
+                            // HlídačStátu API vrací FirmaDTO: { ico, jmeno, datoveSchranky, zalozena }
+                            const name = data.jmeno || data.nazev || '';
+                            if (data.ico && name) return { ok: true, name, seat: null };
                         }
                     }
                 } catch (_) {}
-                // Proxy (CORS)
+                // Proxy (CORS) - POZOR: proxy nemusí předat Authorization header
                 try {
                     const proxied = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
                     const r2 = await fetchWithTimeout(proxied, { headers: { 'Accept': 'application/json' }, timeoutMs: 3000 });
                     if (r2.ok) {
                         const data = await r2.json().catch(() => null);
                         if (data) {
-                            const name = data.obchodniJmeno || data.obchodni_name || data.obchodni_jmeno || data.nazevSubjektu || '';
-                            const sidlo = data.sidlo || data.sídlo || data.adresaSidla || null;
-                            if (name || sidlo) return { ok: true, name, seat: sidlo };
+                            const name = data.jmeno || data.nazev || '';
+                            if (data.ico && name) return { ok: true, name, seat: null };
                         }
-                    }
-                } catch (_) {}
-            }
-
-            // --- XML fallback (původní ARES) ---
-            const xmlBase = [
-                `https://wwwinfo.mfcr.cz/cgi-bin/ares/darv_bas.cgi?ico=${n}&ver=1.0&jazyk=cz`,
-                `https://wwwinfo.mfcr.cz/cgi-bin/ares/darv_res.cgi?ico=${n}&ver=1.0&jazyk=cz`
-            ];
-            const xmlLocal = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-                ? xmlBase.map(u => `http://localhost:8010/${u.replace('https://','')}`) : [];
-            const xmlCandidates = [
-                ...xmlLocal,
-                ...xmlBase,
-                ...xmlBase.map(u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`),
-                ...xmlBase.map(u => `https://thingproxy.freeboard.io/fetch/${u}`),
-                ...xmlBase.map(u => `https://cors.isomorphic-git.org/${u}`)
-            ];
-            for (const u of xmlCandidates) {
-                try {
-                    const r = await fetchWithTimeout(u, { timeoutMs: 3000 });
-                    if (!r.ok) continue;
-                    const xmlText = await r.text();
-                    const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
-                    const icoNode = doc.querySelector('ICO');
-                    const nameNode = doc.querySelector('OF');
-                    if (icoNode && icoNode.textContent.replace(/\D+/g, '') === n) {
-                        let seatText = '';
-                        const ns = doc.querySelector('NS');
-                        const n3 = doc.querySelector('N');
-                        const cd = doc.querySelector('CD');
-                        const co = doc.querySelector('CO');
-                        const psc = doc.querySelector('PSC');
-                        const p = doc.querySelector('P');
-                        const parts = [];
-                        if (n3) parts.push(n3.textContent.trim());
-                        const num = [cd?.textContent?.trim(), co?.textContent?.trim()].filter(Boolean).join('/');
-                        if (num) parts.push(num);
-                        if (psc || p) parts.push([psc?.textContent?.trim(), p?.textContent?.trim()].filter(Boolean).join(' '));
-                        if (ns) parts.push(ns.textContent.trim());
-                        seatText = parts.filter(Boolean).join(', ');
-                        return { ok: true, name: nameNode ? nameNode.textContent : '', seat: seatText ? { text: seatText } : null };
                     }
                 } catch (_) {}
             }
