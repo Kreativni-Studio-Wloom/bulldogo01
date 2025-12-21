@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inzeráty - Admin - BULLDOGO</title>
+    <title>Nahlášení - Admin - BULLDOGO</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Firebase SDK -->
@@ -110,73 +110,122 @@
     <div class="main-content">
         <div class="container">
             <div class="page-header">
-                <h1><i class="fas fa-list"></i> Inzeráty</h1>
-                <p>Správa všech inzerátů platformy</p>
+                <h1><i class="fas fa-flag"></i> Nahlášení</h1>
+                <p>Správa nahlášených inzerátů</p>
             </div>
 
-            <div class="ads-filters">
-                <input type="text" id="adsSearch" placeholder="Hledat inzeráty..." oninput="filterAds()">
-                <select id="adsStatusFilter" onchange="filterAds()">
-                    <option value="">Všechny stavy</option>
-                    <option value="active">Aktivní</option>
-                    <option value="inactive">Neaktivní</option>
-                    <option value="pending">Čekající</option>
-                </select>
-            </div>
-
-            <div class="ads-container">
-                <div class="ads-grid" id="adsGrid">
-                    <div class="loading-ads">
+            <div class="reports-container">
+                <div class="reports-grid" id="reportsGrid">
+                    <div class="loading-reports">
                         <i class="fas fa-spinner fa-spin"></i>
-                        <p>Načítám inzeráty...</p>
+                        <p>Načítám nahlášení...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Ad Edit Modal -->
-    <div id="adEditModal" class="modal">
-        <div class="modal-content">
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content review-modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Upravit inzerát</h2>
-                <span class="close" onclick="closeAdEditModal()">&times;</span>
+                <h2 class="modal-title">Kontrola nahlášeného inzerátu</h2>
+                <span class="close" onclick="closeReviewModal()">&times;</span>
             </div>
-            <form id="adEditForm" class="ad-edit-form">
-                <div class="form-group">
-                    <label for="editAdTitle">Název</label>
-                    <input type="text" id="editAdTitle" name="title" required>
+            <div class="review-steps">
+                <div class="step-indicator">
+                    <div class="step" id="step1-indicator" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Obrázky</div>
+                    </div>
+                    <div class="step" id="step2-indicator" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Název & Popis</div>
+                    </div>
+                    <div class="step" id="step3-indicator" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Uživatel</div>
+                    </div>
+                    <div class="step" id="step4-indicator" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-label">Dokončeno</div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editAdDescription">Popis</label>
-                    <textarea id="editAdDescription" name="description" rows="5" required></textarea>
+
+                <!-- Step 1: Images -->
+                <div id="review-step-1" class="review-step active">
+                    <h3>Krok 1: Obrázky inzerátu</h3>
+                    <div class="review-images" id="reviewImages">
+                        <!-- Images will be loaded here -->
+                    </div>
+                    <div class="review-actions">
+                        <button class="btn btn-success" onclick="reviewStep(1, true)">
+                            <i class="fas fa-check"></i> V pořádku
+                        </button>
+                        <button class="btn btn-danger" onclick="reviewStep(1, false)">
+                            <i class="fas fa-times"></i> Není v pořádku
+                        </button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editAdStatus">Stav</label>
-                    <select id="editAdStatus" name="status" required>
-                        <option value="active">Aktivní</option>
-                        <option value="inactive">Neaktivní</option>
-                        <option value="pending">Čekající</option>
-                    </select>
+
+                <!-- Step 2: Title & Description -->
+                <div id="review-step-2" class="review-step">
+                    <h3>Krok 2: Název a popis</h3>
+                    <div class="review-content">
+                        <div class="review-item">
+                            <label>Název:</label>
+                            <p id="reviewTitle"></p>
+                        </div>
+                        <div class="review-item">
+                            <label>Popis:</label>
+                            <p id="reviewDescription"></p>
+                        </div>
+                    </div>
+                    <div class="review-actions">
+                        <button class="btn btn-success" onclick="reviewStep(2, true)">
+                            <i class="fas fa-check"></i> V pořádku
+                        </button>
+                        <button class="btn btn-danger" onclick="reviewStep(2, false)">
+                            <i class="fas fa-times"></i> Není v pořádku
+                        </button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editAdCategory">Kategorie</label>
-                    <input type="text" id="editAdCategory" name="category">
+
+                <!-- Step 3: User Info -->
+                <div id="review-step-3" class="review-step">
+                    <h3>Krok 3: Údaje o uživateli</h3>
+                    <div class="review-user">
+                        <div class="user-avatar-large" id="reviewUserAvatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-details" id="reviewUserDetails">
+                            <!-- User details will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="review-actions">
+                        <button class="btn btn-success" onclick="reviewStep(3, true)">
+                            <i class="fas fa-check"></i> V pořádku
+                        </button>
+                        <button class="btn btn-danger" onclick="reviewStep(3, false)">
+                            <i class="fas fa-times"></i> Není v pořádku
+                        </button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editAdLocation">Lokace</label>
-                    <input type="text" id="editAdLocation" name="location">
+
+                <!-- Step 4: Complete -->
+                <div id="review-step-4" class="review-step">
+                    <h3>Kontrola dokončena</h3>
+                    <div class="review-result" id="reviewResult">
+                        <!-- Result will be shown here -->
+                    </div>
                 </div>
-                <input type="hidden" id="editAdId" name="adId">
-                <input type="hidden" id="editAdUserId" name="userId">
-                <button type="submit" class="btn btn-primary">Uložit změny</button>
-            </form>
+            </div>
         </div>
     </div>
 
     <script src="script.js"></script>
     <script src="auth.js"></script>
-    <script src="inzeraty.js"></script>
+    <script src="nahlaseni.js"></script>
 </body>
 </html>
 
