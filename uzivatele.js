@@ -32,6 +32,11 @@ async function initUsersPage() {
     await loadAllUsers();
     await loadAllAds();
     displayUsers(allUsers);
+    
+    // Zobrazit admin menu
+    if (typeof window.checkAndShowAdminMenu === 'function') {
+        setTimeout(() => window.checkAndShowAdminMenu(), 500);
+    }
 }
 
 // Kontrola admin statusu

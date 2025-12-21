@@ -31,6 +31,11 @@ async function initAdsPage() {
     await loadAllAds();
     displayAllAds();
     
+    // Zobrazit admin menu
+    if (typeof window.checkAndShowAdminMenu === 'function') {
+        setTimeout(() => window.checkAndShowAdminMenu(), 500);
+    }
+    
     // Event listener pro formulář
     const adEditForm = document.getElementById('adEditForm');
     if (adEditForm) {

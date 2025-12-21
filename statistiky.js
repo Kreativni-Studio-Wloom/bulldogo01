@@ -33,6 +33,11 @@ async function initStatsPage() {
     await loadAllUsers();
     await loadAllAds();
     displayStats();
+    
+    // Zobrazit admin menu
+    if (typeof window.checkAndShowAdminMenu === 'function') {
+        setTimeout(() => window.checkAndShowAdminMenu(), 500);
+    }
 }
 
 // Kontrola admin statusu
