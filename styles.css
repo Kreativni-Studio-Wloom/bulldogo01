@@ -11108,7 +11108,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         margin-right: 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
-        padding-top: 80px !important; /* Space for mobile menu button */
+        padding-top: 0 !important; /* Stránka až nahoru - žádný bílý prostor */
         padding-bottom: 0 !important;
         width: 100vw !important;
         max-width: 100vw !important;
@@ -11152,6 +11152,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         margin-right: 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
+        padding-top: 0 !important; /* Stránka až nahoru - žádný bílý prostor */
         position: relative !important;
         left: 0 !important;
         right: 0 !important;
@@ -11241,8 +11242,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     /* Mobile menu button improvements */
     .mobile-menu-btn {
         position: fixed;
-        top: 16px;
-        left: 16px;
+        top: 8px;
+        left: 8px;
         z-index: 3000;
         background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
         color: white;
@@ -12467,7 +12468,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         margin-right: 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
-        padding-top: 80px !important;
+        padding-top: 0 !important; /* Stránka až nahoru - žádný bílý prostor */
         padding-bottom: 0 !important;
         width: 100vw !important;
         min-width: 100vw !important;
@@ -12495,6 +12496,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         margin-right: 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
+        padding-top: 0 !important; /* Stránka až nahoru - žádný bílý prostor */
         width: 100vw !important;
         max-width: 100vw !important;
         min-width: 100vw !important;
