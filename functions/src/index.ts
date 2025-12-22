@@ -1263,6 +1263,265 @@ async function getGoPayAccessToken(scope = "payment-create"): Promise<string> {
 }
 
 /**
+ * Generuje HTML šablonu faktury
+ */
+function generateInvoiceHTML(
+  orderNumber: string,
+  planName: string,
+  amount: number,
+  currency: string,
+  userName: string,
+  invoiceDate: Date,
+  ico?: string,
+  dic?: string,
+  companyName?: string
+): string {
+  const formattedDate = invoiceDate.toLocaleDateString("cs-CZ", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const formattedAmount = new Intl.NumberFormat("cs-CZ", {
+    style: "currency",
+    currency: currency || "CZK",
+  }).format(amount);
+
+  return `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faktura ${orderNumber}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="700" cellspacing="0" cellpadding="0" style="max-width: 700px; width: 100%; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px; background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%); border-radius: 12px 12px 0 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <h1 style="margin: 0; font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 2px;">
+                      BULLDOGO.CZ
+                    </h1>
+                    <p style="margin: 10px 0 0 0; font-size: 18px; color: #ffffff; font-weight: 600;">
+                      FAKTURA
+                    </p>
+                  </td>
+                  <td align="right">
+                    <p style="margin: 0; font-size: 16px; color: #ffffff; font-weight: 500;">
+                      Číslo: ${orderNumber}
+                    </p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: rgba(255,255,255,0.9);">
+                      Datum vystavení: ${formattedDate}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Dodavatel -->
+          <tr>
+            <td style="padding: 30px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width: 50%; vertical-align: top;">
+                    <h2 style="margin: 0 0 15px 0; font-size: 16px; color: #2c3e50; font-weight: 700; text-transform: uppercase;">
+                      Dodavatel
+                    </h2>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #374151; line-height: 1.6;">
+                      <strong>BULLDOGO.CZ</strong><br>
+                      IČO: 12345678<br>
+                      DIČ: CZ12345678<br>
+                      Email: info@bulldogo.cz<br>
+                      Tel: +420 605 121 023
+                    </p>
+                  </td>
+                  <td style="width: 50%; vertical-align: top;">
+                    <h2 style="margin: 0 0 15px 0; font-size: 16px; color: #2c3e50; font-weight: 700; text-transform: uppercase;">
+                      Odběratel
+                    </h2>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #374151; line-height: 1.6;">
+                      <strong>${userName}</strong><br>
+                      ${companyName ? `Firma: ${companyName}<br>` : ""}
+                      ${ico ? `IČO: ${ico}<br>` : ""}
+                      ${dic ? `DIČ: ${dic}<br>` : ""}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Položky -->
+          <tr>
+            <td style="padding: 0 40px 30px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
+                <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                  <td style="padding: 12px; text-align: left; font-weight: 700; color: #2c3e50; font-size: 14px;">Položka</td>
+                  <td style="padding: 12px; text-align: right; font-weight: 700; color: #2c3e50; font-size: 14px;">Množství</td>
+                  <td style="padding: 12px; text-align: right; font-weight: 700; color: #2c3e50; font-size: 14px;">Cena</td>
+                  <td style="padding: 12px; text-align: right; font-weight: 700; color: #2c3e50; font-size: 14px;">Celkem</td>
+                </tr>
+                <tr>
+                  <td style="padding: 15px 12px; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 14px;">
+                    ${planName}
+                  </td>
+                  <td style="padding: 15px 12px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #374151; font-size: 14px;">
+                    1 ks
+                  </td>
+                  <td style="padding: 15px 12px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #374151; font-size: 14px;">
+                    ${formattedAmount}
+                  </td>
+                  <td style="padding: 15px 12px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #374151; font-size: 14px; font-weight: 600;">
+                    ${formattedAmount}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Celkem -->
+          <tr>
+            <td style="padding: 0 40px 30px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="right">
+                    <table role="presentation" cellspacing="0" cellpadding="0" style="margin-left: auto;">
+                      <tr>
+                        <td style="padding: 8px 20px; text-align: right; font-size: 14px; color: #6b7280;">Celkem k úhradě:</td>
+                        <td style="padding: 8px 0 8px 20px; text-align: right; font-size: 20px; font-weight: 700; color: #f77c00;">
+                          ${formattedAmount}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px; background: #f9fafb; border-radius: 0 0 12px 12px; border-top: 2px solid #e5e7eb;">
+              <p style="margin: 0 0 10px 0; font-size: 13px; color: #6b7280; line-height: 1.6;">
+                <strong>Platební údaje:</strong><br>
+                Bankovní účet: 123456789/0100<br>
+                Variabilní symbol: ${orderNumber}
+              </p>
+              <p style="margin: 20px 0 0 0; font-size: 12px; color: #9ca3af; line-height: 1.6;">
+                Tato faktura byla vygenerována automaticky po úspěšné platbě.<br>
+                © 2025 BULLDOGO.CZ - Všechna práva vyhrazena.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+}
+
+/**
+ * Odešle fakturu na email uživatele a účetní (pro Stripe)
+ */
+async function sendStripeInvoiceEmail(
+  subscriptionId: string,
+  userId: string,
+  subscriptionData: AnyObj
+): Promise<void> {
+  const db = admin.firestore();
+  
+  // Načíst profil uživatele pro email a údaje
+  const userProfileDoc = await db.collection("users").doc(userId).collection("profile").doc("profile").get();
+  const userProfile = userProfileDoc.exists ? (userProfileDoc.data() as AnyObj) : null;
+  
+  // Načíst customer data pro email
+  const customerDoc = await db.collection("customers").doc(userId).get();
+  const customerData = customerDoc.exists ? (customerDoc.data() as AnyObj) : null;
+  
+  const userEmail = customerData?.email || userProfile?.email;
+  if (!userEmail) {
+    functions.logger.warn("No email found for invoice", { subscriptionId, userId });
+    return;
+  }
+
+  const userName = userProfile?.firstName || userProfile?.name || userProfile?.companyName || "Vážený zákazníku";
+  const companyName = userProfile?.companyName;
+  const ico = userProfile?.ico;
+  const dic = userProfile?.dic;
+
+  // Získat informace o plánu z subscription
+  const planName = subscriptionData?.items?.[0]?.price?.product?.name || 
+                   subscriptionData?.product?.name || 
+                   "Balíček";
+  
+  // Získat cenu (Stripe ukládá ceny v centech)
+  const amountInCents = subscriptionData?.items?.[0]?.price?.unit_amount || 
+                        subscriptionData?.amount || 0;
+  const amount = amountInCents / 100; // převod z centů na koruny
+  const currency = subscriptionData?.currency?.toUpperCase() || "CZK";
+
+  // Použít subscription ID jako číslo faktury
+  const invoiceNumber = subscriptionId.substring(0, 12); // zkrátit na rozumnou délku
+
+  const invoiceDate = new Date();
+  const invoiceHTML = generateInvoiceHTML(
+    invoiceNumber,
+    planName,
+    amount,
+    currency,
+    userName,
+    invoiceDate,
+    ico,
+    dic,
+    companyName
+  );
+
+  // Email pro uživatele
+  const userMailOptions = {
+    from: {
+      name: "BULLDOGO",
+      address: "info@bulldogo.cz",
+    },
+    to: userEmail,
+    subject: `Faktura ${invoiceNumber} - BULLDOGO.CZ`,
+    html: invoiceHTML,
+    text: `Dobrý den ${userName},\n\nDěkujeme za vaši platbu. V příloze naleznete fakturu č. ${invoiceNumber}.\n\nČástka: ${amount} ${currency}\nBalíček: ${planName}\n\n© 2025 BULLDOGO.CZ`,
+  };
+
+  await smtpTransporter.sendMail(userMailOptions);
+  functions.logger.info("✅ Faktura odeslána uživateli", { subscriptionId, userEmail });
+
+  // Email pro účetní (pokud je nastavený v konfiguraci)
+  const accountingEmail = functions.config().accounting?.email || "ucetni@bulldogo.cz";
+  if (accountingEmail && accountingEmail !== userEmail) {
+    const accountingMailOptions = {
+      from: {
+        name: "BULLDOGO",
+        address: "info@bulldogo.cz",
+      },
+      to: accountingEmail,
+      subject: `[ÚČETNÍ] Faktura ${invoiceNumber} - ${userName}`,
+      html: invoiceHTML,
+      text: `Faktura ${invoiceNumber} pro ${userName}\n\nČástka: ${amount} ${currency}\nBalíček: ${planName}\n\n© 2025 BULLDOGO.CZ`,
+    };
+
+    await smtpTransporter.sendMail(accountingMailOptions);
+    functions.logger.info("✅ Faktura odeslána účetní", { subscriptionId, accountingEmail });
+  }
+}
+
+/**
  * Pomocná funkce pro aktivaci uživatelského plánu po zaplacení
  */
 async function activateUserPlan(orderNumber: string): Promise<void> {
@@ -2805,6 +3064,106 @@ export const sendNewMessageEmail = functions
       });
       return null;
     }
+  });
+
+/**
+ * Firestore Trigger - Odešle fakturu při aktivaci Stripe subscription
+ */
+export const sendStripeInvoice = functions
+  .region("europe-west1")
+  .firestore.document("customers/{userId}/subscriptions/{subscriptionId}")
+  .onCreate(async (snap, context) => {
+    const subscriptionData = snap.data() as AnyObj;
+    const userId = context.params.userId;
+    const subscriptionId = context.params.subscriptionId;
+    
+    const status = subscriptionData?.status;
+    
+    // Odeslat fakturu pouze když je subscription aktivní nebo v trial období
+    if (status === "active" || status === "trialing") {
+      try {
+        // Zkontrolovat, zda už jsme fakturu neodeslali (ochrana před duplicitami)
+        const invoiceSent = subscriptionData?.invoiceSent;
+        if (invoiceSent) {
+          functions.logger.info("Faktura už byla odeslána", { subscriptionId, userId });
+          return null;
+        }
+        
+        await sendStripeInvoiceEmail(subscriptionId, userId, subscriptionData);
+        
+        // Označit, že faktura byla odeslána
+        await snap.ref.update({
+          invoiceSent: true,
+          invoiceSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        
+        functions.logger.info("✅ Faktura odeslána pro Stripe subscription", { 
+          subscriptionId, 
+          userId,
+          status 
+        });
+      } catch (error: any) {
+        functions.logger.error("❌ Chyba při odesílání faktury pro Stripe subscription", { 
+          subscriptionId,
+          userId,
+          error: error?.message 
+        });
+      }
+    }
+    
+    return null;
+  });
+
+/**
+ * Firestore Trigger - Odešle fakturu při změně statusu subscription na aktivní
+ */
+export const sendStripeInvoiceOnUpdate = functions
+  .region("europe-west1")
+  .firestore.document("customers/{userId}/subscriptions/{subscriptionId}")
+  .onUpdate(async (change, context) => {
+    const before = change.before.data() as AnyObj;
+    const after = change.after.data() as AnyObj;
+    const userId = context.params.userId;
+    const subscriptionId = context.params.subscriptionId;
+    
+    const statusBefore = before?.status;
+    const statusAfter = after?.status;
+    
+    // Odeslat fakturu pouze když se status změní na aktivní nebo trialing
+    if ((statusBefore !== "active" && statusBefore !== "trialing") && 
+        (statusAfter === "active" || statusAfter === "trialing")) {
+      try {
+        // Zkontrolovat, zda už jsme fakturu neodeslali
+        const invoiceSent = after?.invoiceSent;
+        if (invoiceSent) {
+          functions.logger.info("Faktura už byla odeslána", { subscriptionId, userId });
+          return null;
+        }
+        
+        await sendStripeInvoiceEmail(subscriptionId, userId, after);
+        
+        // Označit, že faktura byla odeslána
+        await change.after.ref.update({
+          invoiceSent: true,
+          invoiceSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        
+        functions.logger.info("✅ Faktura odeslána pro Stripe subscription (update)", { 
+          subscriptionId, 
+          userId,
+          statusBefore,
+          statusAfter
+        });
+      } catch (error: any) {
+        functions.logger.error("❌ Chyba při odesílání faktury pro Stripe subscription (update)", { 
+          subscriptionId,
+          userId,
+          error: error?.message 
+        });
+      }
+    }
+    
+    return null;
   });
 
 /**
