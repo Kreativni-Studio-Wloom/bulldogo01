@@ -1307,6 +1307,7 @@ function showAuthModal(type = 'login') {
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open'); // Přidat třídu pro CSS kontrolu
     
     // Po vytvoření/otevření modalu navěsit plné listenery (form submit, SMS krok)
     try { setupEventListeners(); } catch (e) { console.warn('setupEventListeners failed', e); }
@@ -1337,7 +1338,7 @@ function closeAuthModal() {
     const modal = document.getElementById('authModal');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    document.body.classList.remove('modal-open'); // Odstranit třídu
+    document.body.classList.remove('modal-open'); // Odstranit třídu pro CSS kontrolu
     
     // Vyčištění formuláře
     const form = document.getElementById('authForm');
