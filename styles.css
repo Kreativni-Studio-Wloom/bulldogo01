@@ -11319,7 +11319,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ad-card .ad-body {
-        padding: 10px 12px 50px !important; /* Více padding dole pro tlačítka */
+        padding: 10px 12px 60px !important; /* Více padding dole pro tlačítka */
         min-height: auto !important;
         flex: 1;
         display: flex;
@@ -11395,7 +11395,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     /* Tlačítka na mobilních zařízeních */
     .ad-card .ad-actions {
         position: absolute !important;
-        bottom: 8px !important;
+        bottom: 4px !important; /* Ještě níž */
         left: 50% !important;
         transform: translateX(-50%) !important;
         z-index: 10 !important;
@@ -11745,7 +11745,11 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ad-card .ad-body {
-        padding: 8px 10px 50px !important; /* Více padding dole pro tlačítka */
+        padding: 8px 10px 60px !important; /* Více padding dole pro tlačítka */
+    }
+    
+    .ad-card .ad-actions {
+        bottom: 4px !important; /* Ještě níž na malých mobilních zařízeních */
     }
     
     .ad-card .ad-title {
