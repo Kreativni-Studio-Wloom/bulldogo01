@@ -6439,16 +6439,23 @@ html {
 
 /* Auth – tlačítko Ověřit (IČ) ve firemních barvách */
 .auth-form #btnVerifyICO {
-	min-width: 120px;
-	padding: 10px 14px;
-	border-radius: 12px;
+	flex: 1; /* Stejná šířka jako input IČO - každé na půlce */
+	padding: 12px 15px; /* Stejné jako inputy pro stejnou výšku */
+	border-radius: 8px; /* Stejné jako inputy */
 	background: transparent;
 	color: #c45a00;
 	font-weight: 700;
+	font-size: 0.95rem; /* Menší text */
 	border: 2px solid transparent;
 	border-image: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
 	border-image-slice: 1;
 	transition: all .2s ease;
+	box-sizing: border-box;
+	height: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
 }
 .auth-form #btnVerifyICO:hover {
 	transform: translateY(-1px);
