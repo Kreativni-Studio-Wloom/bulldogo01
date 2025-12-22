@@ -6158,6 +6158,7 @@ html {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	width: 100%;
 }
 
 .auth-with-hero .modal-title {
@@ -6166,13 +6167,24 @@ html {
 	font-size: 1.6rem;
 	background: none;
 	-webkit-text-fill-color: currentColor;
+	text-align: left; /* Zarovnání vlevo */
+	margin: 0;
+	flex: 1;
 }
 
-.auth-with-hero .close { color: rgba(255,255,255,0.9); }
+.auth-with-hero .close { 
+	color: rgba(255,255,255,0.9); 
+	margin-left: auto; /* Zarovnání vpravo */
+	font-size: 1.8rem;
+	cursor: pointer;
+}
 .auth-with-hero .close:hover { color: #ffffff; }
 
 /* Odstup mezi lištou a obsahem formuláře */
-.auth-with-hero .auth-form { margin-top: 14px; }
+.auth-with-hero .auth-form { 
+	margin-top: 14px; 
+	text-align: center; /* Zarovnání formuláře na střed */
+}
 
 /* Pozice psa nad titulkem v liště */
 .auth-hero-ledge .auth-dog-lean {
