@@ -11330,7 +11330,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ad-card .ad-thumb {
-        height: 45%; /* Menší podíl obrázku, více místa pro text */
+        width: 100%;
+        aspect-ratio: 1 / 1; /* Čtvercový tvar */
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
         flex-shrink: 0;
@@ -11340,6 +11341,9 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ad-card .ad-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Přizpůsobit obrázek čtvercovému prostoru */
         border-radius: 0 !important; /* Odstranit zaoblené rohy, aby byl obrázek přímo u bílého prostoru */
         margin: 0;
         padding: 0;
@@ -11778,7 +11782,15 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ad-card .ad-thumb {
-        height: 45% !important; /* Menší podíl obrázku */
+        width: 100% !important;
+        aspect-ratio: 1 / 1 !important; /* Čtvercový tvar i na malých mobilních zařízeních */
+        height: auto !important;
+    }
+    
+    .ad-card .ad-thumb img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
     }
     
     .ad-card .ad-body {
