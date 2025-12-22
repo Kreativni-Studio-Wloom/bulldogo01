@@ -2204,6 +2204,17 @@ body {
     padding: 1rem 1.5rem;
 }
 
+/* Na mobilních zařízeních - respektovat inline style display */
+@media (max-width: 768px) {
+    .auth-section[style*="display: none"] {
+        display: none !important;
+    }
+    
+    .user-profile-section[style*="display: none"] {
+        display: none !important;
+    }
+}
+
 .btn-login {
     width: 100%;
     background: rgba(255, 255, 255, 0.9);
@@ -11211,9 +11222,27 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         padding: 0.75rem 1.5rem !important;
     }
     
-    /* Zobrazit auth sekci správně když je menu otevřené */
-    .sidebar.mobile-open .auth-section,
-    .sidebar.mobile-open .user-profile-section {
+    /* Zajistit, že inline style display má přednost - skrýt sekce s display: none */
+    .sidebar.mobile-open .auth-section[style*="display: none"],
+    .sidebar.mobile-open .auth-section[style*="display:none"] {
+        display: none !important;
+    }
+    
+    .sidebar.mobile-open .user-profile-section[style*="display: none"],
+    .sidebar.mobile-open .user-profile-section[style*="display:none"] {
+        display: none !important;
+    }
+    
+    /* Zobrazit auth sekci správně když je menu otevřené a je viditelná */
+    .sidebar.mobile-open .auth-section:not([style*="display: none"]):not([style*="display:none"]) {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        padding: 1rem 1.5rem !important;
+    }
+    
+    /* Zobrazit user profile sekci správně když je menu otevřené a je viditelná */
+    .sidebar.mobile-open .user-profile-section:not([style*="display: none"]):not([style*="display:none"]) {
         display: flex !important;
         flex-direction: column !important;
         gap: 0.75rem !important;
