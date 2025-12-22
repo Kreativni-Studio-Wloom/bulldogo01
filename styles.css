@@ -6399,6 +6399,9 @@ html {
 	cursor: pointer;
 	transition: all 0.3s ease;
 	box-sizing: border-box; /* Zajistit, aby šířka zahrnovala padding - stejně široké jako inputy */
+	text-align: center; /* Vycentrovat text na střed */
+	display: block; /* Zajistit, aby se tlačítko chovalo jako blokový element */
+	margin: 0 auto; /* Vycentrovat tlačítko */
 }
 
 .auth-form .auth-submit-btn:hover,
