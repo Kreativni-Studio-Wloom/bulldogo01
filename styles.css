@@ -1782,9 +1782,10 @@ body {
 .logo {
     flex: 1;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start; /* Logo zarovnané vlevo i bez hover */
     align-items: center;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 0.1rem;
 }
 
 .logo-text {
@@ -1792,11 +1793,11 @@ body {
     font-weight: 700;
     display: flex;
     align-items: center;
-    opacity: 0;
+    opacity: 1; /* Text vždy viditelný */
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(-20px) scale(0.8);
-    width: 0;
-    overflow: hidden;
+    transform: translateX(0) scale(1);
+    width: auto; /* Text vždy viditelný */
+    overflow: visible;
 }
 
 .sidebar:hover .logo-text {
@@ -1804,14 +1805,6 @@ body {
     transform: translateX(0) scale(1);
     width: auto;
     transition-delay: 0s;
-}
-
-/* Hide logo text in collapsed state so the B icon stays visible */
-.sidebar:not(:hover) .logo-text {
-    opacity: 0;
-    transform: translateX(-20px) scale(0.8);
-    width: 0;
-    transition-delay: 0.3s;
 }
 
 /* Ensure B icon shows when collapsed and sits left of text when expanded */
@@ -1823,6 +1816,7 @@ body {
     gap: 0.1rem;
 }
 .sidebar:hover .logo-icon { opacity: 1; }
+.logo-icon { opacity: 1; } /* Ikona vždy viditelná */
 
 .logo-bull {
     background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
@@ -1960,14 +1954,14 @@ body {
 .nav-link {
     display: flex;
     align-items: center;
-    padding: 0.8rem 0.5rem;
+    padding: 0.8rem 1.5rem;
     color: #2c3e50;
     text-decoration: none;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 3px solid transparent;
-    justify-content: center;
+    justify-content: space-between; /* Text vlevo, ikona vpravo i bez hover */
     border-radius: 8px;
-    margin: 0.2rem 0.5rem;
+    margin: 0.2rem 1rem;
     min-height: 48px;
     box-sizing: border-box;
 }
@@ -1992,7 +1986,7 @@ body {
 
 .nav-icon {
     width: 24px;
-    margin-left: 0;
+    margin-left: 0.8rem; /* Ikona vpravo i bez hover */
     font-size: 1.2rem;
     text-align: center;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2000,8 +1994,8 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    opacity: 0.8;
-    order: 2;
+    opacity: 1; /* Ikona vždy viditelná */
+    order: 2; /* Ikona vpravo */
     color: #6c757d;
 }
 
@@ -2025,27 +2019,19 @@ body {
 .nav-text {
     font-weight: 500;
     font-size: 0.95rem;
-    opacity: 0;
+    opacity: 1; /* Text vždy viditelný */
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
-    order: 1;
-    transform: translateX(-15px);
-    width: 0;
-    overflow: hidden;
+    order: 1; /* Text vlevo */
+    transform: translateX(0);
+    width: auto; /* Text vždy viditelný */
+    overflow: visible;
 }
 .sidebar:hover .nav-text {
     opacity: 1;
     transform: translateX(0);
     width: auto;
     transition-delay: 0s;
-}
-
-/* Ensure icons are centered in collapsed sidebar by removing text width */
-.sidebar:not(:hover) .nav-text {
-    opacity: 0;
-    transform: translateX(-15px);
-    width: 0;
-    transition-delay: 0.3s;
 }
 
 /* Admin Section */
@@ -2275,15 +2261,7 @@ body {
 }
 
 /* Keep nav icons strictly centered in collapsed state */
-.sidebar:not(:hover) .nav-link {
-    justify-content: center;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-}
-
-.sidebar:not(:hover) .nav-icon {
-    margin-left: 0;
-}
+/* Odstraněno - navigační položky mají text vlevo a ikonu vpravo i bez hover */
 
 /* Admin ikony musí být vždy viditelné */
 .sidebar:not(:hover) .admin-section .nav-link .nav-icon {
