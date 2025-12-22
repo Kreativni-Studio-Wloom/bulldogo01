@@ -6099,9 +6099,6 @@ html {
     overflow: hidden; /* Zakázat scroll celé stránky */
     padding: 20px;
     box-sizing: border-box;
-    /* Flexbox pro vycentrování - vždy aktivní když je zobrazený */
-    justify-content: center;
-    align-items: center;
 }
 
 /* Když je modal zobrazený, použít flexbox pro vycentrování */
