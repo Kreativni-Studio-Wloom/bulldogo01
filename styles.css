@@ -11362,7 +11362,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         font-size: 0.65rem;
         color: #6b7280;
         margin-bottom: 4px;
-        margin-top: 0 !important; /* Žádný margin nahoře - fotka blíž */
+        margin-top: -4px !important; /* Negativní margin - kategorie blíž k fotce */
         padding-top: 0 !important; /* Žádný padding nahoře */
         order: -1; /* Přesunout nahoru */
         display: flex;
