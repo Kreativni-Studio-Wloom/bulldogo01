@@ -6111,7 +6111,7 @@ html {
 
 .modal-content {
 	background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.94));
-	border-radius: 24px; /* Více zaoblené rohy */
+	border-radius: 28px; /* Ještě více zaoblené rohy */
     padding: 1.5rem;
     width: auto;
     max-width: 400px;
@@ -6398,6 +6398,7 @@ html {
 	font-weight: 600;
 	cursor: pointer;
 	transition: all 0.3s ease;
+	box-sizing: border-box; /* Zajistit, aby šířka zahrnovala padding - stejně široké jako inputy */
 }
 
 .auth-form .auth-submit-btn:hover,
