@@ -9032,15 +9032,15 @@ html {
     display: block;
 }
 
-/* Golden gradient glow behind the square+logo (deep background) */
-.carousel-thumb::before {
+/* Golden gradient glow behind the square+logo (deep background) - ODSTRANĚNO */
+/* .carousel-thumb::before {
     content: "";
     position: absolute;
     inset: -18px;
     border-radius: 18px;
     background: radial-gradient(60% 55% at 50% 50%, rgba(255,215,0,0.32) 0%, rgba(255,165,0,0.28) 35%, rgba(255,140,0,0.18) 55%, rgba(255,255,255,0) 75%);
     filter: blur(14px);
-    z-index: -1; /* completely behind the square */
+    z-index: -1;
     pointer-events: none;
     transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease;
     opacity: 0.85;
@@ -9055,7 +9055,7 @@ html {
     opacity: 1;
     filter: blur(16px);
     transform: scale(1.02);
-}
+} */
 
 /* Smaller thumbnail variant for selected categories */
 .carousel-card.thumb-small .carousel-thumb {
