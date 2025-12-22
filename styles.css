@@ -6111,7 +6111,7 @@ html {
 
 .modal-content {
 	background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.94));
-	border-radius: 18px;
+	border-radius: 24px; /* Více zaoblené rohy */
     padding: 1.5rem;
     width: auto;
     max-width: 400px;
@@ -6153,7 +6153,7 @@ html {
 /* Vrchní „lištu“ s brand gradientem a titulkem */
 .auth-hero-ledge {
 	background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
-	border-radius: 16px;
+	border-radius: 20px; /* Více zaoblené rohy */
 	padding: 14px 18px; /* kompaktní výška přesně kolem titulku */
 	box-shadow: 0 12px 28px rgba(247,124,0,0.28);
 	color: #ffffff;
