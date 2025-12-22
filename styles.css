@@ -11330,7 +11330,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     
     /* Kategorie s tečkou nahoře - vytvořit novou strukturu */
     .ad-card .ad-meta {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
         color: #6b7280;
         margin-bottom: 6px;
         order: -1; /* Přesunout nahoru */
