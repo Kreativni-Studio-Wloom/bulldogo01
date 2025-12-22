@@ -12861,4 +12861,56 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         margin-left: 0 !important;
         margin-right: 0 !important;
     }
+    
+    /* Kompaktnější přihlašovací modal na mobilních zařízeních */
+    .modal-content {
+        padding: 1rem !important;
+        max-width: 90% !important;
+        min-width: 280px !important;
+    }
+    
+    .modal-content.auth-with-hero {
+        padding-top: 3rem !important; /* Menší rezerva pro buldoka */
+    }
+    
+    /* Menší buldok na mobilu */
+    .auth-hero-ledge .auth-dog-lean {
+        width: 90px !important;
+        top: -50px !important;
+    }
+    
+    /* Kompaktnější header */
+    .auth-hero-ledge {
+        padding: 10px 14px !important;
+    }
+    
+    .auth-with-hero .modal-title {
+        font-size: 1.3rem !important;
+    }
+    
+    .auth-with-hero .close {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Menší mezery ve formuláři */
+    .auth-with-hero .auth-form {
+        margin-top: 10px !important;
+        gap: 10px !important;
+    }
+    
+    .auth-form input {
+        padding: 10px 12px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .auth-form .auth-submit-btn,
+    .auth-form .btn-primary {
+        padding: 10px 16px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .auth-switch-btn {
+        font-size: 0.9rem !important;
+        margin-top: 6px !important;
+    }
 }
