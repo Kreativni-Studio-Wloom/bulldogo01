@@ -11635,8 +11635,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ads-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
     
     .hero-title {
