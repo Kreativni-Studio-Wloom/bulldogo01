@@ -751,8 +751,9 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 24px;
-    max-width: 1600px;
+    max-width: 100%; /* Respektovat šířku containeru */
     margin: 0 auto;
+    width: 100%; /* Plná šířka containeru */
 }
 
 .ad-card {
@@ -764,6 +765,8 @@
     border: 1px solid #f0f0f0;
     min-height: 320px;
     position: relative;
+    width: 100%; /* Zajistit, aby karty měly stejnou šířku */
+    max-width: 100%; /* Zajistit, aby karty nepřesahovaly */
 }
 
 .ad-card:hover {
