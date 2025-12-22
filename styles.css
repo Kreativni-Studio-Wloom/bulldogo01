@@ -11345,7 +11345,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ad-card .ad-body {
-        padding: 10px 12px 60px !important; /* Více padding dole pro tlačítka */
+        padding: 6px 12px 60px !important; /* Menší padding nahoře - fotka blíž kategorii */
         min-height: auto !important;
         flex: 1;
         display: flex;
@@ -11358,7 +11358,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     .ad-card .ad-meta {
         font-size: 0.65rem;
         color: #6b7280;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
+        margin-top: 0; /* Žádný margin nahoře - fotka blíž */
         order: -1; /* Přesunout nahoru */
         display: flex;
         align-items: center;
