@@ -162,24 +162,24 @@
         <!-- Auth Buttons Section (shown when not logged in) -->
         <div class="auth-section" id="authSection">
             <button class="btn-login" onclick="showAuthModal('login')">
+                <span>Přihlásit se</span>
                 <i class="fas fa-sign-in-alt"></i>
-                <span>Přihlášení</span>
             </button>
             <button class="btn-register" onclick="showAuthModal('register')">
-                <i class="fas fa-user-plus"></i>
                 <span>Registrace</span>
+                <i class="fas fa-user-plus"></i>
             </button>
         </div>
 
         <!-- User Profile Section (shown when logged in) -->
         <div class="user-profile-section" id="userProfileSection" style="display: none;">
             <button class="btn-profile" onclick="window.location.href='profile.html'">
-                <i class="fas fa-user-circle"></i>
                 <span>Profil</span>
+                <i class="fas fa-user-circle"></i>
             </button>
             <button class="btn-logout" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
                 <span>Odhlásit se</span>
+                <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
     </nav>

@@ -2209,14 +2209,14 @@ body {
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid rgba(247, 124, 0, 0.2);
     border-radius: 8px;
-    padding: 0.8rem 0.5rem;
+    padding: 0.8rem 1rem;
     color: #2c3e50;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     min-height: 48px;
@@ -2226,12 +2226,15 @@ body {
 .btn-login i {
     font-size: 1.1rem;
     flex-shrink: 0;
-    opacity: 0.9;
-    order: 2;
+    opacity: 1;
+    order: 2; /* Ikona napravo */
 }
 
 .btn-login span {
-    order: 1;
+    order: 1; /* Text vlevo */
+    opacity: 1;
+    width: auto;
+    transform: translateX(0);
 }
 
 .sidebar:hover .btn-login {
@@ -2248,21 +2251,6 @@ body {
     border-color: #f77c00;
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(247, 124, 0, 0.2);
-}
-
-.btn-login span {
-    opacity: 0;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(-15px);
-    width: 0;
-    overflow: hidden;
-}
-
-.sidebar:hover .btn-login span {
-    opacity: 1;
-    transform: translateX(0);
-    width: auto;
-    transition-delay: 0s;
 }
 
 /* Hide button labels when collapsed to keep icons centered */
@@ -2299,14 +2287,14 @@ body {
     background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
     border: none;
     border-radius: 8px;
-    padding: 0.8rem 0.5rem;
+    padding: 0.8rem 1rem;
     color: white;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 0.5rem;
     box-shadow: 0 4px 15px rgba(247, 124, 0, 0.3);
     min-height: 48px;
@@ -2316,12 +2304,15 @@ body {
 .btn-register i {
     font-size: 1.1rem;
     flex-shrink: 0;
-    opacity: 0.9;
-    order: 2;
+    opacity: 1;
+    order: 2; /* Ikona napravo */
 }
 
 .btn-register span {
-    order: 1;
+    order: 1; /* Text vlevo */
+    opacity: 1;
+    width: auto;
+    transform: translateX(0);
 }
 
 .sidebar:hover .btn-register {
@@ -2339,61 +2330,45 @@ body {
 }
 
 .btn-profile {
-    padding: 0;
+    width: 100%;
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid rgba(247, 124, 0, 0.2);
     border-radius: 8px;
-    color: #f77c00;
+    padding: 0.8rem 1rem;
+    color: #2c3e50;
+    font-weight: 500;
     text-decoration: none;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0;
+    justify-content: space-between;
+    gap: 0.5rem;
     font-size: 0.9rem;
-    font-weight: 500;
     transition: all 0.3s ease;
     cursor: pointer;
-    margin: 0.2rem 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     min-height: 48px;
     box-sizing: border-box;
-    width: 48px;
-    height: 48px;
-}
-
-.sidebar:hover .btn-profile {
-    padding: 0.8rem 1rem;
-    justify-content: space-between;
-    margin: 0.2rem 1rem;
-    width: auto;
-    height: auto;
-    gap: 0.5rem;
 }
 
 .btn-profile i {
     font-size: 1.1rem;
-    opacity: 0.9;
-    order: 2;
-}
-
-.sidebar:hover .btn-profile i {
     opacity: 1;
+    order: 2; /* Ikona napravo */
+    flex-shrink: 0;
 }
 
 .btn-profile span {
-    opacity: 0;
-    order: 1;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(-15px);
-    width: 0;
-    overflow: hidden;
+    order: 1; /* Text vlevo */
+    opacity: 1;
+    width: auto;
+    transform: translateX(0);
 }
 
-.sidebar:hover .btn-profile span {
-    opacity: 1;
-    transform: translateX(0);
-    width: auto;
-    transition-delay: 0s;
+.btn-profile:hover {
+    background: rgba(247, 124, 0, 0.1);
+    border-color: #f77c00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(247, 124, 0, 0.2);
 }
 
 .btn-profile:hover {
@@ -2409,61 +2384,39 @@ body {
 .sidebar:not(:hover) .btn-profile .user-badge { display: none; }
 
 .btn-logout {
-    padding: 0;
+    width: 100%;
     background: rgba(220, 53, 69, 0.1);
     border: 1px solid rgba(220, 53, 69, 0.3);
     border-radius: 8px;
+    padding: 0.8rem 1rem;
     color: #dc3545;
     text-decoration: none;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0;
+    justify-content: space-between;
+    gap: 0.5rem;
     font-size: 0.9rem;
     font-weight: 500;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     cursor: pointer;
-    margin: 0.2rem 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     min-height: 48px;
     box-sizing: border-box;
-    width: 48px;
-    height: 48px;
-}
-
-.sidebar:hover .btn-logout {
-    padding: 0.8rem 1rem;
-    justify-content: space-between;
-    margin: 0.2rem 1rem;
-    width: auto;
-    height: auto;
-    gap: 0.5rem;
 }
 
 .btn-logout i {
-    font-size: 1rem;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar:hover .btn-logout i {
     font-size: 1.1rem;
+    opacity: 1;
+    order: 2; /* Ikona napravo */
+    flex-shrink: 0;
 }
 
 .btn-logout span {
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    white-space: nowrap;
-    font-weight: 500;
-    width: 0;
-    overflow: hidden;
-}
-
-.sidebar:hover .btn-logout span {
+    order: 1; /* Text vlevo */
     opacity: 1;
-    transform: translateX(0);
     width: auto;
-    transition-delay: 0s;
+    transform: translateX(0);
+    white-space: nowrap;
 }
 
 .btn-logout:hover {
@@ -2474,20 +2427,7 @@ body {
     box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
 }
 
-.btn-register span {
-    opacity: 0;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(-15px);
-    width: 0;
-    overflow: hidden;
-}
-
-.sidebar:hover .btn-register span {
-    opacity: 1;
-    transform: translateX(0);
-    width: auto;
-    transition-delay: 0s;
-}
+/* Odstraněno - texty jsou nyní vždy viditelné */
 
 /* User Profile Section */
 .user-profile-section {
@@ -11285,7 +11225,24 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     .sidebar.mobile-open .btn-profile,
     .sidebar.mobile-open .btn-logout {
         width: 100% !important;
-        justify-content: center !important;
+        justify-content: space-between !important;
+    }
+    
+    /* Zobrazit texty tlačítek když je menu otevřené */
+    .sidebar.mobile-open .btn-login span,
+    .sidebar.mobile-open .btn-register span,
+    .sidebar.mobile-open .btn-profile span,
+    .sidebar.mobile-open .btn-logout span {
+        opacity: 1 !important;
+        width: auto !important;
+        transform: translateX(0) !important;
+    }
+    
+    .sidebar.mobile-open .btn-login i,
+    .sidebar.mobile-open .btn-register i,
+    .sidebar.mobile-open .btn-profile i,
+    .sidebar.mobile-open .btn-logout i {
+        opacity: 1 !important;
     }
     
     .sidebar:hover {
