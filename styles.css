@@ -11303,25 +11303,91 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         gap: 1.5rem;
     }
     
-    /* Cards mobile optimization */
+    /* Cards mobile optimization - čtvercový tvar */
     .ad-card {
-        padding: 1rem;
+        padding: 0;
+        min-height: auto;
+        aspect-ratio: 1 / 1; /* Čtvercový tvar */
+        display: flex;
+        flex-direction: column;
     }
     
     .ad-card .ad-thumb {
-        height: 180px;
-        margin-bottom: 0.75rem;
+        height: 50%; /* Polovina výšky karty */
+        margin-bottom: 0;
+        flex-shrink: 0;
     }
     
-    .ad-card .ad-title {
-        font-size: 1rem;
-        line-height: 1.4;
-        margin-bottom: 0.5rem;
+    .ad-card .ad-body {
+        padding: 10px 12px 12px !important;
+        min-height: auto !important;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
     
+    /* Kategorie s tečkou nahoře - vytvořit novou strukturu */
     .ad-card .ad-meta {
-        font-size: 0.85rem;
-        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 6px;
+        order: -1; /* Přesunout nahoru */
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: relative;
+    }
+    
+    .ad-card .ad-meta::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: #f77c00;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+    
+    /* Skrýt lokaci a oddělovač z ad-meta */
+    .ad-card .ad-meta span:first-child,
+    .ad-card .ad-meta span:first-child::after {
+        display: none;
+    }
+    
+    /* Zobrazit jen kategorii (druhý span) nahoře */
+    .ad-card .ad-meta span:last-child {
+        display: inline;
+    }
+    
+    /* Název */
+    .ad-card .ad-title {
+        font-size: 0.9rem;
+        line-height: 1.3;
+        margin-bottom: 8px;
+        font-weight: 600;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        order: 0;
+    }
+    
+    /* Cena */
+    .ad-card .ad-price {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #f77c00;
+        margin-bottom: 4px;
+        order: 1;
+    }
+    
+    /* Kraj - samostatný element dole */
+    .ad-card .ad-location {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        margin-top: auto;
+        order: 2;
     }
     
     /* Forms mobile optimization */
@@ -11659,8 +11725,25 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         grid-template-columns: 1fr;
     }
     
+    .ad-card {
+        aspect-ratio: 1 / 1 !important; /* Čtvercový tvar i na malých mobilních zařízeních */
+    }
+    
     .ad-card .ad-thumb {
-        height: 160px;
+        height: 50% !important; /* Polovina výšky karty */
+    }
+    
+    .ad-card .ad-body {
+        padding: 8px 10px 10px !important;
+    }
+    
+    .ad-card .ad-title {
+        font-size: 0.85rem;
+        -webkit-line-clamp: 2;
+    }
+    
+    .ad-card .ad-price {
+        font-size: 0.9rem;
     }
     
     .form-group input,

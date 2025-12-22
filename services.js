@@ -725,10 +725,11 @@ function createAdCard(service, showActions = true) {
             <div class="ad-thumb">
                 <img src="${service.images && service.images.length > 0 ? service.images[0].url : 'fotky/team.jpg'}" alt="Inzerát" loading="lazy" decoding="async">
             </div>
-            <div class="ad-body">
+            <div class="ad-body" data-location="${getLocationName(service.location || '') || 'Neuvedeno'}">
+                <div class="ad-meta"><span>${getCategoryName(service.category || '')}</span></div>
                 <h3 class="ad-title">${service.title || 'Bez názvu'}</h3>
-                <div class="ad-meta"><span>${getLocationName(service.location || '') || 'Neuvedeno'}</span> • <span>${getCategoryName(service.category || '')}</span></div>
                 ${formattedPrice ? `<div class="ad-price">${formattedPrice}</div>` : ''}
+                <div class="ad-location">${getLocationName(service.location || '') || 'Neuvedeno'}</div>
             </div>
             ${service.isTop ? `
             <div class="ad-badge-top"><i class="fas fa-fire"></i> TOP</div>
