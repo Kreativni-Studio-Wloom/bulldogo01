@@ -1654,17 +1654,54 @@
     box-sizing: border-box;
 }
 
+html {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Zajistit, že na desktopu není fixed position problém */
+@media (min-width: 769px) {
+    html {
+        position: static;
+    }
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #333;
     background-color: #f8f9fa;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height pro mobilní prohlížeče */
+    overflow-x: hidden;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Mobilní optimalizace pro container */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+        width: 100%;
+        max-width: 100%;
+    }
 }
 
 /* Sidebar Navigation */
@@ -11023,11 +11060,68 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
 
 /* Mobile breakpoint (max 768px) */
 @media (max-width: 768px) {
+    html {
+        position: relative; /* Změna z fixed na relative pro mobilní zařízení */
+        width: 100%;
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+    
+    body {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        position: relative;
+    }
+    
     /* Main content spacing */
     .main-content {
-        margin-left: 0;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
         padding: 1rem;
         padding-top: 80px; /* Space for mobile menu button */
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+    
+    /* Zajistit, že všechny sekce vyplňují celou šířku */
+    section {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    /* Hero, services, about, contact sekce */
+    .hero,
+    .services,
+    .about,
+    .contact,
+    .ads-section,
+    .features,
+    .cta-connect {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    
+    /* Footer */
+    footer,
+    .footer {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        margin-left: 0;
+        margin-right: 0;
     }
     
     /* Sidebar mobile improvements */
@@ -11403,9 +11497,22 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
 
 /* Small mobile (max 480px) */
 @media (max-width: 480px) {
+    html {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    body {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+    }
+    
     .main-content {
         padding: 0.75rem;
         padding-top: 70px;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .mobile-menu-btn {
