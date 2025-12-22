@@ -6159,6 +6159,7 @@ html {
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
+	flex-direction: row; /* Zajistit, že jsou na stejném řádku */
 }
 
 .auth-with-hero .modal-title {
@@ -6169,7 +6170,9 @@ html {
 	-webkit-text-fill-color: currentColor;
 	text-align: left; /* Zarovnání vlevo */
 	margin: 0;
-	flex: 1;
+	padding: 0;
+	flex: 0 0 auto; /* Nenatáhnout, jen potřebná šířka */
+	order: 1; /* První vlevo */
 }
 
 .auth-with-hero .close { 
@@ -6177,6 +6180,13 @@ html {
 	margin-left: auto; /* Zarovnání vpravo */
 	font-size: 1.8rem;
 	cursor: pointer;
+	line-height: 1;
+	padding: 0;
+	flex: 0 0 auto; /* Nenatáhnout, jen potřebná šířka */
+	order: 2; /* Druhý vpravo */
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 .auth-with-hero .close:hover { color: #ffffff; }
 
