@@ -11303,28 +11303,29 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         gap: 1.5rem;
     }
     
-    /* Cards mobile optimization - čtvercový tvar */
+    /* Cards mobile optimization - vyšší tvar pro tlačítka */
     .ad-card {
         padding: 0;
         min-height: auto;
-        aspect-ratio: 1 / 1; /* Čtvercový tvar */
+        aspect-ratio: 1 / 1.4; /* Vyšší tvar - více místa pro obsah */
         display: flex;
         flex-direction: column;
     }
     
     .ad-card .ad-thumb {
-        height: 50%; /* Polovina výšky karty */
+        height: 45%; /* Menší podíl obrázku, více místa pro text */
         margin-bottom: 0;
         flex-shrink: 0;
     }
     
     .ad-card .ad-body {
-        padding: 10px 12px 12px !important;
+        padding: 10px 12px 50px !important; /* Více padding dole pro tlačítka */
         min-height: auto !important;
         flex: 1;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        position: relative;
     }
     
     /* Kategorie s tečkou nahoře - vytvořit novou strukturu */
@@ -11387,7 +11388,17 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         font-size: 0.7rem;
         color: #9ca3af;
         margin-top: auto;
+        margin-bottom: 8px; /* Mezera před tlačítky */
         order: 2;
+    }
+    
+    /* Tlačítka na mobilních zařízeních */
+    .ad-card .ad-actions {
+        position: absolute !important;
+        bottom: 8px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        z-index: 10 !important;
     }
     
     /* Forms mobile optimization */
@@ -11726,15 +11737,15 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ad-card {
-        aspect-ratio: 1 / 1 !important; /* Čtvercový tvar i na malých mobilních zařízeních */
+        aspect-ratio: 1 / 1.4 !important; /* Vyšší tvar i na malých mobilních zařízeních */
     }
     
     .ad-card .ad-thumb {
-        height: 50% !important; /* Polovina výšky karty */
+        height: 45% !important; /* Menší podíl obrázku */
     }
     
     .ad-card .ad-body {
-        padding: 8px 10px 10px !important;
+        padding: 8px 10px 50px !important; /* Více padding dole pro tlačítka */
     }
     
     .ad-card .ad-title {
