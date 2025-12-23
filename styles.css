@@ -11800,7 +11800,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     /* Grid improvements */
     .ads-grid {
         grid-template-columns: 1fr !important;
-        gap: 1rem !important;
+        gap: 0.75rem !important;
+        padding: 0 0.5rem !important;
     }
     
     .services-grid {
@@ -11813,7 +11814,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         gap: 1.5rem;
     }
     
-    /* Cards mobile optimization - vyšší tvar pro tlačítka */
+    /* Cards mobile optimization - kompaktnější vzhled */
     .ad-card {
         padding: 0;
         min-height: auto;
@@ -11821,6 +11822,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         display: flex;
         flex-direction: column;
         gap: 0 !important; /* Žádný gap mezi prvky */
+        border-radius: 12px !important;
+        max-width: 100% !important;
     }
     
     .ad-card .ad-thumb {
@@ -11830,7 +11833,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         padding-bottom: 0 !important;
         flex-shrink: 0;
         background: white; /* Bílý background místo béžového */
-        border-radius: 0; /* Odstranit zaoblené rohy */
+        border-radius: 12px 12px 0 0 !important; /* Zaoblené rohy nahoře */
         overflow: hidden; /* Zajistit, aby obrázek nepřesahoval */
     }
     
@@ -11838,14 +11841,14 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         width: 100%;
         height: 100%;
         object-fit: cover; /* Přizpůsobit obrázek čtvercovému prostoru */
-        border-radius: 0 !important; /* Odstranit zaoblené rohy, aby byl obrázek přímo u bílého prostoru */
+        border-radius: 12px 12px 0 0 !important; /* Zaoblené rohy nahoře */
         margin: 0;
         padding: 0;
         display: block;
     }
     
     .ad-card .ad-body {
-        padding: 12px 12px 60px !important; /* Padding nahoře i dole */
+        padding: 10px 12px 50px !important; /* Menší padding */
         min-height: auto !important;
         flex: 1;
         display: flex;
@@ -11934,9 +11937,9 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     
     /* Název */
     .ad-card .ad-title {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         line-height: 1.3;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         font-weight: 600;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -11948,7 +11951,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     
     /* Cena */
     .ad-card .ad-price {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 700;
         color: #f77c00;
         margin-bottom: 4px;
@@ -11958,10 +11961,10 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     
     /* Kraj - samostatný element dole */
     .ad-card .ad-location {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         color: #9ca3af;
         margin-top: auto;
-        margin-bottom: 8px; /* Mezera před tlačítky */
+        margin-bottom: 6px; /* Mezera před tlačítky */
         order: 2;
         text-align: left !important; /* Zarovnání vlevo */
     }
@@ -11979,10 +11982,17 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     /* Tlačítka na mobilních zařízeních */
     .ad-card .ad-actions {
         position: absolute !important;
-        bottom: 4px !important; /* Ještě níž */
+        bottom: 8px !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
         z-index: 10 !important;
+        width: calc(100% - 24px) !important;
+    }
+    
+    .ad-card .ad-actions .btn {
+        font-size: 0.8rem !important;
+        padding: 0.5rem 1rem !important;
+        min-height: 36px !important;
     }
     
     /* Forms mobile optimization */
@@ -12478,22 +12488,40 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ad-card .ad-body {
-        padding: 12px 10px 60px !important; /* Více padding dole pro tlačítka */
+        padding: 8px 10px 48px !important; /* Menší padding */
         min-height: auto !important;
     }
     
     .ad-card .ad-actions {
-        bottom: 4px !important; /* Ještě níž na malých mobilních zařízeních */
+        bottom: 6px !important;
+        width: calc(100% - 20px) !important;
+    }
+    
+    .ad-card .ad-actions .btn {
+        font-size: 0.75rem !important;
+        padding: 0.45rem 0.9rem !important;
+        min-height: 32px !important;
     }
     
     .ad-card .ad-title {
-        font-size: 0.85rem;
-        -webkit-line-clamp: 3 !important; /* Zobrazit více řádků */
-        margin-bottom: 0.5rem !important;
+        font-size: 0.8rem;
+        -webkit-line-clamp: 2 !important;
+        margin-bottom: 0.4rem !important;
     }
     
     .ad-card .ad-price {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+    }
+    
+    .ad-card .ad-meta-item {
+        font-size: 0.7rem !important;
+        padding: 0.4rem 0 !important;
+    }
+    
+    .ad-card .ad-meta-item i {
+        width: 14px !important;
+        height: 14px !important;
+        font-size: 0.7rem !important;
     }
     
     /* Zobrazit všechny informace v ad-meta-details */
