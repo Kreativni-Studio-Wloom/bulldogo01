@@ -1993,6 +1993,12 @@ body {
     box-sizing: border-box;
 }
 
+.sidebar:not(:hover) .nav-link {
+    padding: 0.8rem 0.5rem !important; /* Menší padding když je sidebar zúžený */
+    justify-content: center !important; /* Ikony vycentrované */
+    margin: 0.2rem 0.5rem !important; /* Menší margin */
+}
+
 .sidebar:hover .nav-link {
     padding: 0.8rem 1.5rem;
     justify-content: space-between; /* Text vlevo, ikona vpravo při hover */
@@ -2027,15 +2033,18 @@ body {
 }
 
 .sidebar:not(:hover) .nav-icon {
-    margin-left: 0;
-    order: 1; /* Ikona uprostřed */
-    width: 100%;
-    text-align: center;
-    justify-content: center;
-    background: transparent;
-    -webkit-background-clip: unset;
-    -webkit-text-fill-color: unset;
-    background-clip: unset;
+    margin-left: 0 !important;
+    order: 1 !important; /* Ikona uprostřed */
+    width: 24px !important; /* Pevná šířka ikony */
+    text-align: center !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: transparent !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: unset !important;
+    background-clip: unset !important;
+    display: flex !important;
+    flex-shrink: 0 !important;
 }
 
 .sidebar:hover .nav-icon {
