@@ -5565,7 +5565,7 @@ body.profile-plan-page .plan-info {
     }
 
     .hero-title {
-        font-size: 3rem;
+        font-size: 4rem;
     }
 
     .hero-slogan {
@@ -5613,7 +5613,7 @@ body.profile-plan-page .plan-info {
     }
     
     .hero-title {
-        font-size: 2.5rem;
+        font-size: 3.5rem;
     }
     
     /* Profile responsive */
@@ -11773,7 +11773,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .hero-title {
-        font-size: clamp(2rem, 8vw, 3rem);
+        font-size: clamp(3rem, 10vw, 4.5rem);
         line-height: 1.2;
     }
     
