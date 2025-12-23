@@ -1780,6 +1780,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     gap: 0.5rem;
     min-height: 80px;
@@ -1806,7 +1807,7 @@ body {
 .logo {
     flex: 1;
     display: flex;
-    justify-content: flex-start; /* Logo zarovnané vlevo i bez hover */
+    justify-content: center; /* Logo vycentrované když je sidebar zúžený */
     align-items: center;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     gap: 0.1rem;
@@ -1817,25 +1818,26 @@ body {
     font-weight: 700;
     display: flex;
     align-items: center;
-    opacity: 1; /* Text vždy viditelný */
+    opacity: 0;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(0) scale(1);
-    width: auto; /* Text vždy viditelný */
-    overflow: visible;
+    transform: translateX(-10px);
+    width: 0;
+    overflow: hidden;
 }
 
 .sidebar:hover .logo-text {
     opacity: 1;
     transform: translateX(0) scale(1);
     width: auto;
-    transition-delay: 0s;
+    transition-delay: 0.1s;
+    overflow: visible;
 }
 
 /* Ensure B icon shows when collapsed and sits left of text when expanded */
 .logo-icon { order: 1; }
 .logo-text { order: 2; }
 .sidebar:hover .logo { 
-    justify-content: flex-start; 
+    justify-content: flex-start; /* Logo zarovnané vlevo při hover */
     align-items: center; 
     gap: 0.1rem;
 }
@@ -1983,7 +1985,7 @@ body {
     text-decoration: none;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 3px solid transparent;
-    justify-content: space-between; /* Text vlevo, ikona vpravo i bez hover */
+    justify-content: center; /* Vycentrovat ikonu když je sidebar zúžený */
     border-radius: 8px;
     margin: 0.2rem 1rem;
     min-height: 48px;
@@ -1992,7 +1994,7 @@ body {
 
 .sidebar:hover .nav-link {
     padding: 0.8rem 1.5rem;
-    justify-content: space-between;
+    justify-content: space-between; /* Text vlevo, ikona vpravo při hover */
     margin: 0.2rem 1rem;
 }
 
@@ -2010,7 +2012,7 @@ body {
 
 .nav-icon {
     width: 24px;
-    margin-left: 0.8rem; /* Ikona vpravo i bez hover */
+    margin-left: 0; /* Ikona vycentrovaná když je sidebar zúžený */
     font-size: 1.2rem;
     text-align: center;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2024,7 +2026,7 @@ body {
 }
 
 .sidebar:hover .nav-icon {
-    margin-left: 0.8rem;
+    margin-left: 0.8rem; /* Ikona vpravo při hover */
     opacity: 1;
     background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
     -webkit-background-clip: text;
@@ -2043,19 +2045,20 @@ body {
 .nav-text {
     font-weight: 500;
     font-size: 0.95rem;
-    opacity: 1; /* Text vždy viditelný */
+    opacity: 0;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     order: 1; /* Text vlevo */
-    transform: translateX(0);
-    width: auto; /* Text vždy viditelný */
-    overflow: visible;
+    transform: translateX(-15px);
+    width: 0;
+    overflow: hidden;
 }
 .sidebar:hover .nav-text {
     opacity: 1;
     transform: translateX(0);
     width: auto;
-    transition-delay: 0s;
+    transition-delay: 0.1s;
+    overflow: visible;
 }
 
 /* Admin Section */
@@ -2237,7 +2240,7 @@ body {
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center; /* Vycentrovat ikonu když je sidebar zúžený */
     gap: 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     min-height: 48px;
@@ -2253,14 +2256,24 @@ body {
 
 .btn-login span {
     order: 1; /* Text vlevo */
-    opacity: 1;
-    width: auto;
-    transform: translateX(0);
+    opacity: 0;
+    width: 0;
+    transform: translateX(-15px);
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar:hover .btn-login {
     padding: 0.8rem 1rem;
-    justify-content: space-between;
+    justify-content: space-between; /* Text vlevo, ikona vpravo při hover */
+}
+
+.sidebar:hover .btn-login span {
+    opacity: 1;
+    width: auto;
+    transform: translateX(0);
+    transition-delay: 0.1s;
+    overflow: visible;
 }
 
 .sidebar:hover .btn-login i {
@@ -2274,20 +2287,7 @@ body {
     box-shadow: 0 4px 15px rgba(247, 124, 0, 0.2);
 }
 
-/* Hide button labels when collapsed to keep icons centered */
-.sidebar:not(:hover) .btn-login span,
-.sidebar:not(:hover) .btn-register span {
-    opacity: 0;
-    transform: translateX(-15px);
-    width: 0;
-    transition-delay: 0.3s;
-}
-/* Text "Profil" je vždy viditelný */
-.sidebar:not(:hover) .btn-profile span {
-    opacity: 1 !important;
-    transform: translateX(0) !important;
-    width: auto !important;
-}
+/* Button labels are now handled individually in their respective classes */
 
 /* Keep nav icons strictly centered in collapsed state */
 /* Odstraněno - navigační položky mají text vlevo a ikonu vpravo i bez hover */
@@ -2312,7 +2312,7 @@ body {
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center; /* Vycentrovat ikonu když je sidebar zúžený */
     gap: 0.5rem;
     box-shadow: 0 4px 15px rgba(247, 124, 0, 0.3);
     min-height: 48px;
@@ -2328,14 +2328,24 @@ body {
 
 .btn-register span {
     order: 1; /* Text vlevo */
-    opacity: 1;
-    width: auto;
-    transform: translateX(0);
+    opacity: 0;
+    width: 0;
+    transform: translateX(-15px);
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar:hover .btn-register {
     padding: 0.8rem 1rem;
-    justify-content: space-between;
+    justify-content: space-between; /* Text vlevo, ikona vpravo při hover */
+}
+
+.sidebar:hover .btn-register span {
+    opacity: 1;
+    width: auto;
+    transform: translateX(0);
+    transition-delay: 0.1s;
+    overflow: visible;
 }
 
 .sidebar:hover .btn-register i {
@@ -2358,10 +2368,10 @@ body {
     text-decoration: none;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center; /* Vycentrovat ikonu když je sidebar zúžený */
     gap: 0.5rem;
     font-size: 0.9rem;
-    transition: all 0.3s ease;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     min-height: 48px;
@@ -2377,9 +2387,23 @@ body {
 
 .btn-profile span {
     order: 1; /* Text vlevo */
-    opacity: 1 !important; /* Text vždy viditelný */
-    width: auto !important;
-    transform: translateX(0) !important;
+    opacity: 0;
+    width: 0;
+    transform: translateX(-15px);
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar:hover .btn-profile {
+    justify-content: space-between; /* Text vlevo, ikona vpravo při hover */
+}
+
+.sidebar:hover .btn-profile span {
+    opacity: 1;
+    width: auto;
+    transform: translateX(0);
+    transition-delay: 0.1s;
+    overflow: visible;
 }
 
 /* Profilovka v kruhu */
@@ -2441,11 +2465,11 @@ body {
     text-decoration: none;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center; /* Vycentrovat ikonu když je sidebar zúžený */
     gap: 0.5rem;
     font-size: 0.9rem;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     min-height: 48px;
@@ -2461,10 +2485,24 @@ body {
 
 .btn-logout span {
     order: 1; /* Text vlevo */
+    opacity: 0;
+    width: 0;
+    transform: translateX(-15px);
+    overflow: hidden;
+    white-space: nowrap;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar:hover .btn-logout {
+    justify-content: space-between; /* Text vlevo, ikona vpravo při hover */
+}
+
+.sidebar:hover .btn-logout span {
     opacity: 1;
     width: auto;
     transform: translateX(0);
-    white-space: nowrap;
+    transition-delay: 0.1s;
+    overflow: visible;
 }
 
 .btn-logout:hover {
