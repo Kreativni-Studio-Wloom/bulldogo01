@@ -1272,6 +1272,9 @@ function generateInvoiceHTML(
   currency: string,
   userName: string,
   invoiceDate: Date,
+  userId: string,
+  userEmail?: string,
+  userPhone?: string,
   ico?: string,
   dic?: string,
   companyName?: string
@@ -1336,9 +1339,10 @@ function generateInvoiceHTML(
                       Dodavatel
                     </h2>
                     <p style="margin: 0 0 8px 0; font-size: 14px; color: #374151; line-height: 1.6;">
-                      <strong>BULLDOGO.CZ</strong><br>
-                      IČO: 12345678<br>
-                      DIČ: CZ12345678<br>
+                      <strong>Dominik Hašek</strong><br>
+                      BULLDOGO.CZ<br>
+                      IČO: 123456<br>
+                      Bydliště: Václavské náměstí 123, 110 00 Praha 1<br>
                       Email: info@bulldogo.cz<br>
                       Tel: +420 605 121 023
                     </p>
@@ -1349,6 +1353,9 @@ function generateInvoiceHTML(
                     </h2>
                     <p style="margin: 0 0 8px 0; font-size: 14px; color: #374151; line-height: 1.6;">
                       <strong>${userName}</strong><br>
+                      UID: ${userId}<br>
+                      ${userEmail ? `Email: ${userEmail}<br>` : ""}
+                      ${userPhone ? `Telefon: ${userPhone}<br>` : ""}
                       ${companyName ? `Firma: ${companyName}<br>` : ""}
                       ${ico ? `IČO: ${ico}<br>` : ""}
                       ${dic ? `DIČ: ${dic}<br>` : ""}
@@ -1455,10 +1462,26 @@ async function sendStripeInvoiceEmail(
     return;
   }
 
-  const userName = userProfile?.firstName || userProfile?.name || userProfile?.companyName || "Vážený zákazníku";
+  // Získat všechny informace z profilu
+  const firstName = userProfile?.firstName || "";
+  const lastName = userProfile?.lastName || "";
+  const name = userProfile?.name || "";
   const companyName = userProfile?.companyName;
+  const phone = userProfile?.phone || userProfile?.phoneNumber || "";
   const ico = userProfile?.ico;
   const dic = userProfile?.dic;
+
+  // Sestavit jméno a příjmení
+  let userName = "";
+  if (firstName && lastName) {
+    userName = `${firstName} ${lastName}`;
+  } else if (name && name !== "Uživatel" && name !== "Firma") {
+    userName = name;
+  } else if (companyName) {
+    userName = companyName;
+  } else {
+    userName = "Jméno Příjmení"; // Fallback pokud není jméno
+  }
 
   // Získat informace o plánu z subscription
   const planName = subscriptionData?.items?.[0]?.price?.product?.name || 
@@ -1482,43 +1505,29 @@ async function sendStripeInvoiceEmail(
     currency,
     userName,
     invoiceDate,
+    userId,
+    userEmail,
+    phone,
     ico,
     dic,
     companyName
   );
 
-  // Email pro uživatele
-  const userMailOptions = {
+  // Odeslat fakturu pouze na účetní email
+  const accountingEmail = "ucetni@bulldogo.cz";
+  const accountingMailOptions = {
     from: {
       name: "BULLDOGO",
       address: "info@bulldogo.cz",
     },
-    to: userEmail,
-    subject: `Faktura ${invoiceNumber} - BULLDOGO.CZ`,
+    to: accountingEmail,
+    subject: `Faktura ${invoiceNumber} - ${userName} (UID: ${userId})`,
     html: invoiceHTML,
-    text: `Dobrý den ${userName},\n\nDěkujeme za vaši platbu. V příloze naleznete fakturu č. ${invoiceNumber}.\n\nČástka: ${amount} ${currency}\nBalíček: ${planName}\n\n© 2025 BULLDOGO.CZ`,
+    text: `Faktura ${invoiceNumber} pro ${userName}\n\nUID: ${userId}\nEmail: ${userEmail || "neuvedeno"}\nTelefon: ${phone || "neuvedeno"}\nČástka: ${amount} ${currency}\nBalíček: ${planName}\n\n© 2025 BULLDOGO.CZ`,
   };
 
-  await smtpTransporter.sendMail(userMailOptions);
-  functions.logger.info("✅ Faktura odeslána uživateli", { subscriptionId, userEmail });
-
-  // Email pro účetní (pokud je nastavený v konfiguraci)
-  const accountingEmail = functions.config().accounting?.email || "ucetni@bulldogo.cz";
-  if (accountingEmail && accountingEmail !== userEmail) {
-    const accountingMailOptions = {
-      from: {
-        name: "BULLDOGO",
-        address: "info@bulldogo.cz",
-      },
-      to: accountingEmail,
-      subject: `[ÚČETNÍ] Faktura ${invoiceNumber} - ${userName}`,
-      html: invoiceHTML,
-      text: `Faktura ${invoiceNumber} pro ${userName}\n\nČástka: ${amount} ${currency}\nBalíček: ${planName}\n\n© 2025 BULLDOGO.CZ`,
-    };
-
-    await smtpTransporter.sendMail(accountingMailOptions);
-    functions.logger.info("✅ Faktura odeslána účetní", { subscriptionId, accountingEmail });
-  }
+  await smtpTransporter.sendMail(accountingMailOptions);
+  functions.logger.info("✅ Faktura odeslána účetní", { subscriptionId, accountingEmail, userId, userName });
 }
 
 /**
