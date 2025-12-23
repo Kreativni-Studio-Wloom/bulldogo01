@@ -5565,7 +5565,12 @@ body.profile-plan-page .plan-info {
     }
 
     .hero-title {
-        font-size: 4rem;
+        font-size: 5rem !important;
+        line-height: 1.1 !important;
+        letter-spacing: 0.05em !important;
+        font-weight: 900 !important;
+        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
     }
 
     .hero-slogan {
@@ -5613,7 +5618,12 @@ body.profile-plan-page .plan-info {
     }
     
     .hero-title {
-        font-size: 3.5rem;
+        font-size: 4.5rem !important;
+        line-height: 1.1 !important;
+        letter-spacing: 0.05em !important;
+        font-weight: 900 !important;
+        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
     }
     
     /* Profile responsive */
@@ -11773,8 +11783,13 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .hero-title {
-        font-size: clamp(3rem, 10vw, 4.5rem);
-        line-height: 1.2;
+        font-size: clamp(4rem, 12vw, 6rem) !important;
+        line-height: 1.1 !important;
+        letter-spacing: 0.05em !important;
+        font-weight: 900 !important;
+        margin-bottom: 1.5rem !important;
+        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
     }
     
     .hero-slogan {
