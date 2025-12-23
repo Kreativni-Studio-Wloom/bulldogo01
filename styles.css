@@ -1779,7 +1779,7 @@ body {
     padding: 1rem 0.5rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start; /* Zarovnat doleva */
     justify-content: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     gap: 0.5rem;
@@ -1950,6 +1950,7 @@ body {
 .navigation-section {
     padding: 1rem 0;
     flex: 1;
+    text-align: left; /* Zarovnání doleva */
 }
 
 .nav-section-title {
@@ -1985,7 +1986,7 @@ body {
     text-decoration: none;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 3px solid transparent;
-    justify-content: center; /* Vycentrovat ikonu když je sidebar zúžený */
+    justify-content: flex-start; /* Zarovnat doleva vždy */
     border-radius: 8px;
     margin: 0.2rem 1rem;
     min-height: 48px;
@@ -2012,13 +2013,13 @@ body {
 
 .nav-icon {
     width: 24px;
-    margin-left: 0; /* Ikona vycentrovaná když je sidebar zúžený */
+    margin-left: 0; /* Ikona vlevo když je sidebar zúžený */
     font-size: 1.2rem;
-    text-align: center;
+    text-align: left;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     flex-shrink: 0;
     opacity: 1; /* Ikona vždy viditelná */
     order: 2; /* Ikona vpravo */
@@ -2052,6 +2053,7 @@ body {
     transform: translateX(-15px);
     width: 0;
     overflow: hidden;
+    text-align: left !important; /* Zarovnání doleva */
 }
 .sidebar:hover .nav-text {
     opacity: 1;
@@ -2059,6 +2061,7 @@ body {
     width: auto;
     transition-delay: 0.1s;
     overflow: visible;
+    text-align: left !important; /* Zarovnání doleva */
 }
 
 /* Admin Section */
