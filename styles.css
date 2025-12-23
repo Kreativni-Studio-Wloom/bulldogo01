@@ -11456,7 +11456,7 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ads-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: 1.5rem;
     }
     
@@ -12437,8 +12437,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     }
     
     .ads-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
     }
     
     .hero-title {
@@ -12657,11 +12657,11 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     margin-top: 1.5rem;
 }
 
-/* Zajistit dva sloupce na mobilních zařízeních i pro admin */
+/* Zajistit jeden sloupec na mobilních zařízeních i pro admin */
 @media (max-width: 768px) {
     .ads-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
     }
 }
 
