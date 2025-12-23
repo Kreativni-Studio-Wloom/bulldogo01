@@ -3177,6 +3177,7 @@ body.dark-mode .footer {
     border-radius: 12px;
     font-size: 1rem;
     background: rgba(255, 255, 255, 0.9);
+    color: #000000; /* Černá barva textu */
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -3193,6 +3194,12 @@ select.search-input {
     background-position: right 1rem center;
     background-size: 16px;
     cursor: pointer;
+    color: #000000; /* Černá barva textu */
+}
+
+select.search-input option {
+    color: #000000; /* Černá barva pro option elementy */
+    background-color: #ffffff;
 }
 
 select.search-input::-ms-expand { /* skrytí defaultní šipky v IE/Edge */
@@ -11756,12 +11763,19 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         padding: 0.6rem 0.8rem; /* Zmenšené */
         min-height: 40px; /* Zmenšené */
         border-radius: 10px;
+        color: #000000; /* Černá barva textu */
     }
     
     select.search-input {
         padding-right: 2rem; /* Místo pro šipku */
         background-size: 14px;
         background-position: right 0.6rem center;
+        color: #000000 !important; /* Černá barva textu na mobilu */
+    }
+    
+    select.search-input option {
+        color: #000000; /* Černá barva pro option elementy */
+        background-color: #ffffff;
     }
     
     .search-btn {
