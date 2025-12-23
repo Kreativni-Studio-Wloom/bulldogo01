@@ -5565,12 +5565,14 @@ body.profile-plan-page .plan-info {
     }
 
     .hero-title {
-        font-size: 10rem !important;
+        font-size: clamp(2.5rem, 8vw, 4rem) !important;
         line-height: 1.1 !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.03em !important;
         font-weight: 900 !important;
         text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
         filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        word-break: break-word;
+        hyphens: auto;
     }
 
     .hero-slogan {
@@ -5618,12 +5620,14 @@ body.profile-plan-page .plan-info {
     }
     
     .hero-title {
-        font-size: 9rem !important;
+        font-size: clamp(2.5rem, 8vw, 4rem) !important;
         line-height: 1.1 !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.03em !important;
         font-weight: 900 !important;
         text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
         filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        word-break: break-word;
+        hyphens: auto;
     }
     
     /* Profile responsive */
@@ -11778,18 +11782,24 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
     
     /* Posunout nápis a slogan níž od hořejšku */
     .hero-brand {
-        padding-top: 4rem;
-        margin-top: 2rem;
+        padding-top: 2rem;
+        margin-top: 1rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
     }
     
     .hero-title {
-        font-size: clamp(8rem, 24vw, 12rem) !important;
+        font-size: clamp(2.5rem, 8vw, 4rem) !important;
         line-height: 1.1 !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.03em !important;
         font-weight: 900 !important;
         margin-bottom: 1.5rem !important;
         text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
         filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        word-break: break-word;
+        hyphens: auto;
+        padding: 0 1rem;
+        box-sizing: border-box;
     }
     
     .hero-slogan {
