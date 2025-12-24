@@ -1452,25 +1452,17 @@ Prosím kontaktujte podporu.
             
             // Profilová fotka – náhled
             try {
-                const url = userProfile?.photoURL || userProfile?.avatarUrl || '';
+                const STOCK_AVATAR_URL = 'https://ui-avatars.com/api/?name=User&background=f77c00&color=fff&size=128&bold=true';
+                const url = userProfile?.photoURL || userProfile?.avatarUrl || STOCK_AVATAR_URL;
                 const img = document.getElementById('profilePhotoPreview');
                 const ph = document.getElementById('profilePhotoPlaceholder');
                 if (img && ph) {
-                    if (url) {
-                        img.src = url;
-                        img.style.display = 'block';
-                        ph.style.display = 'none';
-                        // Reaplikovat avatar i do sidebaru (pro zavřený stav)
-                        if (typeof window.applySidebarAvatar === 'function') {
-                            window.applySidebarAvatar(url);
-                        }
-                    } else {
-                        img.src = '';
-                        img.style.display = 'none';
-                        ph.style.display = 'block';
-                        if (typeof window.applySidebarAvatar === 'function') {
-                            window.applySidebarAvatar('');
-                        }
+                    img.src = url;
+                    img.style.display = 'block';
+                    ph.style.display = 'none';
+                    // Reaplikovat avatar i do sidebaru (pro zavřený stav)
+                    if (typeof window.applySidebarAvatar === 'function') {
+                        window.applySidebarAvatar(url === STOCK_AVATAR_URL ? '' : url);
                     }
                 }
             } catch (e) { /* noop */ }

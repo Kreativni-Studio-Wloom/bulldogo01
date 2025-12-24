@@ -636,6 +636,9 @@ function updateUserProfile(user) {
 	} catch (_) {}
 }
 
+// Stock avatar URL - použije se když uživatel nemá nahranou profilovku
+const STOCK_AVATAR_URL = 'https://ui-avatars.com/api/?name=User&background=f77c00&color=fff&size=128&bold=true';
+
 // Avatar helpers (sidebar + hero profilů)
 async function loadAndApplyUserAvatar(uid) {
 	try {
@@ -644,8 +647,8 @@ async function loadAndApplyUserAvatar(uid) {
 		const profileRef = doc(window.firebaseDb, 'users', uid, 'profile', 'profile');
 		const snap = await getDoc(profileRef);
 		const url = snap.exists() ? (snap.data()?.photoURL || snap.data()?.avatarUrl || '') : '';
-		applySidebarAvatar(url);
-		applyHeroAvatar(url);
+		applySidebarAvatar(url || STOCK_AVATAR_URL);
+		applyHeroAvatar(url || STOCK_AVATAR_URL);
 	} catch (_) { /* tichý fallback */ }
 }
 
@@ -730,7 +733,8 @@ function ensureSidebarAvatarNode() {
 
 function applySidebarAvatar(url) {
 	// Uložit poslední URL pro re-aplikaci při hover/leave
-	window.__sidebarAvatarUrl = url || '';
+	const avatarUrl = url || STOCK_AVATAR_URL;
+	window.__sidebarAvatarUrl = avatarUrl;
 	const wrap = ensureSidebarAvatarNode();
 	const img = document.getElementById('sidebarUserAvatarImg');
 	const ph = document.getElementById('sidebarUserAvatarPh');
@@ -738,46 +742,34 @@ function applySidebarAvatar(url) {
 	const btnIcon = btn ? btn.querySelector('i') : null;
 	const sidebar = document.querySelector('.sidebar');
 	if (!btn || !img || !ph) return;
-	if (url) {
-		img.src = url;
-		// Vždy zobrazit profilovku v kruhu, ne přes celé tlačítko
-		if (wrap) {
-			const circle = wrap.querySelector('span');
-			if (circle) {
-				// Zajistit, aby kruh byl skutečně kruhový
-				circle.style.width = '32px';
-				circle.style.height = '32px';
-				circle.style.borderRadius = '50%';
-				circle.style.overflow = 'hidden';
-			}
-			wrap.style.display = 'inline-flex';
+	// Vždy zobrazit avatar (buď nahraný nebo stock)
+	img.src = avatarUrl;
+	// Vždy zobrazit profilovku v kruhu, ne přes celé tlačítko
+	if (wrap) {
+		const circle = wrap.querySelector('span');
+		if (circle) {
+			// Zajistit, aby kruh byl skutečně kruhový
+			circle.style.width = '32px';
+			circle.style.height = '32px';
+			circle.style.borderRadius = '50%';
+			circle.style.overflow = 'hidden';
 		}
-		// Zajistit, aby obrázek byl kruhový
-		img.style.display = 'block';
-		img.style.borderRadius = '50%';
-		img.style.width = '100%';
-		img.style.height = '100%';
-		img.style.objectFit = 'cover';
-		ph.style.display = 'none';
-		// Odstranit backgroundImage z tlačítka
-		btn.style.backgroundImage = '';
-		btn.style.backgroundSize = '';
-		btn.style.backgroundPosition = '';
-		btn.style.backgroundRepeat = '';
-		if (btnIcon) {
-			btnIcon.style.display = 'none';
-		}
-	} else {
-		// bez profilovky – zrušit pozadí a zobrazit ikonku
-		img.src = '';
-		img.style.display = 'none';
-		ph.style.display = 'block';
-		btn.style.backgroundImage = '';
-		btn.style.backgroundSize = '';
-		btn.style.backgroundPosition = '';
-		btn.style.backgroundRepeat = '';
-		if (wrap) wrap.style.display = 'inline-flex';
-		if (btnIcon) btnIcon.style.display = '';
+		wrap.style.display = 'inline-flex';
+	}
+	// Zajistit, aby obrázek byl kruhový
+	img.style.display = 'block';
+	img.style.borderRadius = '50%';
+	img.style.width = '100%';
+	img.style.height = '100%';
+	img.style.objectFit = 'cover';
+	ph.style.display = 'none';
+	// Odstranit backgroundImage z tlačítka
+	btn.style.backgroundImage = '';
+	btn.style.backgroundSize = '';
+	btn.style.backgroundPosition = '';
+	btn.style.backgroundRepeat = '';
+	if (btnIcon) {
+		btnIcon.style.display = 'none';
 	}
 }
 
@@ -785,13 +777,9 @@ function applyHeroAvatar(url) {
 	// Avatar vedle nadpisu "Můj profil" apod. – očekává <img id="profileHeroAvatar">
 	const img = document.getElementById('profileHeroAvatar');
 	if (!img) return;
-	if (url) {
-		img.src = url;
-		img.style.display = 'inline-block';
-	} else {
-		img.src = '';
-		img.style.display = 'none';
-	}
+	const avatarUrl = url || STOCK_AVATAR_URL;
+	img.src = avatarUrl;
+	img.style.display = 'inline-block';
 }
 
 // Logout function

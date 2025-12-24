@@ -5596,8 +5596,8 @@ body.profile-plan-page .plan-info {
         line-height: 1.1 !important;
         letter-spacing: 0.03em !important;
         font-weight: 900 !important;
-        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
-        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3) !important;
+        filter: drop-shadow(0 4px 12px rgba(247, 124, 0, 0.2)) drop-shadow(0 2px 4px rgba(247, 124, 0, 0.15)) !important;
         word-break: break-word;
         hyphens: auto;
     }
@@ -5651,8 +5651,8 @@ body.profile-plan-page .plan-info {
         line-height: 1.1 !important;
         letter-spacing: 0.03em !important;
         font-weight: 900 !important;
-        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
-        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3) !important;
+        filter: drop-shadow(0 4px 12px rgba(247, 124, 0, 0.2)) drop-shadow(0 2px 4px rgba(247, 124, 0, 0.15)) !important;
         word-break: break-word;
         hyphens: auto;
     }
@@ -11684,6 +11684,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         opacity: 1 !important;
         transform: translateX(0) !important;
         width: auto !important;
+        text-align: left !important;
+        order: 1 !important;
     }
     
     .sidebar.mobile-open .nav-icon {
@@ -11693,10 +11695,15 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
         background-clip: text !important;
+        order: 2 !important;
+        width: 24px !important;
+        flex-shrink: 0 !important;
     }
     
     .sidebar.mobile-open .nav-link {
         padding: 0.75rem 1.5rem !important;
+        justify-content: space-between !important; /* Text vlevo, ikona vpravo */
+        align-items: center !important;
     }
     
     /* Zajistit, že inline style display má přednost - skrýt sekce s display: none */
@@ -12133,8 +12140,8 @@ body.chat-page .message.other .message-content { margin-right: auto !important; 
         letter-spacing: 0.03em !important;
         font-weight: 900 !important;
         margin-bottom: 1.5rem !important;
-        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3);
-        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        text-shadow: 0 4px 20px rgba(247, 124, 0, 0.3) !important;
+        filter: drop-shadow(0 4px 12px rgba(247, 124, 0, 0.2)) drop-shadow(0 2px 4px rgba(247, 124, 0, 0.15)) !important;
         word-break: break-word;
         hyphens: auto;
         padding: 0 1rem;

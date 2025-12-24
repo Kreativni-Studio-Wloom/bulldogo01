@@ -421,17 +421,12 @@ function updateProfileInfo() {
     if (profileNameEl) profileNameEl.textContent = displayName;
         // Avatar z userProfile.photoURL / avatarUrl
         try {
-            const avatarUrl = userProfile?.photoURL || userProfile?.avatarUrl || '';
+            const STOCK_AVATAR_URL = 'https://ui-avatars.com/api/?name=User&background=f77c00&color=fff&size=128&bold=true';
+            const avatarUrl = userProfile?.photoURL || userProfile?.avatarUrl || STOCK_AVATAR_URL;
             if (profileAvatarEl && profileAvatarPh) {
-                if (avatarUrl) {
-                    profileAvatarEl.src = avatarUrl;
-                    profileAvatarEl.style.display = 'block';
-                    profileAvatarPh.style.display = 'none';
-                } else {
-                    profileAvatarEl.src = '';
-                    profileAvatarEl.style.display = 'none';
-                    profileAvatarPh.style.display = 'block';
-                }
+                profileAvatarEl.src = avatarUrl;
+                profileAvatarEl.style.display = 'block';
+                profileAvatarPh.style.display = 'none';
             }
         } catch (e) { /* noop */ }
     if (profileEmailEl) profileEmailEl.textContent = userProfile.email || currentProfileUser.email || '';

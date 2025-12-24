@@ -218,19 +218,14 @@ function displayAdDetail() {
         document.getElementById('adUser').textContent = displayName;
         // Avatar (hlavička profilu u detailu inzerátu)
         try {
-            const avatarUrl = adOwner.photoURL || adOwner.avatarUrl || '';
+            const STOCK_AVATAR_URL = 'https://ui-avatars.com/api/?name=User&background=f77c00&color=fff&size=128&bold=true';
+            const avatarUrl = adOwner.photoURL || adOwner.avatarUrl || STOCK_AVATAR_URL;
             const img = document.getElementById('adUserAvatar');
             const ph = document.getElementById('adUserAvatarPh');
             if (img && ph) {
-                if (avatarUrl) {
-                    img.src = avatarUrl;
-                    img.style.display = 'block';
-                    ph.style.display = 'none';
-                } else {
-                    img.src = '';
-                    img.style.display = 'none';
-                    ph.style.display = 'block';
-                }
+                img.src = avatarUrl;
+                img.style.display = 'block';
+                ph.style.display = 'none';
             }
         } catch (e) { /* noop */ }
         

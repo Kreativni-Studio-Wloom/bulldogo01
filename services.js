@@ -259,6 +259,14 @@ async function setupRealtimeListener() {
             
             // Respektovat aktuálně zadané filtry (včetně města)
             filterServices();
+            
+            // Pokud jsou v URL parametry, znovu aplikovat filtry (pro případ, že se volaly dřív než data)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('q') || urlParams.get('region')) {
+                console.log('🔄 Aplikuji filtry z URL po načtení dat...');
+                applyFiltersFromUrl();
+            }
+            
             updateStats();
             
             // Debug - kolik služeb prošlo filtrem
