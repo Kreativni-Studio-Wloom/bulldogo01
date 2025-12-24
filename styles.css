@@ -1814,7 +1814,7 @@ body {
     padding: 1rem 0.5rem;
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Zarovnat doleva */
+    align-items: center; /* Zarovnat na střed když je sidebar zavřený */
     justify-content: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     gap: 0.5rem;
@@ -1846,6 +1846,18 @@ body {
     align-items: center;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     gap: 0.1rem;
+    width: 100%;
+}
+
+/* Zajistit, že logo je vycentrované když je sidebar zavřený */
+.sidebar:not(:hover) .logo {
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+.sidebar:not(:hover) .logo-icon {
+    margin: 0 auto !important;
 }
 
 .logo-text {
@@ -2475,6 +2487,7 @@ body {
     vertical-align: middle;
     flex-shrink: 0;
     order: 2; /* Profilovka napravo */
+    transition: margin 0.3s ease, order 0.3s ease !important; /* Pouze základní přechody */
 }
 
 #sidebarUserAvatar > span {
@@ -2488,6 +2501,7 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: width 0.3s ease, height 0.3s ease !important; /* Pouze rozměry */
 }
 
 #sidebarUserAvatarImg {
@@ -2496,6 +2510,7 @@ body {
     object-fit: cover !important;
     border-radius: 50% !important;
     display: block !important;
+    transition: none !important; /* Žádné animace pro obrázek */
 }
 
 .btn-profile:hover {
@@ -2530,6 +2545,7 @@ body {
     flex-shrink: 0 !important;
     position: relative !important;
     left: -4px !important; /* Mírně přesahuje vlevo pro polokruhový efekt */
+    transition: none !important; /* Zakázat animace při zavřeném navbaru */
 }
 
 .sidebar:not(:hover) #sidebarUserAvatar > span {
@@ -2540,6 +2556,7 @@ body {
     opacity: 1 !important;
     border-radius: 50% !important;
     overflow: visible !important; /* Aby bylo vidět i když přesahuje */
+    transition: none !important; /* Zakázat animace */
 }
 
 .sidebar:not(:hover) #sidebarUserAvatarImg {
@@ -2549,21 +2566,26 @@ body {
     width: 100% !important;
     height: 100% !important;
     border-radius: 50% !important;
+    transition: none !important; /* Zakázat animace */
 }
 
 .sidebar:not(:hover) .btn-profile {
-    justify-content: flex-start !important; /* Zarovnat vlevo */
+    justify-content: center !important; /* Vycentrovat profilovku */
+    align-items: center !important;
     gap: 0 !important;
     padding: 0.8rem 0.5rem !important;
     overflow: visible !important; /* Aby profilovka mohla přesahovat */
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important; /* Pouze základní přechody, ne layout */
 }
 
 .sidebar:not(:hover) .btn-profile i {
     display: none !important; /* Skrýt ikonu když je sidebar zavřený, zobrazit jen profilovku */
+    transition: none !important;
 }
 
 .sidebar:not(:hover) .btn-profile span {
     display: none !important; /* Skrýt text když je sidebar zavřený */
+    transition: none !important;
 }
 
 .btn-logout {
@@ -11294,16 +11316,23 @@ html body .ad-actions {
         padding: 0 1rem !important;
         position: relative !important;
         z-index: 100 !important;
+        display: flex !important;
+        justify-content: flex-end !important; /* Zarovnat tlačítko doprava */
+        align-items: flex-start !important;
     }
     
     .back-btn {
         padding: 18px 28px !important;
         font-size: 1.05rem !important;
-        margin-bottom: 1rem !important;
-        position: relative !important;
-        z-index: 100 !important;
+        margin-bottom: 0 !important;
+        position: fixed !important;
+        top: 8px !important;
+        right: 8px !important;
+        left: auto !important;
+        z-index: 200 !important;
         min-height: 54px !important;
         gap: 10px !important;
+        margin-left: 0 !important;
     }
     
     /* Zajistit, že mobile-menu-btn a back-btn se neprolínají */
@@ -11314,7 +11343,7 @@ html body .ad-actions {
     }
     
     .ad-detail-header .back-btn {
-        margin-left: 60px !important; /* Odstoupit od mobile-menu-btn */
+        margin-left: 0 !important; /* Odstranit margin-left */
     }
     
     .ad-detail-main {
