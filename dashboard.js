@@ -95,26 +95,17 @@ async function checkAdminLogin() {
                     setTimeout(() => window.checkAndShowAdminMenu(), 500);
                 }
                 return;
+            } else {
+                // Uživatel není admin - smazat localStorage a zobrazit login
+                localStorage.removeItem('adminLoggedIn');
+                showLoginForm();
+                return;
             }
         }
         
-        // Fallback: kontrola localStorage (pro starý dashboard login)
-        const isLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
-        if (isLoggedIn) {
-            showDashboard();
-            
-            // Počkat na zobrazení dashboardu a pak načíst data
-            setTimeout(async () => {
-                await loadDashboardData();
-            }, 100);
-            
-            // Zobrazit admin menu
-            if (typeof window.checkAndShowAdminMenu === 'function') {
-                setTimeout(() => window.checkAndShowAdminMenu(), 500);
-            }
-        } else {
-            showLoginForm();
-        }
+        // Uživatel není přihlášen - zobrazit login formulář
+        localStorage.removeItem('adminLoggedIn');
+        showLoginForm();
     });
 }
 

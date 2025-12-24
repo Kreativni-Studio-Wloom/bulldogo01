@@ -193,7 +193,7 @@ window.checkAndShowAdminMenu = async function() {
             }
         }
         
-        // Fallback: kontrola přes email
+        // Fallback: kontrola přes email (pouze pro skutečné admin emaily)
         if (!isAdmin) {
             const adminEmails = ['admin@bulldogo.cz', 'support@bulldogo.cz'];
             if (user.email && adminEmails.includes(user.email.toLowerCase())) {
@@ -201,10 +201,8 @@ window.checkAndShowAdminMenu = async function() {
             }
         }
         
-        // Fallback: localStorage (pro dashboard login)
-        if (!isAdmin && localStorage.getItem('adminLoggedIn') === 'true') {
-            isAdmin = true;
-        }
+        // Poznámka: localStorage fallback byl odstraněn kvůli bezpečnosti
+        // Admin menu se zobrazuje pouze uživatelům s isAdmin=true nebo role='admin' v profilu
         
         if (isAdmin) {
             adminSection.style.display = 'block';

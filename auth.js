@@ -842,16 +842,14 @@ async function checkAdminStatus(user) {
             }
         }
         
-        // Fallback: kontrola přes email (pro rychlé nastavení)
+        // Fallback: kontrola přes email (pouze pro skutečné admin emaily)
         const adminEmails = ['admin@bulldogo.cz', 'support@bulldogo.cz'];
         if (user.email && adminEmails.includes(user.email.toLowerCase())) {
             return true;
         }
         
-        // Fallback: kontrola localStorage (pro dashboard login)
-        if (localStorage.getItem('adminLoggedIn') === 'true') {
-            return true;
-        }
+        // Poznámka: localStorage fallback byl odstraněn kvůli bezpečnosti
+        // Admin práva se kontrolují pouze přes Firestore profil nebo admin emaily
         
         return false;
     } catch (error) {
