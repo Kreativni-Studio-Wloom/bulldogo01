@@ -657,8 +657,8 @@ function updateUserProfile(user) {
 }
 
 // Stock avatar URL - použije se když uživatel nemá nahranou profilovku
-// SVG ikona uživatele - oranžovo-žlutý gradient s bílou siluetou (jako na obrázku)
-const STOCK_AVATAR_URL = 'data:image/svg+xml;base64,' + btoa('<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="avatarGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f77c00;stop-opacity:1" /><stop offset="100%" style="stop-color:#fdf002;stop-opacity:1" /></linearGradient></defs><circle cx="64" cy="64" r="64" fill="url(#avatarGradient)"/><circle cx="64" cy="45" r="18" fill="white"/><path d="M20 90C20 77.843 29.843 68 42 68H86C98.157 68 108 77.843 108 90V128H20V90Z" fill="white"/></svg>');
+// SVG ikona uživatele - oranžovo-žlutý gradient s bílou siluetou (minimalistická verze)
+const STOCK_AVATAR_URL = 'data:image/svg+xml;base64,' + btoa('<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="avatarGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f77c00;stop-opacity:1" /><stop offset="100%" style="stop-color:#fdf002;stop-opacity:1" /></linearGradient></defs><circle cx="64" cy="64" r="64" fill="url(#avatarGradient)"/><circle cx="64" cy="48" r="16" fill="white"/><path d="M32 88C32 80.268 38.268 74 46 74H82C89.732 74 96 80.268 96 88V128H32V88Z" fill="white"/></svg>');
 
 // Avatar helpers (sidebar + hero profilů)
 async function loadAndApplyUserAvatar(uid) {
