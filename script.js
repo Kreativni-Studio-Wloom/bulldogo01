@@ -798,7 +798,17 @@ function applySidebarAvatar(url) {
 	if (!btn || !finalImg || !finalPh) return;
 	
 	// Vždy zobrazit avatar (buď nahraný nebo stock)
+	// Nejdřív nastavit display na block, aby se zobrazil okamžitě
+	finalImg.style.display = 'block';
+	finalImg.style.borderRadius = '50%';
+	finalImg.style.width = '100%';
+	finalImg.style.height = '100%';
+	finalImg.style.objectFit = 'cover';
+	finalPh.style.display = 'none';
+	
+	// Nastavit src až po nastavení display
 	finalImg.src = avatarUrl;
+	
 	// Zajistit, aby se obrázek načetl
 	finalImg.onload = function() {
 		finalImg.style.display = 'block';
@@ -820,18 +830,17 @@ function applySidebarAvatar(url) {
 			circle.style.height = '32px';
 			circle.style.borderRadius = '50%';
 			circle.style.overflow = 'hidden';
+			circle.style.display = 'inline-flex';
+			circle.style.alignItems = 'center';
+			circle.style.justifyContent = 'center';
 		}
 		wrap.style.display = 'inline-flex';
 		wrap.style.visibility = 'visible';
 		wrap.style.opacity = '1';
+		wrap.style.width = '32px';
+		wrap.style.height = '32px';
+		wrap.style.flexShrink = '0';
 	}
-	// Zajistit, aby obrázek byl kruhový
-	finalImg.style.display = 'block';
-	finalImg.style.borderRadius = '50%';
-	finalImg.style.width = '100%';
-	finalImg.style.height = '100%';
-	finalImg.style.objectFit = 'cover';
-	finalPh.style.display = 'none';
 	// Odstranit backgroundImage z tlačítka
 	btn.style.backgroundImage = '';
 	btn.style.backgroundSize = '';

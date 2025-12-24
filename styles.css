@@ -2521,14 +2521,35 @@ body {
 .sidebar:not(:hover) #sidebarUserAvatar {
     display: inline-flex !important;
     margin-left: 0 !important;
+    margin-right: 0 !important;
     order: 1 !important;
     visibility: visible !important;
     opacity: 1 !important;
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0 !important;
+}
+
+.sidebar:not(:hover) #sidebarUserAvatar > span {
+    display: inline-flex !important;
+    width: 32px !important;
+    height: 32px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.sidebar:not(:hover) #sidebarUserAvatarImg {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .sidebar:not(:hover) .btn-profile {
     justify-content: center !important;
     gap: 0 !important;
+    padding: 0.8rem 0.5rem !important;
 }
 
 .sidebar:not(:hover) .btn-profile i {
