@@ -7529,6 +7529,39 @@ html {
     margin-top: 1rem;
 }
 
+.no-services-actions .btn-bulldogo {
+    background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(247, 124, 0, 0.3);
+}
+
+.no-services-actions .btn-bulldogo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(247, 124, 0, 0.4);
+}
+
+.no-services-actions .btn-secondary {
+    background: transparent;
+    color: #666;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.no-services-actions .btn-secondary:hover {
+    border-color: #f77c00;
+    color: #f77c00;
+}
+
 /* My Ads – empty state CTA button (match screenshot style) */
 #myAdsGrid .no-services-actions {
     flex-direction: column;

@@ -43,11 +43,13 @@ function initMyAds() {
                 if (grid) {
                     grid.innerHTML = `
                         <div class="no-services">
-                            <i class="fas fa-lock"></i>
+                            <div class="no-services-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
                             <h3>Pro zobrazení vašich inzerátů se musíte přihlásit</h3>
                             <p>Přihlaste se pro správu vašich inzerátů.</p>
                             <div class="no-services-actions">
-                                <button class="btn btn-primary" onclick="showAuthModal('login')">Přihlásit se</button>
+                                <button class="btn btn-primary btn-bulldogo" onclick="showAuthModal('login')">Přihlásit se</button>
                                 <button class="btn btn-secondary" onclick="window.location.href='index.html'">Zpět na hlavní stránku</button>
                             </div>
                         </div>
