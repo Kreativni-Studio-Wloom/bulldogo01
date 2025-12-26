@@ -365,6 +365,7 @@ function initAuth() {
             console.log('👤 Auth state changed:', user ? `Přihlášen: ${user.email}` : 'Odhlášen');
             console.log('👤 Auth state changed na stránce:', window.location.pathname);
             console.log('👤 Auth state changed v čase:', new Date().toLocaleTimeString());
+            console.log('👤 afterLoginCallback dostupný:', typeof window.afterLoginCallback);
             authCurrentUser = user;
             updateUI(user);
             
@@ -376,9 +377,15 @@ function initAuth() {
             // Zkontrolovat, zda existuje callback po přihlášení
             if (user && window.afterLoginCallback) {
                 console.log('🔄 Spouštím callback po přihlášení');
-                window.afterLoginCallback();
+                try {
+                    window.afterLoginCallback();
+                } catch (e) {
+                    console.error('❌ Chyba při volání afterLoginCallback:', e);
+                }
                 // Vyčistit callback
                 window.afterLoginCallback = null;
+            } else if (user) {
+                console.log('⚠️ Uživatel přihlášen, ale afterLoginCallback není nastaven');
             }
         });
     }).catch(error => {
@@ -780,9 +787,20 @@ async function login(email, password) {
         const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
         console.log('✅ Přihlášení úspěšné:', userCredential.user);
         
+        // Počkat na aktualizaci auth state (onAuthStateChanged se spustí automaticky)
         // Manuálně aktualizovat UI po přihlášení
         console.log('🔄 Manuálně aktualizuji UI po přihlášení');
         updateUI(userCredential.user);
+        
+        // Zkontrolovat, zda existuje callback po přihlášení a zavolat ho
+        if (window.afterLoginCallback) {
+            console.log('🔄 Volám afterLoginCallback z login funkce');
+            try {
+                window.afterLoginCallback();
+            } catch (e) {
+                console.error('❌ Chyba při volání afterLoginCallback:', e);
+            }
+        }
         
         showMessage('Úspěšně jste se přihlásili!', 'success');
         closeAuthModal();
@@ -1046,7 +1064,7 @@ function createAuthModal() {
 					<span class="close">&times;</span>
 				</div>
 			</div>
-            <form id="authForm" class="auth-form">
+            <form id="authForm" class="auth-form" action="javascript:void(0)" method="post">
                 <!-- Výběr typu registrace (pouze při registraci) -->
                 <div class="form-group registration-type" style="display: none;">
                     <label class="form-label">Typ registrace:</label>
@@ -1132,6 +1150,15 @@ function createAuthModal() {
     
     // Nastavit event listenery
     setupAuthModalEvents();
+    
+    // Nastavit event listenery pro formulář okamžitě po vytvoření modalu
+    setTimeout(() => {
+        try { 
+            setupEventListeners(); 
+        } catch (e) { 
+            console.warn('setupEventListeners failed in createAuthModal', e); 
+        }
+    }, 50);
     
     return modal;
 }
@@ -1371,7 +1398,21 @@ function showAuthModal(type = 'login') {
     document.body.classList.add('modal-open'); // Přidat třídu pro CSS kontrolu
     
     // Po vytvoření/otevření modalu navěsit plné listenery (form submit, SMS krok)
-    try { setupEventListeners(); } catch (e) { console.warn('setupEventListeners failed', e); }
+    // Nastavit listenery okamžitě, ne v setTimeout
+    try { 
+        setupEventListeners(); 
+    } catch (e) { 
+        console.warn('setupEventListeners failed', e); 
+    }
+    
+    // Zajistit, aby se listener nastavil i po malém zpoždění (fallback)
+    setTimeout(() => {
+        const authForm = document.getElementById('authForm');
+        if (authForm && !authForm.hasAttribute('data-listener-set')) {
+            console.log('⚠️ Fallback: Nastavuji event listener po zpoždění');
+            try { setupEventListeners(); } catch (e) { console.warn('setupEventListeners failed in fallback', e); }
+        }
+    }, 100);
     
     // Debug: Zkontrolovat formulář po otevření modalu a nastavit event listener
     setTimeout(() => {
@@ -1963,10 +2004,14 @@ function setupEventListeners() {
         console.log('🔧 AuthForm ID:', cleanAuthForm.id);
         console.log('🔧 AuthForm class:', cleanAuthForm.className);
         
+        // Označit, že listener je nastaven
+        cleanAuthForm.setAttribute('data-listener-set', 'true');
+        
         // Přidat listener pouze jednou
         cleanAuthForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             e.stopPropagation(); // Zastavit propagaci eventu
+            e.stopImmediatePropagation(); // Zastavit všechny další listenery
             
             // Zamezit vícenásobnému odesílání
             const submitBtn = cleanAuthForm.querySelector('button[type="submit"]');
