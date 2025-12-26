@@ -97,7 +97,8 @@ function initMyAds() {
     });
 
     // Event listenery pro filtry a vyhledávání
-    setupEventListeners();
+    // POZOR: Název funkce je setupMyAdsEventListeners, aby nedošlo ke konfliktu s auth.js
+    setupMyAdsEventListeners();
 }
 
 // Aktualizace UI podle stavu přihlášení
@@ -336,8 +337,10 @@ function createAdCard(ad) {
     `;
 }
 
-// Nastavení event listenerů
-function setupEventListeners() {
+// Nastavení event listenerů pro my-ads stránku
+// POZOR: Název změněn z setupEventListeners na setupMyAdsEventListeners, 
+// aby nedošlo ke konfliktu s auth.js setupEventListeners()
+function setupMyAdsEventListeners() {
     // Vyhledávání
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {

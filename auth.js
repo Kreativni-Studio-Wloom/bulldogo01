@@ -2003,8 +2003,9 @@ async function loadServices() {
 }
 
 // Event listenery - přesunuto do initAuth funkce
+// POZOR: Tato funkce je specifická pro auth formulář, ne pro obecné event listenery
 function setupEventListeners() {
-    console.log('🔧 Nastavuji event listenery');
+    console.log('🔧 Nastavuji event listenery pro auth formulář');
     
     // Auth formulář - POUZE JEDEN LISTENER (odstraněny duplicity)
     const authForm = document.getElementById('authForm');
