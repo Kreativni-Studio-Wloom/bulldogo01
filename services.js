@@ -214,6 +214,9 @@ async function setupRealtimeListener() {
             }
             
             allServices = [];
+            const servicesToCheck = [];
+            
+            // Nejdříve načíst všechny služby
             snapshot.forEach((doc) => {
                 const data = doc.data() || {};
                 // Doplnit userId z cesty (users/{uid}/inzeraty/{adId}) pokud chybí
@@ -221,12 +224,69 @@ async function setupRealtimeListener() {
                 if (!data.userId && userIdFromPath) {
                     data.userId = userIdFromPath;
                 }
-                console.log('📄 Dokument:', doc.id, data);
-                allServices.push({ 
-                    id: doc.id, 
-                    ...data,
-                    createdAt: data.createdAt?.toDate() || new Date()
+                servicesToCheck.push({
+                    id: doc.id,
+                    data: data,
+                    userId: data.userId || userIdFromPath
                 });
+            });
+            
+            // Cache pro profily uživatelů (aby se nemusely načítat opakovaně)
+            const userProfilesCache = new Map();
+            const uniqueUserIds = [...new Set(servicesToCheck.map(s => s.userId).filter(Boolean))];
+            
+            // Načíst profily všech uživatelů paralelně
+            const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const profilePromises = uniqueUserIds.map(async (userId) => {
+                try {
+                    const profileRef = doc(servicesFirebaseDb, 'users', userId, 'profile', 'profile');
+                    const profileSnap = await getDoc(profileRef);
+                    
+                    if (!profileSnap.exists()) {
+                        userProfilesCache.set(userId, false);
+                        return;
+                    }
+                    
+                    const profile = profileSnap.data();
+                    const plan = profile.plan;
+                    
+                    if (!plan || (plan !== 'hobby' && plan !== 'business')) {
+                        userProfilesCache.set(userId, false);
+                        return;
+                    }
+                    
+                    const planPeriodEnd = profile.planPeriodEnd;
+                    if (planPeriodEnd) {
+                        const endDate = planPeriodEnd.toDate ? planPeriodEnd.toDate() : new Date(planPeriodEnd);
+                        if (endDate < new Date()) {
+                            userProfilesCache.set(userId, false);
+                            return;
+                        }
+                    }
+                    
+                    userProfilesCache.set(userId, true);
+                } catch (error) {
+                    console.warn('⚠️ Chyba při kontrole předplatného pro uživatele', userId, error);
+                    // V případě chyby zobrazit inzerát (aby se nezobrazovaly chyby uživatelům)
+                    userProfilesCache.set(userId, true);
+                }
+            });
+            
+            await Promise.all(profilePromises);
+            
+            // Filtrovat služby podle předplatného
+            servicesToCheck.forEach((service) => {
+                const hasActivePlan = userProfilesCache.get(service.userId) || false;
+                const status = service.data.status || 'active';
+                
+                // Zobrazit pouze služby uživatelů s aktivním předplatným a aktivním statusem
+                if (hasActivePlan && status === 'active') {
+                    allServices.push({ 
+                        id: service.id, 
+                        ...service.data,
+                        createdAt: service.data.createdAt?.toDate() || new Date()
+                    });
+                }
             });
             
             // Seřadit podle data vytvoření (nejnovější první) v JavaScriptu
@@ -622,7 +682,8 @@ function displayServices(list) {
     const limit = limitAttr ? parseInt(limitAttr, 10) : null;
     const showActions = showActionsAttr ? showActionsAttr === 'true' : true;
     
-    let servicesToRender = Array.isArray(list) ? list : filteredServices;
+    // VŽDY použít filteredServices, ne předaný parametr (aby se respektovaly filtry)
+    let servicesToRender = filteredServices;
     
     // Pro homepage: seřadit služby - TOP nejnovější první, pak klasické nejnovější
     if (limit) {
