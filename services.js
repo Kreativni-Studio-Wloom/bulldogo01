@@ -947,7 +947,19 @@ function setupEventListeners() {
         categoryFilter.addEventListener('change', () => {
             filterServices();
             const searchVal = normalize((document.getElementById('searchInput')?.value || ''));
-            filterServicesDom(searchVal, categoryFilter.value || '');
+            const regionVal = (document.getElementById('regionFilter')?.value || '').trim();
+            filterServicesDom(searchVal, categoryFilter.value || '', regionVal);
+        });
+    }
+    
+    // Filtrování podle kraje
+    const regionFilter = document.getElementById('regionFilter');
+    if (regionFilter) {
+        regionFilter.addEventListener('change', () => {
+            filterServices();
+            const searchVal = normalize((document.getElementById('searchInput')?.value || ''));
+            const categoryVal = (document.getElementById('categoryFilter')?.value || '').trim();
+            filterServicesDom(searchVal, categoryVal, regionFilter.value || '');
         });
     }
     
@@ -981,7 +993,8 @@ function filterServices() {
 
         const matchesSearch = !searchTerm || title.includes(searchTerm) || desc.includes(searchTerm) || loc.includes(searchTerm);
         const matchesCategory = !categoryFilter || (service?.category === categoryFilter);
-        const matchesRegion = !regionCode || (locCode === regionCode);
+        // Pokud je vybrán kraj, musí se shodovat. Pokud kraj není vybrán, zobrazit všechny.
+        const matchesRegion = !regionCode ? true : (locCode && locCode === regionCode);
         // Ve veřejném katalogu zobrazujeme jen aktivní inzeráty
         // Pokud status není nastaven, považujeme ho za aktivní
         const status = service?.status || 'active';
@@ -1027,14 +1040,17 @@ function filterServicesDom(searchTerm, categoryFilter, regionFilter) {
         const meta = normalize(card.querySelector('.ad-meta')?.textContent || '');
         const dataCategory = card.getAttribute('data-category') || '';
         
-        // Extrahovat lokaci z meta (formát: "Lokace • Kategorie")
-        const metaText = card.querySelector('.ad-meta')?.textContent || '';
-        const locationMatch = metaText.split('•')[0]?.trim() || '';
-        const locationCode = getRegionCode(locationMatch);
+        // Extrahovat lokaci z data-location atributu nebo z .ad-location elementu
+        const adBody = card.querySelector('.ad-body');
+        const locationFromAttr = adBody?.getAttribute('data-location') || '';
+        const locationFromElement = card.querySelector('.ad-location')?.textContent?.trim() || '';
+        const locationText = locationFromAttr || locationFromElement || '';
+        const locationCode = getRegionCode(locationText);
 
         const matchesSearch = !searchTerm || title.includes(searchTerm) || meta.includes(searchTerm);
         const matchesCategory = !categoryFilter || dataCategory === categoryFilter;
-        const matchesRegion = !regionCode || locationCode === regionCode;
+        // Pokud je vybrán kraj, musí se shodovat. Pokud kraj není vybrán, zobrazit všechny.
+        const matchesRegion = !regionCode ? true : (locationCode && locationCode === regionCode);
 
         // Ve veřejném katalogu zobrazujeme jen aktivní karty (fallback režim)
         const st = (card.getAttribute('data-status') || 'active').toString().trim().toLowerCase();
