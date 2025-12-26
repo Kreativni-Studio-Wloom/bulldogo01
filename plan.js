@@ -86,14 +86,19 @@ async function loadCurrentPlan_profile() {
 					if (!empty) {
 						empty = document.createElement('div');
 						empty.id = 'noPlanNotice';
-						empty.style.cssText = 'margin-top:16px; padding:14px 16px; border-radius:14px; background:#fff8eb; border:1px solid #ffe0b2; color:#111827;';
+						empty.className = 'no-plan-notice';
 						empty.innerHTML = `
-							<div style="font-weight:800; margin-bottom:6px;">Nemáte aktivní balíček</div>
-							<div style="color:#6b7280; font-size:14px; margin-bottom:10px;">Balíček si vyberete na stránce Balíčky.</div>
-							<a href="packages.html" class="btn btn-primary" style="display:inline-flex; gap:8px; align-items:center;">
-								<i class="fas fa-box"></i>
-								Přejít na balíčky
-							</a>
+							<div class="no-plan-notice-icon">
+								<i class="fas fa-box-open"></i>
+							</div>
+							<div class="no-plan-notice-content">
+								<h3 class="no-plan-notice-title">Nemáte aktivní balíček</h3>
+								<p class="no-plan-notice-text">Balíček si vyberete na stránce Balíčky.</p>
+								<a href="packages.html" class="btn btn-primary btn-bulldogo">
+									<i class="fas fa-box"></i>
+									Přejít na balíčky
+								</a>
+							</div>
 						`;
 						manage.appendChild(empty);
 					} else {

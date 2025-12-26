@@ -1135,8 +1135,30 @@ function createAuthModal() {
 
 // Nastavení event listenerů pro auth modal
 function setupAuthModalEvents() {
+    const modal = document.getElementById('authModal');
+    if (!modal) return;
+    
+    // Event listener pro zavírací tlačítko
+    const closeBtn = modal.querySelector('.close');
+    if (closeBtn) {
+        // Odstranit starý onclick atribut a přidat event listener
+        closeBtn.removeAttribute('onclick');
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAuthModal();
+        });
+    }
+    
+    // Event listener pro kliknutí na pozadí (overlay) - zavřít modal
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeAuthModal();
+        }
+    });
+    
     // Event listener pro přepínání mezi přihlášením a registrací
-    const authSwitchBtn = document.querySelector('.auth-switch-btn');
+    const authSwitchBtn = modal.querySelector('.auth-switch-btn');
     if (authSwitchBtn) {
         authSwitchBtn.addEventListener('click', () => {
             const type = authSwitchBtn.getAttribute('data-type');
@@ -1145,15 +1167,15 @@ function setupAuthModalEvents() {
     }
     
     // Event listener pro tlačítka typu registrace
-    const typeButtons = document.querySelectorAll('.registration-type-btn');
+    const typeButtons = modal.querySelectorAll('.registration-type-btn');
     typeButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             typeButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
             const type = btn.getAttribute('data-type');
-            const personForm = document.querySelector('.person-form');
-            const companyForm = document.querySelector('.company-form');
+            const personForm = modal.querySelector('.person-form');
+            const companyForm = modal.querySelector('.company-form');
             
             if (type === 'person') {
                 personForm.style.display = 'block';
@@ -1177,7 +1199,7 @@ function setupAuthModalEvents() {
     // Duplicitní listenery způsobovaly vícenásobné odesílání formuláře
     
     // Event listener pro tlačítko odeslání SMS kódu
-    const btnSendPhoneCode = document.getElementById('btnSendPhoneCode');
+    const btnSendPhoneCode = modal.querySelector('#btnSendPhoneCode');
     if (btnSendPhoneCode) {
         btnSendPhoneCode.addEventListener('click', async () => {
             console.log('Odeslání SMS kódu');
@@ -1303,6 +1325,9 @@ function showAuthModal(type = 'login') {
         document.querySelector('.registration-type-btn[data-type="person"]').classList.add('active');
     }
 
+    // Znovu nastavit event listenery (pro případ, že byl modal vytvořen dříve)
+    setupAuthModalEvents();
+    
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open'); // Přidat třídu pro CSS kontrolu
@@ -1334,13 +1359,17 @@ function showAuthModal(type = 'login') {
 // Zavření auth modalu
 function closeAuthModal() {
     const modal = document.getElementById('authModal');
+    if (!modal) return;
+    
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
     document.body.classList.remove('modal-open'); // Odstranit třídu pro CSS kontrolu
     
     // Vyčištění formuláře
     const form = document.getElementById('authForm');
-    form.reset();
+    if (form) {
+        form.reset();
+    }
 }
 
 // Export funkcí pro globální použití - ihned po definici
