@@ -1137,7 +1137,8 @@ function createAuthModal() {
 }
 
 // Nastavení event listenerů pro auth modal
-// Flag pro kontrolu, zda už byly listenery nastaveny
+// Uložit reference na handler funkce pro správné odstranění
+let authModalClickHandler = null;
 let authModalEventsSetup = false;
 
 function setupAuthModalEvents() {
@@ -1152,47 +1153,55 @@ function setupAuthModalEvents() {
     if (closeBtn) {
         // Odstranit starý onclick atribut
         closeBtn.removeAttribute('onclick');
-        // Odstranit všechny existující listenery (pokud existují)
+        // Odstranit všechny existující listenery klonováním elementu
         const newCloseBtn = closeBtn.cloneNode(true);
         closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-        // Přidat nový listener
-        newCloseBtn.addEventListener('click', (e) => {
+        // Přidat nový listener s once: true, aby se spustil jen jednou
+        newCloseBtn.addEventListener('click', function closeBtnHandler(e) {
             e.preventDefault();
             e.stopPropagation();
             closeAuthModal();
-        });
+        }, { once: false });
     }
     
     // Event listener pro kliknutí na pozadí (overlay) - zavřít modal
-    // Použít once: false, ale zkontrolovat, zda už není listener
-    const handleModalClick = (e) => {
+    // Uložit handler do globální proměnné pro správné odstranění
+    if (authModalClickHandler) {
+        modal.removeEventListener('click', authModalClickHandler);
+    }
+    authModalClickHandler = function(e) {
         if (e.target === modal) {
+            e.preventDefault();
+            e.stopPropagation();
             closeAuthModal();
         }
     };
-    // Odstranit starý listener, pokud existuje
-    modal.removeEventListener('click', handleModalClick);
-    modal.addEventListener('click', handleModalClick);
+    modal.addEventListener('click', authModalClickHandler);
     
     // Event listener pro přepínání mezi přihlášením a registrací
     const authSwitchBtn = modal.querySelector('.auth-switch-btn');
     if (authSwitchBtn) {
-        const handleSwitchClick = () => {
-            const type = authSwitchBtn.getAttribute('data-type');
+        // Odstranit všechny listenery klonováním
+        const newSwitchBtn = authSwitchBtn.cloneNode(true);
+        authSwitchBtn.parentNode.replaceChild(newSwitchBtn, authSwitchBtn);
+        newSwitchBtn.addEventListener('click', function() {
+            const type = newSwitchBtn.getAttribute('data-type');
             showAuthModal(type);
-        };
-        authSwitchBtn.removeEventListener('click', handleSwitchClick);
-        authSwitchBtn.addEventListener('click', handleSwitchClick);
+        });
     }
     
     // Event listener pro tlačítka typu registrace
     const typeButtons = modal.querySelectorAll('.registration-type-btn');
     typeButtons.forEach(btn => {
-        const handleTypeClick = () => {
-            typeButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        // Odstranit všechny listenery klonováním
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', function() {
+            const allButtons = modal.querySelectorAll('.registration-type-btn');
+            allButtons.forEach(b => b.classList.remove('active'));
+            newBtn.classList.add('active');
             
-            const type = btn.getAttribute('data-type');
+            const type = newBtn.getAttribute('data-type');
             const personForm = modal.querySelector('.person-form');
             const companyForm = modal.querySelector('.company-form');
             
@@ -1211,9 +1220,7 @@ function setupAuthModalEvents() {
                 personForm.classList.add('hidden');
                 personForm.classList.remove('visible');
             }
-        };
-        btn.removeEventListener('click', handleTypeClick);
-        btn.addEventListener('click', handleTypeClick);
+        });
     });
     
     // Event listener pro formulář - ODSTRANĚNO (přidává se v setupEventListeners)
@@ -1222,11 +1229,11 @@ function setupAuthModalEvents() {
     // Event listener pro tlačítko odeslání SMS kódu
     const btnSendPhoneCode = modal.querySelector('#btnSendPhoneCode');
     if (btnSendPhoneCode) {
-        const handleSendCode = async () => {
+        const newBtn = btnSendPhoneCode.cloneNode(true);
+        btnSendPhoneCode.parentNode.replaceChild(newBtn, btnSendPhoneCode);
+        newBtn.addEventListener('click', async function() {
             console.log('Odeslání SMS kódu');
-        };
-        btnSendPhoneCode.removeEventListener('click', handleSendCode);
-        btnSendPhoneCode.addEventListener('click', handleSendCode);
+        });
     }
     
     authModalEventsSetup = true;
@@ -1385,17 +1392,24 @@ function showAuthModal(type = 'login') {
 
 // Zavření auth modalu
 function closeAuthModal() {
-    const modal = document.getElementById('authModal');
-    if (!modal) return;
-    
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-    document.body.classList.remove('modal-open'); // Odstranit třídu pro CSS kontrolu
-    
-    // Vyčištění formuláře
-    const form = document.getElementById('authForm');
-    if (form) {
-        form.reset();
+    try {
+        const modal = document.getElementById('authModal');
+        if (!modal) return;
+        
+        // Zastavit propagaci eventů, aby se zabránilo rekurzi
+        if (modal.style.display === 'none') return; // Už je zavřený
+        
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.body.classList.remove('modal-open'); // Odstranit třídu pro CSS kontrolu
+        
+        // Vyčištění formuláře
+        const form = document.getElementById('authForm');
+        if (form) {
+            form.reset();
+        }
+    } catch (e) {
+        console.error('Chyba při zavírání modalu:', e);
     }
 }
 
