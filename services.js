@@ -668,14 +668,39 @@ function displayServices(list) {
         }
     }
 
+    // Zkontrolovat, zda jsou aktivní nějaké filtry
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const regionFilter = document.getElementById('regionFilter');
+    const hasActiveFilters = (searchInput?.value?.trim() || '') || 
+                            (categoryFilter?.value?.trim() || '') || 
+                            (regionFilter?.value?.trim() || '');
+    
     if (!finalServices || finalServices.length === 0) {
-        grid.innerHTML = `
-            <div class="no-services">
-                <i class="fas fa-search"></i>
-                <h3>Žádné služby nenalezeny</h3>
-                <p>Zkuste změnit kritéria vyhledávání.</p>
-            </div>
-        `;
+        if (hasActiveFilters) {
+            // Aktivní filtry, ale žádné výsledky
+            grid.innerHTML = `
+                <div class="no-services">
+                    <div class="no-services-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Žádné výsledky</h3>
+                    <p>Pro zadané parametry vyhledávání nebyl nalezen žádný inzerát.</p>
+                    <p class="no-services-suggestion">Zkuste upravit kritéria vyhledávání nebo zkuste jiný výraz.</p>
+                </div>
+            `;
+        } else {
+            // Žádné filtry, ale žádné služby v databázi
+            grid.innerHTML = `
+                <div class="no-services">
+                    <div class="no-services-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h3>Žádné služby nenalezeny</h3>
+                    <p>Momentálně nejsou k dispozici žádné služby.</p>
+                </div>
+            `;
+        }
         return;
     }
 

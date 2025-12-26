@@ -7484,14 +7484,42 @@ html {
 .no-services {
     grid-column: 1 / -1;
     text-align: center;
-    padding: 3rem;
+    padding: 4rem 2rem;
     color: #666;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.no-services-icon {
+    margin-bottom: 1.5rem;
 }
 
 .no-services i {
-    font-size: 3rem;
+    font-size: 4rem;
     margin-bottom: 1rem;
-    color: #ccc;
+    color: #ddd;
+    opacity: 0.6;
+}
+
+.no-services h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.no-services p {
+    font-size: 1.1rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+.no-services-suggestion {
+    font-size: 0.95rem !important;
+    color: #999 !important;
+    font-style: italic;
+    margin-top: 0.5rem;
 }
 
 .no-services-actions {
