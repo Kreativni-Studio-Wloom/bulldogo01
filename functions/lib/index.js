@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setAdminStatus = exports.sendWelcomeEmail = exports.sendStripeInvoiceOnUpdate = exports.sendStripeInvoice = exports.sendNewMessageEmail = exports.sendProfileChangeEmail = exports.onPlanCancelled = exports.forceCheckExpiredPlans = exports.enforceExpiredPlanAds = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.cleanupInactiveUsers = exports.reportAd = exports.sendInactivityWarningEmails = exports.validateICO = void 0;
+exports.setAdminStatus = exports.sendWelcomeEmail = exports.sendStripeInvoiceOnUpdate = exports.sendTopAdInvoice = exports.sendTopAdInvoiceOnCreate = exports.sendStripeInvoice = exports.sendNewMessageEmail = exports.sendProfileChangeEmail = exports.onPlanCancelled = exports.forceCheckExpiredPlans = exports.enforceExpiredPlanAds = exports.paymentReturn = exports.gopayNotification = exports.checkPayment = exports.createPayment = exports.cleanupInactiveUsers = exports.reportAd = exports.sendInactivityWarningEmails = exports.validateICO = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const axios_1 = __importDefault(require("axios"));
@@ -1280,11 +1280,9 @@ function generateInvoiceHTML(orderNumber, planName, amount, currency, userName, 
                     </h2>
                     <p style="margin: 0 0 8px 0; font-size: 14px; color: #374151; line-height: 1.6;">
                       <strong>Dominik Hašek</strong><br>
-                      BULLDOGO.CZ<br>
-                      IČO: 123456<br>
-                      Bydliště: Václavské náměstí 123, 110 00 Praha 1<br>
-                      Email: info@bulldogo.cz<br>
-                      Tel: +420 605 121 023
+                      Jiřího z Poděbrad 2017, Sokolov 356 01<br>
+                      IČO: 17059470<br>
+                      Email: ucetni@bulldogo.cz
                     </p>
                   </td>
                   <td style="width: 50%; vertical-align: top;">
@@ -1443,6 +1441,82 @@ async function sendStripeInvoiceEmail(subscriptionId, userId, subscriptionData) 
     };
     await smtpTransporter.sendMail(accountingMailOptions);
     functions.logger.info("✅ Faktura odeslána účetní", { subscriptionId, accountingEmail, userId, userName });
+}
+/**
+ * Odešle fakturu za topování na email účetní
+ */
+async function sendTopAdInvoiceEmail(sessionId, userId, checkoutData) {
+    const db = admin.firestore();
+    // Načíst profil uživatele pro email a údaje
+    const userProfileDoc = await db.collection("users").doc(userId).collection("profile").doc("profile").get();
+    const userProfile = userProfileDoc.exists ? userProfileDoc.data() : null;
+    // Načíst customer data pro email
+    const customerDoc = await db.collection("customers").doc(userId).get();
+    const customerData = customerDoc.exists ? customerDoc.data() : null;
+    const userEmail = (customerData === null || customerData === void 0 ? void 0 : customerData.email) || (userProfile === null || userProfile === void 0 ? void 0 : userProfile.email);
+    if (!userEmail) {
+        functions.logger.warn("No email found for top ad invoice", { sessionId, userId });
+        return;
+    }
+    // Získat všechny informace z profilu
+    const firstName = (userProfile === null || userProfile === void 0 ? void 0 : userProfile.firstName) || "";
+    const lastName = (userProfile === null || userProfile === void 0 ? void 0 : userProfile.lastName) || "";
+    const name = (userProfile === null || userProfile === void 0 ? void 0 : userProfile.name) || "";
+    const companyName = userProfile === null || userProfile === void 0 ? void 0 : userProfile.companyName;
+    const phone = (userProfile === null || userProfile === void 0 ? void 0 : userProfile.phone) || (userProfile === null || userProfile === void 0 ? void 0 : userProfile.phoneNumber) || "";
+    const ico = userProfile === null || userProfile === void 0 ? void 0 : userProfile.ico;
+    const dic = userProfile === null || userProfile === void 0 ? void 0 : userProfile.dic;
+    // Sestavit jméno a příjmení
+    let userName = "";
+    if (firstName && lastName) {
+        userName = `${firstName} ${lastName}`;
+    }
+    else if (name && name !== "Uživatel" && name !== "Firma") {
+        userName = name;
+    }
+    else if (companyName) {
+        userName = companyName;
+    }
+    else {
+        userName = "Jméno Příjmení"; // Fallback pokud není jméno
+    }
+    // Získat metadata z checkout session
+    const metadata = (checkoutData === null || checkoutData === void 0 ? void 0 : checkoutData.metadata) || {};
+    const adId = metadata === null || metadata === void 0 ? void 0 : metadata.adId;
+    const duration = (metadata === null || metadata === void 0 ? void 0 : metadata.duration) || "neuvedeno";
+    // Určit název položky podle délky topování
+    let planName = "Topování inzerátu";
+    if (duration === "oneday") {
+        planName = "Topování inzerátu - 1 den";
+    }
+    else if (duration === "oneweek") {
+        planName = "Topování inzerátu - 1 týden";
+    }
+    else if (duration === "onemonth") {
+        planName = "Topování inzerátu - 1 měsíc";
+    }
+    // Získat cenu z checkout session (Stripe ukládá ceny v centech)
+    const amountInCents = (checkoutData === null || checkoutData === void 0 ? void 0 : checkoutData.amount_total) || (checkoutData === null || checkoutData === void 0 ? void 0 : checkoutData.amount) || 0;
+    const amount = amountInCents / 100; // převod z centů na koruny
+    const currency = ((checkoutData === null || checkoutData === void 0 ? void 0 : checkoutData.currency) || "CZK").toUpperCase();
+    // Použít session ID jako číslo faktury
+    const invoiceNumber = `TOP-${sessionId.substring(0, 10)}`;
+    const invoiceDate = new Date();
+    const invoiceHTML = generateInvoiceHTML(invoiceNumber, planName, amount, currency, userName, invoiceDate, userId, userEmail, phone, ico, dic, companyName);
+    // Odeslat fakturu pouze na účetní email
+    const accountingEmail = "ucetni@bulldogo.cz";
+    const accountingMailOptions = {
+        from: {
+            name: "BULLDOGO",
+            address: "info@bulldogo.cz",
+        },
+        to: accountingEmail,
+        subject: `Faktura ${invoiceNumber} - Topování inzerátu - ${userName} (UID: ${userId})`,
+        html: invoiceHTML,
+        text: `Faktura ${invoiceNumber} pro ${userName}\n\nUID: ${userId}\nEmail: ${userEmail || "neuvedeno"}\nTelefon: ${phone || "neuvedeno"}\nČástka: ${amount} ${currency}\nTopování: ${planName}\nAd ID: ${adId || "neuvedeno"}\n\n© 2025 BULLDOGO.CZ`,
+    };
+    await smtpTransporter.sendMail(accountingMailOptions);
+    functions.logger.info("✅ Faktura za topování odeslána účetní", { sessionId, accountingEmail, userId, userName, adId, amount });
 }
 /**
  * Pomocná funkce pro aktivaci uživatelského plánu po zaplacení
@@ -2899,6 +2973,99 @@ exports.sendStripeInvoice = functions
             functions.logger.error("❌ Chyba při odesílání faktury pro Stripe subscription", {
                 subscriptionId,
                 userId,
+                error: error === null || error === void 0 ? void 0 : error.message
+            });
+        }
+    }
+    return null;
+});
+/**
+ * Firestore Trigger - Odešle fakturu za topování po úspěšné platbě přes Stripe checkout (onCreate)
+ */
+exports.sendTopAdInvoiceOnCreate = functions
+    .region("europe-west1")
+    .firestore.document("customers/{userId}/checkout_sessions/{sessionId}")
+    .onCreate(async (snap, context) => {
+    const checkoutData = snap.data();
+    const userId = context.params.userId;
+    const sessionId = context.params.sessionId;
+    // Kontrola, zda je platba úspěšná
+    const paymentStatus = checkoutData === null || checkoutData === void 0 ? void 0 : checkoutData.payment_status;
+    // Zkontrolovat, zda jde o topování (má metadata s adId)
+    const metadata = (checkoutData === null || checkoutData === void 0 ? void 0 : checkoutData.metadata) || {};
+    const adId = metadata === null || metadata === void 0 ? void 0 : metadata.adId;
+    // Odeslat fakturu pouze když:
+    // 1. Platba je úspěšně zaplacena (payment_status === 'paid')
+    // 2. Jde o topování (metadata obsahuje adId)
+    // 3. Faktura ještě nebyla odeslána
+    if (paymentStatus === "paid" && adId && !(checkoutData === null || checkoutData === void 0 ? void 0 : checkoutData.invoiceSent)) {
+        try {
+            await sendTopAdInvoiceEmail(sessionId, userId, checkoutData);
+            // Označit, že faktura byla odeslána
+            await snap.ref.update({
+                invoiceSent: true,
+                invoiceSentAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            functions.logger.info("✅ Faktura za topování odeslána (onCreate)", {
+                sessionId,
+                userId,
+                adId,
+                paymentStatus
+            });
+        }
+        catch (error) {
+            functions.logger.error("❌ Chyba při odesílání faktury za topování (onCreate)", {
+                sessionId,
+                userId,
+                adId,
+                error: error === null || error === void 0 ? void 0 : error.message
+            });
+        }
+    }
+    return null;
+});
+/**
+ * Firestore Trigger - Odešle fakturu za topování po úspěšné platbě přes Stripe checkout (onUpdate)
+ */
+exports.sendTopAdInvoice = functions
+    .region("europe-west1")
+    .firestore.document("customers/{userId}/checkout_sessions/{sessionId}")
+    .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    const userId = context.params.userId;
+    const sessionId = context.params.sessionId;
+    // Kontrola, zda je platba úspěšná
+    const paymentStatusBefore = before === null || before === void 0 ? void 0 : before.payment_status;
+    const paymentStatusAfter = after === null || after === void 0 ? void 0 : after.payment_status;
+    // Zkontrolovat, zda jde o topování (má metadata s adId)
+    const metadata = (after === null || after === void 0 ? void 0 : after.metadata) || {};
+    const adId = metadata === null || metadata === void 0 ? void 0 : metadata.adId;
+    // Odeslat fakturu pouze když:
+    // 1. Platba byla úspěšně zaplacena (payment_status se změnil na 'paid')
+    // 2. Jde o topování (metadata obsahuje adId)
+    // 3. Faktura ještě nebyla odeslána
+    if (paymentStatusAfter === "paid" && adId && !(after === null || after === void 0 ? void 0 : after.invoiceSent)) {
+        try {
+            await sendTopAdInvoiceEmail(sessionId, userId, after);
+            // Označit, že faktura byla odeslána
+            await change.after.ref.update({
+                invoiceSent: true,
+                invoiceSentAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            functions.logger.info("✅ Faktura za topování odeslána", {
+                sessionId,
+                userId,
+                adId,
+                paymentStatusBefore,
+                paymentStatusAfter
+            });
+        }
+        catch (error) {
+            functions.logger.error("❌ Chyba při odesílání faktury za topování", {
+                sessionId,
+                userId,
+                adId,
                 error: error === null || error === void 0 ? void 0 : error.message
             });
         }

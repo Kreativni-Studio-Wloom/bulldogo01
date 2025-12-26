@@ -1340,11 +1340,9 @@ function generateInvoiceHTML(
                     </h2>
                     <p style="margin: 0 0 8px 0; font-size: 14px; color: #374151; line-height: 1.6;">
                       <strong>Dominik Hašek</strong><br>
-                      BULLDOGO.CZ<br>
-                      IČO: 123456<br>
-                      Bydliště: Václavské náměstí 123, 110 00 Praha 1<br>
-                      Email: info@bulldogo.cz<br>
-                      Tel: +420 605 121 023
+                      Jiřího z Poděbrad 2017, Sokolov 356 01<br>
+                      IČO: 17059470<br>
+                      Email: ucetni@bulldogo.cz
                     </p>
                   </td>
                   <td style="width: 50%; vertical-align: top;">
@@ -1528,6 +1526,107 @@ async function sendStripeInvoiceEmail(
 
   await smtpTransporter.sendMail(accountingMailOptions);
   functions.logger.info("✅ Faktura odeslána účetní", { subscriptionId, accountingEmail, userId, userName });
+}
+
+/**
+ * Odešle fakturu za topování na email účetní
+ */
+async function sendTopAdInvoiceEmail(
+  sessionId: string,
+  userId: string,
+  checkoutData: AnyObj
+): Promise<void> {
+  const db = admin.firestore();
+  
+  // Načíst profil uživatele pro email a údaje
+  const userProfileDoc = await db.collection("users").doc(userId).collection("profile").doc("profile").get();
+  const userProfile = userProfileDoc.exists ? (userProfileDoc.data() as AnyObj) : null;
+  
+  // Načíst customer data pro email
+  const customerDoc = await db.collection("customers").doc(userId).get();
+  const customerData = customerDoc.exists ? (customerDoc.data() as AnyObj) : null;
+  
+  const userEmail = customerData?.email || userProfile?.email;
+  if (!userEmail) {
+    functions.logger.warn("No email found for top ad invoice", { sessionId, userId });
+    return;
+  }
+
+  // Získat všechny informace z profilu
+  const firstName = userProfile?.firstName || "";
+  const lastName = userProfile?.lastName || "";
+  const name = userProfile?.name || "";
+  const companyName = userProfile?.companyName;
+  const phone = userProfile?.phone || userProfile?.phoneNumber || "";
+  const ico = userProfile?.ico;
+  const dic = userProfile?.dic;
+
+  // Sestavit jméno a příjmení
+  let userName = "";
+  if (firstName && lastName) {
+    userName = `${firstName} ${lastName}`;
+  } else if (name && name !== "Uživatel" && name !== "Firma") {
+    userName = name;
+  } else if (companyName) {
+    userName = companyName;
+  } else {
+    userName = "Jméno Příjmení"; // Fallback pokud není jméno
+  }
+
+  // Získat metadata z checkout session
+  const metadata = checkoutData?.metadata || {};
+  const adId = metadata?.adId;
+  const duration = metadata?.duration || "neuvedeno";
+  
+  // Určit název položky podle délky topování
+  let planName = "Topování inzerátu";
+  if (duration === "oneday") {
+    planName = "Topování inzerátu - 1 den";
+  } else if (duration === "oneweek") {
+    planName = "Topování inzerátu - 1 týden";
+  } else if (duration === "onemonth") {
+    planName = "Topování inzerátu - 1 měsíc";
+  }
+
+  // Získat cenu z checkout session (Stripe ukládá ceny v centech)
+  const amountInCents = checkoutData?.amount_total || checkoutData?.amount || 0;
+  const amount = amountInCents / 100; // převod z centů na koruny
+  const currency = (checkoutData?.currency || "CZK").toUpperCase();
+
+  // Použít session ID jako číslo faktury
+  const invoiceNumber = `TOP-${sessionId.substring(0, 10)}`;
+
+  const invoiceDate = new Date();
+  const invoiceHTML = generateInvoiceHTML(
+    invoiceNumber,
+    planName,
+    amount,
+    currency,
+    userName,
+    invoiceDate,
+    userId,
+    userEmail,
+    phone,
+    ico,
+    dic,
+    companyName
+  );
+
+  // Odeslat fakturu pouze na účetní email
+  const accountingEmail = "ucetni@bulldogo.cz";
+  const accountingMailOptions = {
+    from: {
+      name: "BULLDOGO",
+      address: "info@bulldogo.cz",
+    },
+    to: accountingEmail,
+    subject: `Faktura ${invoiceNumber} - Topování inzerátu - ${userName} (UID: ${userId})`,
+    html: invoiceHTML,
+    text: `Faktura ${invoiceNumber} pro ${userName}\n\nUID: ${userId}\nEmail: ${userEmail || "neuvedeno"}\nTelefon: ${phone || "neuvedeno"}\nČástka: ${amount} ${currency}\nTopování: ${planName}\nAd ID: ${adId || "neuvedeno"}\n\n© 2025 BULLDOGO.CZ`,
+  };
+
+  await smtpTransporter.sendMail(accountingMailOptions);
+  functions.logger.info("✅ Faktura za topování odeslána účetní", { sessionId, accountingEmail, userId, userName, adId, amount });
 }
 
 /**
@@ -3115,6 +3214,111 @@ export const sendStripeInvoice = functions
         functions.logger.error("❌ Chyba při odesílání faktury pro Stripe subscription", { 
           subscriptionId,
           userId,
+          error: error?.message 
+        });
+      }
+    }
+    
+    return null;
+  });
+
+/**
+ * Firestore Trigger - Odešle fakturu za topování po úspěšné platbě přes Stripe checkout (onCreate)
+ */
+export const sendTopAdInvoiceOnCreate = functions
+  .region("europe-west1")
+  .firestore.document("customers/{userId}/checkout_sessions/{sessionId}")
+  .onCreate(async (snap, context) => {
+    const checkoutData = snap.data() as AnyObj;
+    const userId = context.params.userId;
+    const sessionId = context.params.sessionId;
+    
+    // Kontrola, zda je platba úspěšná
+    const paymentStatus = checkoutData?.payment_status;
+    
+    // Zkontrolovat, zda jde o topování (má metadata s adId)
+    const metadata = checkoutData?.metadata || {};
+    const adId = metadata?.adId;
+    
+    // Odeslat fakturu pouze když:
+    // 1. Platba je úspěšně zaplacena (payment_status === 'paid')
+    // 2. Jde o topování (metadata obsahuje adId)
+    // 3. Faktura ještě nebyla odeslána
+    if (paymentStatus === "paid" && adId && !checkoutData?.invoiceSent) {
+      try {
+        await sendTopAdInvoiceEmail(sessionId, userId, checkoutData);
+        
+        // Označit, že faktura byla odeslána
+        await snap.ref.update({
+          invoiceSent: true,
+          invoiceSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        
+        functions.logger.info("✅ Faktura za topování odeslána (onCreate)", { 
+          sessionId, 
+          userId,
+          adId,
+          paymentStatus
+        });
+      } catch (error: any) {
+        functions.logger.error("❌ Chyba při odesílání faktury za topování (onCreate)", { 
+          sessionId,
+          userId,
+          adId,
+          error: error?.message 
+        });
+      }
+    }
+    
+    return null;
+  });
+
+/**
+ * Firestore Trigger - Odešle fakturu za topování po úspěšné platbě přes Stripe checkout (onUpdate)
+ */
+export const sendTopAdInvoice = functions
+  .region("europe-west1")
+  .firestore.document("customers/{userId}/checkout_sessions/{sessionId}")
+  .onUpdate(async (change, context) => {
+    const before = change.before.data() as AnyObj;
+    const after = change.after.data() as AnyObj;
+    const userId = context.params.userId;
+    const sessionId = context.params.sessionId;
+    
+    // Kontrola, zda je platba úspěšná
+    const paymentStatusBefore = before?.payment_status;
+    const paymentStatusAfter = after?.payment_status;
+    
+    // Zkontrolovat, zda jde o topování (má metadata s adId)
+    const metadata = after?.metadata || {};
+    const adId = metadata?.adId;
+    
+    // Odeslat fakturu pouze když:
+    // 1. Platba byla úspěšně zaplacena (payment_status se změnil na 'paid')
+    // 2. Jde o topování (metadata obsahuje adId)
+    // 3. Faktura ještě nebyla odeslána
+    if (paymentStatusAfter === "paid" && adId && !after?.invoiceSent) {
+      try {
+        await sendTopAdInvoiceEmail(sessionId, userId, after);
+        
+        // Označit, že faktura byla odeslána
+        await change.after.ref.update({
+          invoiceSent: true,
+          invoiceSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        
+        functions.logger.info("✅ Faktura za topování odeslána", { 
+          sessionId, 
+          userId,
+          adId,
+          paymentStatusBefore,
+          paymentStatusAfter
+        });
+      } catch (error: any) {
+        functions.logger.error("❌ Chyba při odesílání faktury za topování", { 
+          sessionId,
+          userId,
+          adId,
           error: error?.message 
         });
       }
