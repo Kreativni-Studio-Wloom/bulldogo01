@@ -60,59 +60,35 @@ function initMyAds() {
                             <h3>Pro zobrazení vašich inzerátů se musíte přihlásit</h3>
                             <p>Přihlaste se pro správu vašich inzerátů.</p>
                             <div class="no-services-actions">
-                                <button class="btn btn-primary btn-bulldogo btn-login" id="btnLoginMyAds" data-open-auth="login">Přihlásit se</button>
+                                <button class="btn btn-primary btn-bulldogo" id="btnLoginMyAds">Přihlásit se</button>
                                 <button class="btn btn-secondary" id="btnBackMyAds">Zpět na hlavní stránku</button>
                             </div>
                         </div>
                     `;
                     
-                    // Tlačítko má třídu btn-login a data-open-auth="login", takže delegovaný listener v auth.js ho zachytí
-                    // Přidat event listener jako fallback pro případ, že delegovaný listener nefunguje
-                    setTimeout(() => {
-                        const btnLogin = document.getElementById('btnLoginMyAds');
-                        const btnBack = document.getElementById('btnBackMyAds');
-                        
-                        console.log('🔍 Hledám tlačítka:', { btnLogin: !!btnLogin, btnBack: !!btnBack });
-                        console.log('🔍 showAuthModal dostupná:', typeof window.showAuthModal);
-                        
-                        if (btnLogin) {
-                            // Přidat fallback listener (delegovaný listener v auth.js by měl fungovat, ale pro jistotu)
-                            btnLogin.addEventListener('click', function(e) {
-                                console.log('🖱️ Kliknutí na tlačítko Přihlásit se (fallback listener)');
-                                
-                                // Pokud delegovaný listener už zpracoval, neopakovat
-                                if (e.defaultPrevented) {
-                                    console.log('⚠️ Event už byl zpracován delegovaným listenerem');
-                                    return;
-                                }
-                                
-                                e.preventDefault();
-                                e.stopPropagation();
-                                
-                                if (typeof window.showAuthModal === 'function') {
-                                    console.log('✅ Volám window.showAuthModal("login") z fallback listeneru');
-                                    try {
-                                        window.showAuthModal('login');
-                                    } catch (err) {
-                                        console.error('❌ Chyba při volání showAuthModal:', err);
-                                    }
-                                } else {
-                                    console.error('❌ showAuthModal není dostupná');
-                                    console.error('❌ window.showAuthModal:', typeof window.showAuthModal);
-                                }
-                            });
-                        } else {
-                            console.error('❌ Tlačítko btnLoginMyAds nebylo nalezeno');
-                        }
-                        
-                        if (btnBack) {
-                            btnBack.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                window.location.href = 'index.html';
-                            });
-                        }
-                    }, 100);
+                    // Přidat event listenery na tlačítka
+                    const btnLogin = document.getElementById('btnLoginMyAds');
+                    const btnBack = document.getElementById('btnBackMyAds');
+                    
+                    if (btnLogin) {
+                        btnLogin.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (typeof window.showAuthModal === 'function') {
+                                window.showAuthModal('login');
+                            } else {
+                                console.error('showAuthModal není dostupná');
+                            }
+                        });
+                    }
+                    
+                    if (btnBack) {
+                        btnBack.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.location.href = 'index.html';
+                        });
+                    }
                 }
                 
                 // Dříve zde bylo automatické přesměrování. Necháme uživatele rozhodnout tlačítkem.
