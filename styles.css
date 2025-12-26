@@ -1445,7 +1445,7 @@
 }
 
 .no-ads-message {
-    margin: 2rem auto;
+    margin: 4rem auto;
     padding: 2rem;
     border-radius: 16px;
     background: linear-gradient(135deg, rgba(247, 124, 0, 0.1) 0%, rgba(253, 240, 2, 0.1) 100%);
@@ -1457,6 +1457,24 @@
     text-align: center;
     gap: 1rem;
     max-width: 600px;
+    width: 100%;
+}
+
+/* Zajistit, aby zpráva byla na středu, když je v ads-grid */
+.ads-grid:has(.no-ads-message),
+#adsList:has(.no-ads-message) {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 400px;
+    width: 100%;
+}
+
+/* Fallback pro prohlížeče bez podpory :has() */
+#adsList .no-ads-message {
+    grid-column: 1 / -1;
+    justify-self: center;
+    align-self: center;
 }
 
 .no-ads-message-icon {
