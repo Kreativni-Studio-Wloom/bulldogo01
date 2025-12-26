@@ -682,6 +682,55 @@ function displayServices(list) {
     const limit = limitAttr ? parseInt(limitAttr, 10) : null;
     const showActions = showActionsAttr ? showActionsAttr === 'true' : true;
     
+    // Zkontrolovat, zda jsou aktivní nějaké filtry
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const regionFilter = document.getElementById('regionFilter');
+    const hasActiveFilters = (searchInput?.value?.trim() || '') || 
+                            (categoryFilter?.value?.trim() || '') || 
+                            (regionFilter?.value?.trim() || '');
+    
+    // Pokud není žádný výsledek, zobrazit prázdný stav a ukončit
+    if (!filteredServices || filteredServices.length === 0) {
+        // Skrýt paginaci
+        const pagination = document.getElementById('pagination');
+        if (pagination) {
+            pagination.style.display = 'none';
+        }
+        
+        // Skrýt element noServices (pokud existuje)
+        const noServices = document.getElementById('noServices');
+        if (noServices) {
+            noServices.style.display = 'none';
+        }
+        
+        if (hasActiveFilters) {
+            // Aktivní filtry, ale žádné výsledky
+            grid.innerHTML = `
+                <div class="no-services">
+                    <div class="no-services-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Žádné výsledky</h3>
+                    <p>Pro zadané parametry vyhledávání nebyl nalezen žádný inzerát.</p>
+                    <p class="no-services-suggestion">Zkuste upravit kritéria vyhledávání nebo zkuste jiný výraz.</p>
+                </div>
+            `;
+        } else {
+            // Žádné filtry, ale žádné služby v databázi
+            grid.innerHTML = `
+                <div class="no-services">
+                    <div class="no-services-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h3>Žádné služby nenalezeny</h3>
+                    <p>Momentálně nejsou k dispozici žádné služby.</p>
+                </div>
+            `;
+        }
+        return;
+    }
+    
     // VŽDY použít filteredServices, ne předaný parametr (aby se respektovaly filtry)
     let servicesToRender = filteredServices;
     
@@ -728,41 +777,11 @@ function displayServices(list) {
             }
         }
     }
-
-    // Zkontrolovat, zda jsou aktivní nějaké filtry
-    const searchInput = document.getElementById('searchInput');
-    const categoryFilter = document.getElementById('categoryFilter');
-    const regionFilter = document.getElementById('regionFilter');
-    const hasActiveFilters = (searchInput?.value?.trim() || '') || 
-                            (categoryFilter?.value?.trim() || '') || 
-                            (regionFilter?.value?.trim() || '');
     
-    if (!finalServices || finalServices.length === 0) {
-        if (hasActiveFilters) {
-            // Aktivní filtry, ale žádné výsledky
-            grid.innerHTML = `
-                <div class="no-services">
-                    <div class="no-services-icon">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <h3>Žádné výsledky</h3>
-                    <p>Pro zadané parametry vyhledávání nebyl nalezen žádný inzerát.</p>
-                    <p class="no-services-suggestion">Zkuste upravit kritéria vyhledávání nebo zkuste jiný výraz.</p>
-                </div>
-            `;
-        } else {
-            // Žádné filtry, ale žádné služby v databázi
-            grid.innerHTML = `
-                <div class="no-services">
-                    <div class="no-services-icon">
-                        <i class="fas fa-inbox"></i>
-                    </div>
-                    <h3>Žádné služby nenalezeny</h3>
-                    <p>Momentálně nejsou k dispozici žádné služby.</p>
-                </div>
-            `;
-        }
-        return;
+    // Skrýt element noServices (pokud existuje)
+    const noServices = document.getElementById('noServices');
+    if (noServices) {
+        noServices.style.display = 'none';
     }
 
     grid.innerHTML = finalServices.map(service => createAdCard(service, showActions)).join('');
