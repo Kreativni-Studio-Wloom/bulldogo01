@@ -1445,27 +1445,77 @@
 }
 
 .no-ads-message {
+    margin: 2rem auto;
+    padding: 2rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(247, 124, 0, 0.1) 0%, rgba(253, 240, 2, 0.1) 100%);
+    border: 2px solid rgba(247, 124, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(247, 124, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    padding: 40px 20px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    border: 2px dashed #dee2e6;
+    gap: 1rem;
+    max-width: 600px;
 }
 
-.no-ads-message i {
+.no-ads-message-icon {
+    margin-bottom: 0.5rem;
+}
+
+.no-ads-message-icon i {
     font-size: 3rem;
-    color: #6c757d;
-    margin-bottom: 20px;
+    color: #f77c00;
+    opacity: 0.8;
 }
 
-.no-ads-message h3 {
-    color: #495057;
-    margin-bottom: 10px;
+.no-ads-message-content {
+    width: 100%;
 }
 
-.no-ads-message p {
-    color: #6c757d;
-    margin-bottom: 20px;
+.no-ads-message-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 0.75rem 0;
+    background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.no-ads-message-text {
+    color: #6b7280;
+    font-size: 1rem;
+    margin: 0 0 1.25rem 0;
+    line-height: 1.5;
+}
+
+.no-ads-message .btn-bulldogo {
+    background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(247, 124, 0, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.no-ads-message .btn-bulldogo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(247, 124, 0, 0.4);
+}
+
+.no-ads-message .btn-bulldogo i {
+    color: white;
+    font-size: 1rem;
 }
 
 .selection-actions {
@@ -2112,12 +2162,10 @@ body {
     margin-left: 0.8rem; /* Ikona vpravo při hover */
     opacity: 1;
     order: 2; /* Ikona vpravo při hover */
-    background: linear-gradient(135deg, #f77c00 0%, #fdf002 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #6c757d; /* Pevná barva ikony, bez gradientu */
     width: auto;
     justify-content: flex-start;
+    transition: margin-left 0.3s ease, opacity 0.3s ease;
 }
 
 .nav-link.active .nav-icon {
@@ -2132,13 +2180,14 @@ body {
     font-weight: 500;
     font-size: 0.95rem;
     opacity: 0;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.3s ease, transform 0.3s ease, width 0.3s ease;
     white-space: nowrap;
     order: 1; /* Text vlevo */
     transform: translateX(-15px);
     width: 0;
     overflow: hidden;
     text-align: left !important; /* Zarovnání doleva */
+    color: #2c3e50 !important; /* Pevná barva textu, bez animace */
 }
 .sidebar:hover .nav-text {
     opacity: 1;
@@ -2147,6 +2196,7 @@ body {
     transition-delay: 0.1s;
     overflow: visible;
     text-align: left !important; /* Zarovnání doleva */
+    color: #2c3e50 !important; /* Pevná barva textu, bez animace */
 }
 
 /* Admin Section */

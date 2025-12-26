@@ -177,13 +177,17 @@ function showLoginRequired() {
     if (adsList) {
         adsList.innerHTML = `
             <div class="no-ads-message">
-                <i class="fas fa-lock"></i>
-                <h3>Přihlášení vyžadováno</h3>
-                <p>Pro topování inzerátů se musíte přihlásit.</p>
-                <button class="btn btn-primary" onclick="showAuthModal('login')">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Přihlásit se
-                </button>
+                <div class="no-ads-message-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div class="no-ads-message-content">
+                    <h3 class="no-ads-message-title">Přihlášení vyžadováno</h3>
+                    <p class="no-ads-message-text">Pro topování inzerátů se musíte přihlásit.</p>
+                    <button class="btn btn-primary btn-bulldogo" onclick="showAuthModal('login')">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Přihlásit se
+                    </button>
+                </div>
             </div>
         `;
     }
