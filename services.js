@@ -1122,9 +1122,22 @@ function filterServices() {
     });
 
     filteredServices = filteredAds;
+    
+    // Debug log
+    console.log('🔍 filterServices - filteredAds.length:', filteredAds.length, 'filteredServices.length:', filteredServices.length);
+    
     // Resetovat na první stránku při změně filtru
     currentPage = 1;
-    // Po každé změně filtru znovu aplikovat aktuální řazení
+    
+    // Pokud není žádný výsledek, zobrazit prázdný stav a ukončit (bez volání sortServices)
+    if (!filteredServices || filteredServices.length === 0) {
+        console.log('⚠️ Žádné výsledky po filtrování - zobrazuji prázdný stav');
+        displayServices();
+        updateStats();
+        return;
+    }
+    
+    // Po každé změně filtru znovu aplikovat aktuální řazení (pouze pokud jsou výsledky)
     sortServices();
     updateStats();
 }
@@ -1300,8 +1313,14 @@ function normalize(str) {
 function sortServices() {
     const sortBy = document.getElementById('sortSelect')?.value || 'newest';
 
+    // Pokud není co řadit (prázdný filteredServices), zobrazit prázdný stav
+    if (!filteredServices || filteredServices.length === 0) {
+        displayServices();
+        return;
+    }
+
     // Řaď aktuálně filtrované výsledky (ne všechny služby)
-    const base = Array.isArray(filteredServices) && filteredServices.length ? [...filteredServices] : [...allServices];
+    const base = [...filteredServices];
 
     const toDate = (d) => new Date(d?.toDate?.() || d);
 
@@ -1324,7 +1343,7 @@ function sortServices() {
     const result = [...top, ...rest];
 
     filteredServices = result;
-    displayServices(filteredServices);
+    displayServices();
 }
 
 // Extrakce ceny z textu
