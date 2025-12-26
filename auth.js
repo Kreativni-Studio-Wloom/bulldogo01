@@ -1406,13 +1406,37 @@ function showAuthModal(type = 'login') {
     }
     
     // Zajistit, aby se listener nastavil i po malém zpoždění (fallback)
+    // Použít requestAnimationFrame pro lepší načasování
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            const authForm = document.getElementById('authForm');
+            if (authForm && !authForm.hasAttribute('data-listener-set')) {
+                console.log('⚠️ Fallback: Nastavuji event listener po zpoždění');
+                try { 
+                    setupEventListeners(); 
+                } catch (e) { 
+                    console.warn('setupEventListeners failed in fallback', e); 
+                }
+            } else if (authForm) {
+                console.log('✅ AuthForm už má listener nastaven');
+            } else {
+                console.warn('⚠️ AuthForm nebyl nalezen v fallback');
+            }
+        }, 150);
+    });
+    
+    // Dodatečný fallback - zkontrolovat po delším zpoždění
     setTimeout(() => {
         const authForm = document.getElementById('authForm');
         if (authForm && !authForm.hasAttribute('data-listener-set')) {
-            console.log('⚠️ Fallback: Nastavuji event listener po zpoždění');
-            try { setupEventListeners(); } catch (e) { console.warn('setupEventListeners failed in fallback', e); }
+            console.log('⚠️ Dodatečný fallback: Nastavuji event listener po delším zpoždění');
+            try { 
+                setupEventListeners(); 
+            } catch (e) { 
+                console.warn('setupEventListeners failed in additional fallback', e); 
+            }
         }
-    }, 100);
+    }, 500);
     
     // Debug: Zkontrolovat formulář po otevření modalu a nastavit event listener
     setTimeout(() => {
@@ -1986,7 +2010,15 @@ function setupEventListeners() {
     const authForm = document.getElementById('authForm');
     console.log('🔍 Hledám authForm:', authForm ? 'NALEZEN' : 'NENALEZEN');
     console.log('🔍 AuthForm element:', authForm);
+    console.log('🔍 AuthForm má už listener:', authForm?.hasAttribute('data-listener-set'));
+    
     if (authForm) {
+        // Pokud už má listener, neopakovat
+        if (authForm.hasAttribute('data-listener-set')) {
+            console.log('⚠️ AuthForm už má listener, neopakuji');
+            return;
+        }
+        
         // Odstranit existující listenery - klonovat formulář a nahradit
         const newForm = authForm.cloneNode(true);
         authForm.parentNode.replaceChild(newForm, authForm);
@@ -2008,7 +2040,9 @@ function setupEventListeners() {
         cleanAuthForm.setAttribute('data-listener-set', 'true');
         
         // Přidat listener pouze jednou
+        // Použít capture phase pro zachycení eventu dříve než ostatní listenery
         cleanAuthForm.addEventListener('submit', async (e) => {
+            console.log('📝 Auth formulář submit event zachycen');
             e.preventDefault();
             e.stopPropagation(); // Zastavit propagaci eventu
             e.stopImmediatePropagation(); // Zastavit všechny další listenery
@@ -2017,7 +2051,7 @@ function setupEventListeners() {
             const submitBtn = cleanAuthForm.querySelector('button[type="submit"]');
             if (submitBtn && submitBtn.disabled) {
                 console.log('⚠️ Formulář se již odesílá, ignoruji další pokus');
-                return;
+                return false;
             }
             
             if (submitBtn) {
@@ -2058,7 +2092,9 @@ function setupEventListeners() {
                     submitBtn.textContent = isLogin ? 'Přihlásit se' : 'Zaregistrovat se';
                 }
             }
-        });
+            
+            return false; // Dodatečná ochrana na konci
+        }, { capture: true }); // Použít capture phase pro zachycení eventu dříve
     }
     // Tlačítko: Pokračovat na ověření telefonního čísla
     const btnSendPhoneCode = document.getElementById('btnSendPhoneCode');
