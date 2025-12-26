@@ -749,15 +749,14 @@ function callAuthModal(type) {
 	}
 }
 
-function closeAuthModal() {
-    if (window.closeAuthModal) window.closeAuthModal();
-}
+// closeAuthModal je definována v auth.js jako window.closeAuthModal
+// Nepoužívat lokální funkci, aby se zabránilo rekurzi
 
 // Bezpečnostní guardy – tyto prvky vytváří až auth.js
 window.addEventListener('click', function(event) {
     const modal = document.getElementById('authModal');
-    if (modal && event.target === modal) {
-        closeAuthModal();
+    if (modal && event.target === modal && typeof window.closeAuthModal === 'function') {
+        window.closeAuthModal();
     }
 });
 

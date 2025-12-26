@@ -1043,7 +1043,7 @@ function createAuthModal() {
 				<img src="fotky/bulldogo-overlay.png" alt="Bulldogo" class="auth-dog-lean" aria-hidden="true">
 				<div class="modal-header">
 					<h2 class="modal-title">Přihlášení</h2>
-					<span class="close" onclick="closeAuthModal()">&times;</span>
+					<span class="close">&times;</span>
 				</div>
 			</div>
             <form id="authForm" class="auth-form">
@@ -1160,7 +1160,9 @@ function setupAuthModalEvents() {
         newCloseBtn.addEventListener('click', function closeBtnHandler(e) {
             e.preventDefault();
             e.stopPropagation();
-            closeAuthModal();
+            if (typeof window.closeAuthModal === 'function') {
+                window.closeAuthModal();
+            }
         }, { once: false });
     }
     
@@ -1173,7 +1175,9 @@ function setupAuthModalEvents() {
         if (e.target === modal) {
             e.preventDefault();
             e.stopPropagation();
-            closeAuthModal();
+            if (typeof window.closeAuthModal === 'function') {
+                window.closeAuthModal();
+            }
         }
     };
     modal.addEventListener('click', authModalClickHandler);
@@ -2553,7 +2557,9 @@ function setupEventListeners() {
         const userDropdown = document.querySelector('.user-dropdown');
         
         if (e.target === authModal) {
-            closeAuthModal();
+            if (typeof window.closeAuthModal === 'function') {
+                window.closeAuthModal();
+            }
         }
         if (e.target === addServiceModal) {
             closeAddServiceModal();
